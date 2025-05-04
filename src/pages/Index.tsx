@@ -17,7 +17,11 @@ const Index = () => {
       <Navbar selectedMode={selectedMode} onSelectMode={handleModeChange} />
       
       <main className="flex-grow">
-        <div className="content-container py-6">
+        <div className="content-container py-8">
+          <h1 className="section-heading mb-6">
+            {selectedMode === 'overall' ? 'Player Rankings' : `${selectedMode.charAt(0).toUpperCase() + selectedMode.slice(1)} Tier Ranks`}
+          </h1>
+          
           {/* Conditionally render layout based on selected mode */}
           {selectedMode === 'overall' ? (
             <LeaderboardTable />

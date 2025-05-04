@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { GameModeSelector } from './GameModeSelector';
+import { Trophy } from 'lucide-react';
 
 interface NavbarProps {
   selectedMode: string;
@@ -13,7 +14,8 @@ export function Navbar({ selectedMode, onSelectMode }: NavbarProps) {
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <div className="flex-shrink-0 animate-slide-in">
+          <div className="flex-shrink-0 animate-slide-in flex items-center">
+            <Trophy size={20} className="mr-2 text-yellow-400" />
             <h1 className="logo-text">
               MCBE TIERS
             </h1>

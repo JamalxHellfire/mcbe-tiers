@@ -1,22 +1,6 @@
 
-import React, { useState } from 'react';
-import { 
-  CheckCircle2, 
-  Diamond, 
-  Sword, 
-  Axe, 
-  Hammer, 
-  Bed, 
-  Globe, 
-  Flame, 
-  Target 
-} from 'lucide-react';
-
-export interface GameMode {
-  id: string;
-  name: string;
-  icon: React.ElementType;
-}
+import React from 'react';
+import { Trophy, Sword, Axe } from 'lucide-react';
 
 interface GameModeSelectorProps {
   selectedMode: string;
@@ -24,55 +8,39 @@ interface GameModeSelectorProps {
 }
 
 export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelectorProps) {
-  // Game modes list
-  const gameModes: GameMode[] = [
-    { id: 'overall', name: 'Overall', icon: CheckCircle2 },
-    { id: 'crystal', name: 'Crystal', icon: Diamond },
-    { id: 'sword', name: 'Sword', icon: Sword },
-    { id: 'axe', name: 'Axe', icon: Axe },
-    { id: 'mace', name: 'Mace', icon: Hammer },
-    { id: 'bedwars', name: 'Bed', icon: Bed },
-    { id: 'smp', name: 'SMP', icon: Globe },
-    { id: 'netherpot', name: 'Nether', icon: Flame },
-    { id: 'uhc', name: 'UHC', icon: Target },
+  // Game modes including labels and icon components
+  const modes = [
+    { id: 'overall', label: 'Overall', icon: <Trophy size={18} className="mr-1" /> },
+    { id: 'crystal', label: 'Crystal', icon: <span className="mode-icon">🟣</span> },
+    { id: 'sword', label: 'Sword', icon: <Sword size={18} className="mr-1" /> },
+    { id: 'axe', label: 'Axe', icon: <Axe size={18} className="mr-1" /> },
+    { id: 'mace', label: 'Mace', icon: <span className="mode-icon">🔨</span> },
+    { id: 'bedwars', label: 'Bedwars', icon: <span className="mode-icon">🛏️</span> },
+    { id: 'smp', label: 'SMP', icon: <span className="mode-icon">🌍</span> },
+    { id: 'netherpot', label: 'NetherPot', icon: <span className="mode-icon">⚗️</span> },
+    { id: 'uhc', label: 'UHC', icon: <span className="mode-icon">❤️</span> }
   ];
 
   return (
-    <div className="flex justify-center space-x-1 md:space-x-2 overflow-x-auto pb-1 no-scrollbar">
-      <div className="flex animate-fade-in">
-        {gameModes.map((mode, index) => {
-          const isSelected = selectedMode === mode.id;
-          const tierColor = index % 5 + 1;
-          const borderColor = isSelected 
-            ? mode.id === 'overall' 
-              ? 'border-white' 
-              : `border-tier-${tierColor}`
-            : 'border-transparent';
+    <div className="game-mode-selector flex items-center space-x-1 overflow-x-auto pb-1 px-1">
+      {modes.map((mode) => (
+        <button
+          key={mode.id}
+          onClick={() => onSelectMode(mode.id)}
+          className={`game-mode-button whitespace-nowrap flex items-center ${
+            selectedMode === mode.id ? 'active' : ''
+          }`}
+        >
+          <span className="flex items-center">
+            {mode.icon}
+            <span>{mode.label}</span>
+          </span>
           
-          return (
-            <button
-              key={mode.id}
-              className={`game-mode-button text-xs md:text-sm px-2 py-1 md:px-3 md:py-2 whitespace-nowrap flex items-center gap-1 rounded-xl transition hover:bg-[#1d1d1d] hover:scale-105 ${
-                isSelected ? 'active font-semibold' : 'text-white/70'
-              } ${borderColor} ${
-                isSelected ? 'bg-white/10' : ''
-              }`}
-              style={{ animationDelay: `${index * 0.05}s` }}
-              onClick={() => onSelectMode(mode.id)}
-            >
-              {mode.icon !== null && <mode.icon className="w-3 h-3 md:w-4 md:h-4" />}
-              <span className="hidden xs:inline">{mode.name}</span>
-              {isSelected && (
-                <span 
-                  className={`absolute bottom-0 left-0 h-0.5 w-full ${
-                    mode.id === 'overall' ? 'bg-white' : `bg-tier-${tierColor}`
-                  } animate-scale-in`}
-                ></span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+          {selectedMode === mode.id && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-white"></div>
+          )}
+        </button>
+      ))}
     </div>
   );
 }
