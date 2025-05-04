@@ -24,7 +24,7 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -34,12 +34,16 @@
   }
   
   body {
-    @apply bg-dark-background text-foreground antialiased;
+    @apply bg-dark-background text-foreground antialiased bg-gradient-dark;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
 
   html {
-    @apply scroll-smooth;
+    @apply scroll-smooth h-full;
+  }
+
+  body, #root {
+    @apply min-h-screen flex flex-col;
   }
 
   ::-webkit-scrollbar {
@@ -57,68 +61,112 @@
 }
 
 @layer components {
+  .glass {
+    @apply backdrop-blur-md bg-dark-surface/80 border border-white/5 shadow-glass;
+  }
+
   .tier-container {
-    @apply min-h-[200px] flex flex-col;
+    @apply min-h-[250px] flex flex-col rounded-2xl p-5 backdrop-blur-sm border 
+           transition-all duration-300 hover:translate-y-[-2px] glass;
   }
 
   .tier-header {
-    @apply text-xl md:text-2xl font-bold py-2 border-b-2 mb-2;
+    @apply text-2xl md:text-3xl font-bold py-3 border-b-2 mb-4 text-center relative;
   }
 
   .tier-section {
-    @apply p-3 border rounded-lg bg-dark-surface/80 flex-1 min-h-[80px];
+    @apply p-4 rounded-xl bg-dark-surface/80 flex-1 min-h-[100px] border border-white/5 
+           backdrop-blur-sm transition-all duration-300 hover:border-white/10;
   }
 
   .tier-placeholder {
-    @apply text-white/20 text-center py-4 italic text-sm;
+    @apply text-white/20 text-center py-6 italic text-sm;
   }
 
   .game-mode-button {
-    @apply px-4 py-2 rounded-md transition-all duration-300 hover:bg-white/10 hover:scale-105;
+    @apply px-4 py-2 rounded-md transition-all duration-300 hover:bg-white/10 hover:scale-105 relative;
   }
 
   .game-mode-button.active {
-    @apply bg-white/10 font-bold;
+    @apply font-bold;
+  }
+
+  .logo-text {
+    @apply text-xl md:text-2xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
+           bg-clip-text text-transparent hover:from-white hover:to-white/80 transition-all;
+  }
+
+  .navbar {
+    @apply sticky top-0 z-10 glass border-b border-white/10;
+  }
+
+  .content-container {
+    @apply container mx-auto px-6 lg:px-16 max-w-7xl py-8;
+  }
+  
+  .section-heading {
+    @apply text-3xl lg:text-4xl font-extrabold text-center mb-10 bg-gradient-to-r 
+           from-white to-white/70 bg-clip-text text-transparent;
   }
 }
 
 /* Tier-specific styles */
 .tier-1 {
-  @apply border-tier-1/70;
+  @apply border-tier-1/30;
 }
 
 .tier-1 .tier-header {
-  @apply text-tier-1 border-tier-1/70 shadow-glow-gold;
+  @apply text-tier-1 border-tier-1/50 shadow-glow-gold;
+}
+
+.tier-1 .tier-section:hover {
+  @apply border-tier-1/30;
 }
 
 .tier-2 {
-  @apply border-tier-2/70;
+  @apply border-tier-2/30;
 }
 
 .tier-2 .tier-header {
-  @apply text-tier-2 border-tier-2/70 shadow-glow-orange;
+  @apply text-tier-2 border-tier-2/50 shadow-glow-orange;
+}
+
+.tier-2 .tier-section:hover {
+  @apply border-tier-2/30;
 }
 
 .tier-3 {
-  @apply border-tier-3/70;
+  @apply border-tier-3/30;
 }
 
 .tier-3 .tier-header {
-  @apply text-tier-3 border-tier-3/70 shadow-glow-purple;
+  @apply text-tier-3 border-tier-3/50 shadow-glow-purple;
+}
+
+.tier-3 .tier-section:hover {
+  @apply border-tier-3/30;
 }
 
 .tier-4 {
-  @apply border-tier-4/70;
+  @apply border-tier-4/30;
 }
 
 .tier-4 .tier-header {
-  @apply text-tier-4 border-tier-4/70 shadow-glow-blue;
+  @apply text-tier-4 border-tier-4/50 shadow-glow-blue;
+}
+
+.tier-4 .tier-section:hover {
+  @apply border-tier-4/30;
 }
 
 .tier-5 {
-  @apply border-tier-5/70;
+  @apply border-tier-5/30;
 }
 
 .tier-5 .tier-header {
-  @apply text-tier-5 border-tier-5/70 shadow-glow-green;
+  @apply text-tier-5 border-tier-5/50 shadow-glow-green;
+}
+
+.tier-5 .tier-section:hover {
+  @apply border-tier-5/30;
 }

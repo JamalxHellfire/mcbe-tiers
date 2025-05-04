@@ -35,32 +35,40 @@ export function GameModeSelector() {
   const [selectedMode, setSelectedMode] = useState('overall');
 
   return (
-    <div className="flex space-x-1 md:space-x-2 overflow-x-auto pb-1 no-scrollbar">
+    <div className="flex justify-center space-x-2 md:space-x-3 overflow-x-auto pb-1 no-scrollbar">
       <div className="flex animate-fade-in">
-        {gameModes.map((mode, index) => (
-          <button
-            key={mode.id}
-            className={`game-mode-button whitespace-nowrap flex items-center ${
-              selectedMode === mode.id ? 'active' : ''
-            } ${
-              selectedMode === mode.id ? 
-                `border-b-2 ${mode.id === 'overall' ? 'border-white' : `border-tier-${index % 5 + 1}`}` : 
-                ''
-            }`}
-            style={{ animationDelay: `${index * 0.05}s` }}
-            onClick={() => setSelectedMode(mode.id)}
-          >
-            {mode.icon !== null && <mode.icon className="w-4 h-4 mr-1" />}
-            {mode.name}
-            {selectedMode === mode.id && (
-              <span 
-                className={`absolute bottom-0 left-0 h-0.5 w-full transform ${
-                  mode.id === 'overall' ? 'bg-white' : `bg-tier-${index % 5 + 1}`
-                } animate-scale-in`}
-              ></span>
-            )}
-          </button>
-        ))}
+        {gameModes.map((mode, index) => {
+          const isSelected = selectedMode === mode.id;
+          const tierColor = index % 5 + 1;
+          const borderColor = isSelected 
+            ? mode.id === 'overall' 
+              ? 'border-white' 
+              : `border-tier-${tierColor}`
+            : 'border-transparent';
+          
+          return (
+            <button
+              key={mode.id}
+              className={`game-mode-button whitespace-nowrap flex items-center gap-2 ${
+                isSelected ? 'active font-semibold' : 'text-white/70'
+              } ${borderColor} ${
+                isSelected ? 'bg-white/10' : ''
+              }`}
+              style={{ animationDelay: `${index * 0.05}s` }}
+              onClick={() => setSelectedMode(mode.id)}
+            >
+              {mode.icon !== null && <mode.icon className="w-4 h-4" />}
+              {mode.name}
+              {isSelected && (
+                <span 
+                  className={`absolute bottom-0 left-0 h-0.5 w-full ${
+                    mode.id === 'overall' ? 'bg-white' : `bg-tier-${tierColor}`
+                  } animate-scale-in`}
+                ></span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -61,9 +61,10 @@ export default {
 					5: "#10B981", // Green
 				},
 				dark: {
-					background: "#121212",
+					background: "#0f0f0f",
 					surface: "#1A1F2C",
 					border: "#2D3748",
+					overlay: "#121212",
 				},
 			},
 			borderRadius: {
@@ -96,6 +97,14 @@ export default {
 					'0%, 100%': { filter: 'brightness(1)' },
 					'50%': { filter: 'brightness(1.2)' },
 				},
+				'border-glow': {
+					'0%, 100%': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+					'50%': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+				},
+				'staggered-fade': {
+					'0%': { opacity: '0', transform: 'translateY(20px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -104,13 +113,25 @@ export default {
 				'slide-in': 'slide-in 0.4s ease-out',
 				'scale-in': 'scale-in 0.3s ease-out',
 				'glow-pulse': 'glow-pulse 3s infinite',
+				'border-glow': 'border-glow 2s infinite',
+				'staggered-fade-1': 'staggered-fade 0.8s ease-out 0.1s both',
+				'staggered-fade-2': 'staggered-fade 0.8s ease-out 0.2s both',
+				'staggered-fade-3': 'staggered-fade 0.8s ease-out 0.3s both',
+				'staggered-fade-4': 'staggered-fade 0.8s ease-out 0.4s both',
+				'staggered-fade-5': 'staggered-fade 0.8s ease-out 0.5s both',
 			},
 			boxShadow: {
-				'glow-gold': '0 0 10px rgba(255, 215, 0, 0.5)',
-				'glow-orange': '0 0 10px rgba(249, 115, 22, 0.5)',
-				'glow-purple': '0 0 10px rgba(139, 92, 246, 0.5)',
-				'glow-blue': '0 0 10px rgba(30, 174, 219, 0.5)',
-				'glow-green': '0 0 10px rgba(16, 185, 129, 0.5)',
+				'glow-gold': '0 0 15px rgba(255, 215, 0, 0.5)',
+				'glow-orange': '0 0 15px rgba(249, 115, 22, 0.5)',
+				'glow-purple': '0 0 15px rgba(139, 92, 246, 0.5)',
+				'glow-blue': '0 0 15px rgba(30, 174, 219, 0.5)',
+				'glow-green': '0 0 15px rgba(16, 185, 129, 0.5)',
+				'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+				'glass': '0 8px 32px rgba(0, 0, 0, 0.2)',
+			},
+			backgroundImage: {
+				'gradient-dark': 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)',
+				'gradient-radial': 'radial-gradient(circle at center, #1a1a1a 0%, #0f0f0f 70%)',
 			},
 		}
 	},
