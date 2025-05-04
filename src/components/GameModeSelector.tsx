@@ -12,13 +12,18 @@ import {
   Target 
 } from 'lucide-react';
 
-interface GameMode {
+export interface GameMode {
   id: string;
   name: string;
   icon: React.ElementType;
 }
 
-export function GameModeSelector() {
+interface GameModeSelectorProps {
+  selectedMode: string;
+  onSelectMode: (mode: string) => void;
+}
+
+export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelectorProps) {
   // Game modes list
   const gameModes: GameMode[] = [
     { id: 'overall', name: 'Overall', icon: CheckCircle2 },
@@ -31,9 +36,6 @@ export function GameModeSelector() {
     { id: 'netherpot', name: 'Nether', icon: Flame },
     { id: 'uhc', name: 'UHC', icon: Target },
   ];
-
-  // Overall selected by default
-  const [selectedMode, setSelectedMode] = useState('overall');
 
   return (
     <div className="flex justify-center space-x-1 md:space-x-2 overflow-x-auto pb-1 no-scrollbar">
@@ -50,13 +52,13 @@ export function GameModeSelector() {
           return (
             <button
               key={mode.id}
-              className={`game-mode-button text-xs md:text-sm px-2 py-1 md:px-3 md:py-2 whitespace-nowrap flex items-center gap-1 ${
+              className={`game-mode-button text-xs md:text-sm px-2 py-1 md:px-3 md:py-2 whitespace-nowrap flex items-center gap-1 rounded-xl transition hover:bg-[#1d1d1d] hover:scale-105 ${
                 isSelected ? 'active font-semibold' : 'text-white/70'
               } ${borderColor} ${
                 isSelected ? 'bg-white/10' : ''
               }`}
               style={{ animationDelay: `${index * 0.05}s` }}
-              onClick={() => setSelectedMode(mode.id)}
+              onClick={() => onSelectMode(mode.id)}
             >
               {mode.icon !== null && <mode.icon className="w-3 h-3 md:w-4 md:h-4" />}
               <span className="hidden xs:inline">{mode.name}</span>

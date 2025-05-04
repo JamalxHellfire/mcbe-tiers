@@ -2,7 +2,12 @@
 import React from 'react';
 import { GameModeSelector } from './GameModeSelector';
 
-export function Navbar() {
+interface NavbarProps {
+  selectedMode: string;
+  onSelectMode: (mode: string) => void;
+}
+
+export function Navbar({ selectedMode, onSelectMode }: NavbarProps) {
   return (
     <nav className="navbar">
       <div className="container mx-auto px-4 lg:px-8">
@@ -16,7 +21,7 @@ export function Navbar() {
 
           {/* Center - Game Mode Selector */}
           <div className="hidden md:block flex-grow px-2 mx-2 overflow-hidden">
-            <GameModeSelector />
+            <GameModeSelector selectedMode={selectedMode} onSelectMode={onSelectMode} />
           </div>
 
           {/* Right - Future Links */}
@@ -32,7 +37,7 @@ export function Navbar() {
 
         {/* Mobile Game Mode Selector */}
         <div className="md:hidden px-1 py-1 border-t border-white/10 overflow-x-auto">
-          <GameModeSelector />
+          <GameModeSelector selectedMode={selectedMode} onSelectMode={onSelectMode} />
         </div>
       </div>
     </nav>
