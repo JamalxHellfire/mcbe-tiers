@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { 
+  CheckCircle2, 
   Diamond, 
   Sword, 
   Axe, 
@@ -20,14 +21,14 @@ interface GameMode {
 export function GameModeSelector() {
   // Game modes list
   const gameModes: GameMode[] = [
-    { id: 'overall', name: 'Overall', icon: () => null },
+    { id: 'overall', name: 'Overall', icon: CheckCircle2 },
     { id: 'crystal', name: 'Crystal', icon: Diamond },
     { id: 'sword', name: 'Sword', icon: Sword },
     { id: 'axe', name: 'Axe', icon: Axe },
     { id: 'mace', name: 'Mace', icon: Hammer },
-    { id: 'bedwars', name: 'Bedwars', icon: Bed },
+    { id: 'bedwars', name: 'Bed', icon: Bed },
     { id: 'smp', name: 'SMP', icon: Globe },
-    { id: 'netherpot', name: 'Netherpot', icon: Flame },
+    { id: 'netherpot', name: 'Nether', icon: Flame },
     { id: 'uhc', name: 'UHC', icon: Target },
   ];
 
@@ -35,7 +36,7 @@ export function GameModeSelector() {
   const [selectedMode, setSelectedMode] = useState('overall');
 
   return (
-    <div className="flex justify-center space-x-2 md:space-x-3 overflow-x-auto pb-1 no-scrollbar">
+    <div className="flex justify-center space-x-1 md:space-x-2 overflow-x-auto pb-1 no-scrollbar">
       <div className="flex animate-fade-in">
         {gameModes.map((mode, index) => {
           const isSelected = selectedMode === mode.id;
@@ -49,7 +50,7 @@ export function GameModeSelector() {
           return (
             <button
               key={mode.id}
-              className={`game-mode-button whitespace-nowrap flex items-center gap-2 ${
+              className={`game-mode-button text-xs md:text-sm px-2 py-1 md:px-3 md:py-2 whitespace-nowrap flex items-center gap-1 ${
                 isSelected ? 'active font-semibold' : 'text-white/70'
               } ${borderColor} ${
                 isSelected ? 'bg-white/10' : ''
@@ -57,8 +58,8 @@ export function GameModeSelector() {
               style={{ animationDelay: `${index * 0.05}s` }}
               onClick={() => setSelectedMode(mode.id)}
             >
-              {mode.icon !== null && <mode.icon className="w-4 h-4" />}
-              {mode.name}
+              {mode.icon !== null && <mode.icon className="w-3 h-3 md:w-4 md:h-4" />}
+              <span className="hidden xs:inline">{mode.name}</span>
               {isSelected && (
                 <span 
                   className={`absolute bottom-0 left-0 h-0.5 w-full ${

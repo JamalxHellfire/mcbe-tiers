@@ -10,13 +10,8 @@ const Index = () => {
       <Navbar />
       
       <main className="flex-grow">
-        {/* Hero section */}
-        <div className="py-12">
-          <h1 className="section-heading animate-fade-in">
-            Minecraft Bedrock Edition Player Rankings
-          </h1>
-          
-          {/* Tier Grid */}
+        {/* Main content area */}
+        <div className="py-6">
           <TierGrid />
         </div>
       </main>
