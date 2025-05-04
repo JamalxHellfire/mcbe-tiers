@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import { 
-  Crystal, 
+  Diamond, 
   Sword, 
   Axe, 
-  Mace, 
-  Bedwars, 
-  SMP, 
-  Netherpot, 
-  UHC 
+  Hammer, 
+  Bed, 
+  Globe, 
+  Flame, 
+  Target 
 } from 'lucide-react';
 
 interface GameMode {
@@ -21,14 +21,14 @@ export function GameModeSelector() {
   // Game modes list
   const gameModes: GameMode[] = [
     { id: 'overall', name: 'Overall', icon: () => null },
-    { id: 'crystal', name: 'Crystal', icon: Crystal },
+    { id: 'crystal', name: 'Crystal', icon: Diamond },
     { id: 'sword', name: 'Sword', icon: Sword },
     { id: 'axe', name: 'Axe', icon: Axe },
-    { id: 'mace', name: 'Mace', icon: Mace },
-    { id: 'bedwars', name: 'Bedwars', icon: Bedwars },
-    { id: 'smp', name: 'SMP', icon: SMP },
-    { id: 'netherpot', name: 'Netherpot', icon: Netherpot },
-    { id: 'uhc', name: 'UHC', icon: UHC },
+    { id: 'mace', name: 'Mace', icon: Hammer },
+    { id: 'bedwars', name: 'Bedwars', icon: Bed },
+    { id: 'smp', name: 'SMP', icon: Globe },
+    { id: 'netherpot', name: 'Netherpot', icon: Flame },
+    { id: 'uhc', name: 'UHC', icon: Target },
   ];
 
   // Overall selected by default
