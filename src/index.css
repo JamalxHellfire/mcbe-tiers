@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -129,7 +128,7 @@
 }
 
 .tier-1 .tier-section:hover {
-  @apply border-tier-1/30 shadow-glow-gold/10;
+  @apply border-tier-1/30 shadow-glow-gold opacity-90;
 }
 
 .tier-2 {
@@ -141,7 +140,7 @@
 }
 
 .tier-2 .tier-section:hover {
-  @apply border-tier-2/30 shadow-glow-orange/10;
+  @apply border-tier-2/30 shadow-glow-orange opacity-90;
 }
 
 .tier-3 {
@@ -153,7 +152,7 @@
 }
 
 .tier-3 .tier-section:hover {
-  @apply border-tier-3/30 shadow-glow-purple/10;
+  @apply border-tier-3/30 shadow-glow-purple opacity-90;
 }
 
 .tier-4 {
@@ -165,7 +164,7 @@
 }
 
 .tier-4 .tier-section:hover {
-  @apply border-tier-4/30 shadow-glow-blue/10;
+  @apply border-tier-4/30 shadow-glow-blue opacity-90;
 }
 
 .tier-5 {
@@ -177,7 +176,7 @@
 }
 
 .tier-5 .tier-section:hover {
-  @apply border-tier-5/30 shadow-glow-green/10;
+  @apply border-tier-5/30 shadow-glow-green opacity-90;
 }
 
 /* Dark theme enhancements */
