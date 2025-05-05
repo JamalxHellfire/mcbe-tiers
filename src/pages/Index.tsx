@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const Index = () => {
   const [selectedMode, setSelectedMode] = useState('overall');
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<{ id: string, gamemode?: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const navigate = useNavigate();
   

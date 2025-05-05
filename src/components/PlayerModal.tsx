@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,16 +10,48 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Trophy, Monitor, Smartphone, Gamepad, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Player, GamemodeScore } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchPlayerWithGamemodeScores } from '@/api/supabase';
+import { toast } from 'sonner';
 
 interface PlayerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  player: any;
+  player: {
+    id: string;
+    gamemode?: string; // Optional - if provided, will highlight this gamemode
+  };
 }
 
 export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
+  const [playerData, setPlayerData] = useState<Player | null>(null);
+  const [gamemodeScores, setGamemodeScores] = useState<GamemodeScore[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    if (!isOpen || !player.id) return;
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { player: fetchedPlayer, scores } = await fetchPlayerWithGamemodeScores(player.id);
+        setPlayerData(fetchedPlayer);
+        setGamemodeScores(scores);
+      } catch (error) {
+        console.error("Error fetching player details:", error);
+        toast.error("Failed to load player details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [isOpen, player.id]);
+  
   // Function to get device icon
-  const getDeviceIcon = (device: string) => {
+  const getDeviceIcon = (device: string | undefined) => {
     switch(device) {
       case 'PC': return <Monitor size={16} className="mr-1" />;
       case 'Mobile': return <Smartphone size={16} className="mr-1" />;
@@ -28,26 +60,17 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
     }
   };
   
-  // Mock tiers data for different game modes
-  const gameModes = [
-    { mode: 'Crystal', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'Sword', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'SMP', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'UHC', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'Axe', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'NethPot', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'Bedwars', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-    { mode: 'Mace', tier: Math.ceil(Math.random() * 5), subtier: Math.random() > 0.5 ? 'High' : 'Low' },
-  ];
-  
-  // Determine badge based on rank/points
+  // Determine badge based on global points
   const getBadge = () => {
-    const position = player.position || Math.ceil(Math.random() * 100); // Fallback to random position
+    if (!playerData) return { name: 'Loading...', color: 'text-white/60' };
     
-    if (position <= 5) return { name: 'Combat Master', color: 'text-yellow-400' };
-    if (position <= 20) return { name: 'Combat Ace', color: 'text-orange-400' };
-    if (position <= 50) return { name: 'Combat Cadet', color: 'text-purple-400' };
-    return { name: 'Combat Rookie', color: 'text-blue-400' };
+    const points = playerData.global_points || 0;
+    const rank = points > 0 ? Math.floor(1000 / (points + 10)) : 999; // Mock calculation
+    
+    if (points > 300) return { name: 'Combat Master', color: 'text-yellow-400', rank };
+    if (points > 200) return { name: 'Combat Ace', color: 'text-orange-400', rank };
+    if (points > 100) return { name: 'Combat Cadet', color: 'text-purple-400', rank };
+    return { name: 'Combat Rookie', color: 'text-blue-400', rank };
   };
   
   const badge = getBadge();
@@ -70,81 +93,147 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
             <DialogTitle className="text-xl font-bold text-center">Player Profile</DialogTitle>
           </DialogHeader>
           
-          <div className="flex flex-col items-center pt-2">
-            <Avatar className="h-24 w-24 border-4 border-white/10">
-              <AvatarImage src={player.avatar} alt={player.name} />
-              <AvatarFallback>{player.name?.slice(0, 2)}</AvatarFallback>
-            </Avatar>
-            
-            <h2 className="text-xl font-bold mt-3">{player.displayName || player.name}</h2>
-            
-            <div className="flex items-center mt-1 space-x-2">
-              <span className={cn(
-                "text-sm px-2 py-0.5 rounded-full",
-                player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
-                player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
-                player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
-                'bg-purple-900/30 text-purple-400'
-              )}>
-                {player.region}
-              </span>
+          {isLoading ? (
+            <div className="py-8 flex flex-col items-center space-y-6">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <div className="space-y-2 w-full max-w-[200px]">
+                <Skeleton className="h-6 w-full mx-auto" />
+                <Skeleton className="h-4 w-3/4 mx-auto" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 w-full">
+                <Skeleton className="h-16 rounded-lg" />
+                <Skeleton className="h-16 rounded-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 rounded" />
+                ))}
+              </div>
+            </div>
+          ) : playerData ? (
+            <div className="flex flex-col items-center pt-2">
+              <Avatar className="h-24 w-24 border-4 border-white/10">
+                <AvatarImage 
+                  src={playerData.avatar_url || `https://crafthead.net/avatar/${playerData.ign}`} 
+                  alt={playerData.ign} 
+                />
+                <AvatarFallback>{playerData.ign?.slice(0, 2)}</AvatarFallback>
+              </Avatar>
               
-              <span className="text-white/60 text-sm flex items-center">
-                <Trophy size={14} className="mr-1 text-yellow-400" />
-                {player.points || 0} points
-              </span>
-            </div>
-            
-            <div className="mt-1 flex items-center">
-              <Award size={16} className={cn("mr-1", badge.color)} />
-              <span className={cn("text-sm font-medium", badge.color)}>
-                {badge.name}
-              </span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 mt-6">
-            <div className="bg-white/5 rounded-lg p-3 flex flex-col">
-              <span className="text-xs text-white/40">Rank</span>
-              <span className="text-lg font-bold">#{player.position || '?'}</span>
-            </div>
-            
-            <div className="bg-white/5 rounded-lg p-3 flex flex-col">
-              <span className="text-xs text-white/40">Device</span>
-              <span className="text-lg font-bold flex items-center">
-                {getDeviceIcon(player.device || 'PC')}
-                {player.device || 'PC'}
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-5">
-            <h3 className="text-md font-medium mb-3">Gamemode Rankings</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {gameModes.map((modeData, index) => (
-                <motion.div 
-                  key={modeData.mode}
-                  className="bg-white/5 p-3 rounded flex items-center justify-between"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+              <h2 className="text-xl font-bold mt-3">{playerData.ign}</h2>
+              
+              <div className="flex items-center mt-1 space-x-2">
+                <span className={cn(
+                  "text-sm px-2 py-0.5 rounded-full",
+                  playerData.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
+                  playerData.region === 'EU' ? 'bg-green-900/30 text-green-400' :
+                  playerData.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
+                  'bg-purple-900/30 text-purple-400'
+                )}>
+                  {playerData.region || 'Unknown'}
+                </span>
+                
+                <motion.span 
+                  className="text-white/60 text-sm flex items-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <span className="text-sm">{modeData.mode}</span>
-                  <div className="flex flex-col items-end">
-                    <span className={cn(
-                      "text-sm font-bold",
-                      `text-tier-${modeData.tier}`
-                    )}>
-                      T{modeData.tier}
-                    </span>
-                    <span className="text-xs text-white/50">
-                      {modeData.subtier}
-                    </span>
-                  </div>
+                  <Trophy size={14} className="mr-1 text-yellow-400" />
+                  {playerData.global_points || 0} points
+                </motion.span>
+              </div>
+              
+              <div className="mt-2 flex items-center">
+                <motion.div
+                  className="flex items-center"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4, type: "spring" }}
+                >
+                  <Award size={16} className={cn("mr-1", badge.color)} />
+                  <span className={cn("text-sm font-medium", badge.color)}>
+                    {badge.name}
+                  </span>
+                  <motion.span
+                    className="ml-2 text-xs bg-yellow-600/20 text-yellow-400 px-1.5 rounded-sm flex items-center"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.5, type: "spring" }}
+                  >
+                    <Trophy size={10} className="mr-0.5" />
+                    #{badge.rank}
+                  </motion.span>
                 </motion.div>
-              ))}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mt-6 w-full">
+                <motion.div 
+                  className="bg-white/5 rounded-lg p-3 flex flex-col"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <span className="text-xs text-white/40">Global Rank</span>
+                  <span className="text-lg font-bold">#{badge.rank}</span>
+                </motion.div>
+                
+                <motion.div 
+                  className="bg-white/5 rounded-lg p-3 flex flex-col"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <span className="text-xs text-white/40">Device</span>
+                  <span className="text-lg font-bold flex items-center">
+                    {getDeviceIcon(playerData.device)}
+                    {playerData.device || 'PC'}
+                  </span>
+                </motion.div>
+              </div>
+              
+              <div className="mt-5 w-full">
+                <h3 className="text-md font-medium mb-3">Gamemode Rankings</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {gamemodeScores.length > 0 ? (
+                    gamemodeScores.map((score, index) => (
+                      <motion.div 
+                        key={score.id}
+                        className={cn(
+                          "p-3 rounded flex items-center justify-between",
+                          player.gamemode === score.gamemode ? "bg-blue-900/20 border border-blue-500/20" : "bg-white/5"
+                        )}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 + 0.2 }}
+                      >
+                        <span className="text-sm">{score.gamemode}</span>
+                        <div className="flex flex-col items-end">
+                          <span className={cn(
+                            "text-sm font-bold",
+                            `text-tier-${score.display_tier.split(' ')[1]}`
+                          )}>
+                            {score.display_tier}
+                          </span>
+                          <span className="text-xs text-white/50">
+                            {score.internal_tier}
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-4 text-white/40">
+                      No gamemode data available
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="py-8 text-center text-red-400">
+              Failed to load player details
+            </div>
+          )}
         </motion.div>
       </DialogContent>
     </Dialog>

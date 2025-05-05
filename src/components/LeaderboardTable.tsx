@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table,
   TableBody,
@@ -8,37 +8,85 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Trophy, Award } from 'lucide-react';
+import { Trophy, Award, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { Player } from '@/types';
+import { fetchPlayers } from '@/api/supabase';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LeaderboardTableProps {
   onPlayerClick: (player: any) => void;
 }
 
 export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
-  // Placeholder data for leaderboard
-  const placeholderRanks = Array.from({ length: 20 }, (_, i) => ({
-    id: `player-${i}`,
-    position: i + 1,
-    name: `Player_${i + 1}`,
-    displayName: `Player ${i + 1}`,
-    region: ['NA', 'EU', 'ASIA', 'OCE'][i % 4],
-    tiers: `T${(i % 5) + 1}`,
-    avatar: `https://crafthead.net/avatar/MHF_Steve${i}`,
-    badge: i < 3 ? 'Combat Master' : i < 10 ? 'Combat Ace' : i < 20 ? 'Combat Cadet' : 'Combat Rookie',
-    points: 350 - (i * 12),
-    device: ['Mobile', 'Console', 'PC'][i % 3]
-  }));
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const playersData = await fetchPlayers();
+        setPlayers(playersData);
+      } catch (err) {
+        console.error("Error fetching players:", err);
+        setError("Failed to load leaderboard data");
+        toast.error("Failed to load leaderboard data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+    
+    // Subscribe to realtime changes
+    const playersChannel = supabase
+      .channel('players-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'players' 
+      }, () => {
+        loadData();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(playersChannel);
+    };
+  }, []);
   
   // Function to get badge color
-  const getBadgeColor = (badge: string) => {
-    switch(badge) {
-      case 'Combat Master': return 'text-yellow-400';
-      case 'Combat Ace': return 'text-orange-400';
-      case 'Combat Cadet': return 'text-purple-400';
-      default: return 'text-blue-400';
+  const getBadgeColor = (player: Player) => {
+    const points = player.global_points || 0;
+    
+    if (points > 300) return 'text-yellow-400';
+    if (points > 200) return 'text-orange-400';
+    if (points > 100) return 'text-purple-400';
+    return 'text-blue-400';
+  };
+  
+  // Function to get badge name
+  const getBadgeName = (player: Player) => {
+    const points = player.global_points || 0;
+    
+    if (points > 300) return 'Combat Master';
+    if (points > 200) return 'Combat Ace';
+    if (points > 100) return 'Combat Cadet';
+    return 'Combat Rookie';
+  };
+  
+  const getDeviceIcon = (device: string | undefined) => {
+    switch(device) {
+      case 'PC': return <Monitor size={16} className="mr-1" />;
+      case 'Mobile': return <Smartphone size={16} className="mr-1" />;
+      case 'Console': return <Gamepad size={16} className="mr-1" />;
+      default: return <Monitor size={16} className="mr-1" />;
     }
   };
   
@@ -61,77 +109,130 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {placeholderRanks.map((player) => {
-              // Special styling for top positions
-              let borderClass = '';
-              let bgClass = 'hover:bg-[#151520]';
-              
-              if (player.position === 1) {
-                borderClass = 'border-l-4 border-yellow-400';
-                bgClass = 'bg-[#131313] hover:bg-[#181820]';
-              }
-              else if (player.position === 2) borderClass = 'border-l-4 border-gray-300';
-              else if (player.position === 3) borderClass = 'border-l-4 border-orange-300';
-              
-              return (
-                <motion.tr 
-                  key={player.position}
-                  className={cn(
-                    "cursor-pointer transition-colors",
-                    borderClass,
-                    bgClass
-                  )}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: player.position * 0.03 }}
-                  onClick={() => onPlayerClick(player)}
-                >
-                  <TableCell className="font-bold text-center text-lg py-4 w-12">
-                    {player.position}
+            {isLoading ? (
+              [...Array(10)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell className="w-12 text-center">
+                    <Skeleton className="h-6 w-6 mx-auto" />
                   </TableCell>
-                  <TableCell className="w-12 py-3">
-                    <Avatar className={cn(
-                      "h-9 w-9 border-2",
-                      player.region === 'NA' ? 'border-red-400/30' : 
-                      player.region === 'EU' ? 'border-green-400/30' :
-                      player.region === 'ASIA' ? 'border-blue-400/30' : 
-                      'border-purple-400/30'
-                    )}>
-                      <AvatarImage src={player.avatar} alt={player.name} />
-                      <AvatarFallback>{player.name.slice(0, 2)}</AvatarFallback>
-                    </Avatar>
+                  <TableCell className="w-12">
+                    <Skeleton className="h-9 w-9 rounded-full" />
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-base">{player.displayName}</span>
-                      <div className="flex items-center space-x-1">
-                        <span className={cn(
-                          "text-xs flex items-center",
-                          getBadgeColor(player.badge)
-                        )}>
-                          <Award size={14} className="mr-1" />
-                          {player.badge}
-                        </span>
-                      </div>
+                  <TableCell>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-center">
-                    <span className={cn(
-                      "px-2 py-1 rounded text-xs font-medium",
-                      player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
-                      player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
-                      player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
-                      'bg-purple-900/30 text-purple-400'
-                    )}>
-                      {player.region}
-                    </span>
+                    <Skeleton className="h-6 w-16 mx-auto" />
                   </TableCell>
-                  <TableCell className="text-right pr-4 font-medium text-yellow-500">
-                    {player.points}
+                  <TableCell className="text-right">
+                    <Skeleton className="h-4 w-12 ml-auto" />
                   </TableCell>
-                </motion.tr>
-              );
-            })}
+                </TableRow>
+              ))
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-red-400">
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : players.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-white/60">
+                  No players found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              players.map((player, i) => {
+                // Special styling for top positions
+                let borderClass = '';
+                let bgClass = 'hover:bg-[#151520]';
+                
+                if (i === 0) {
+                  borderClass = 'border-l-4 border-yellow-400';
+                  bgClass = 'bg-[#131313] hover:bg-[#181820]';
+                }
+                else if (i === 1) borderClass = 'border-l-4 border-gray-300';
+                else if (i === 2) borderClass = 'border-l-4 border-orange-300';
+                
+                return (
+                  <motion.tr 
+                    key={player.id}
+                    className={cn(
+                      "cursor-pointer transition-colors",
+                      borderClass,
+                      bgClass
+                    )}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => onPlayerClick(player)}
+                  >
+                    <TableCell className="font-bold text-center text-lg py-4 w-12">
+                      {i + 1}
+                    </TableCell>
+                    <TableCell className="w-12 py-3">
+                      <Avatar className={cn(
+                        "h-9 w-9 border-2",
+                        player.region === 'NA' ? 'border-red-400/30' : 
+                        player.region === 'EU' ? 'border-green-400/30' :
+                        player.region === 'ASIA' ? 'border-blue-400/30' : 
+                        'border-purple-400/30'
+                      )}>
+                        <AvatarImage src={player.avatar_url || `https://crafthead.net/avatar/${player.ign}`} alt={player.ign} />
+                        <AvatarFallback>{player.ign.slice(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="flex flex-col">
+                        <motion.span 
+                          className="font-bold text-base flex items-center gap-1"
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: i * 0.03 + 0.2 }}
+                        >
+                          {player.ign}
+                          <motion.span
+                            className="text-xs bg-yellow-600/20 text-yellow-400 px-1.5 rounded-sm flex items-center"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: i * 0.03 + 0.3, type: "spring" }}
+                          >
+                            <Trophy size={10} className="mr-0.5" />
+                            #{i + 1}
+                          </motion.span>
+                        </motion.span>
+                        <div className="flex items-center space-x-1">
+                          <span className={cn(
+                            "text-xs flex items-center",
+                            getBadgeColor(player)
+                          )}>
+                            <Award size={14} className="mr-1" />
+                            {getBadgeName(player)}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-center">
+                      <span className={cn(
+                        "px-2 py-1 rounded text-xs font-medium",
+                        player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
+                        player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
+                        player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
+                        'bg-purple-900/30 text-purple-400'
+                      )}>
+                        {player.region || 'Unknown'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right pr-4 font-medium text-yellow-500">
+                      {player.global_points || 0}
+                    </TableCell>
+                  </motion.tr>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </div>
