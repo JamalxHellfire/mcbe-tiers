@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GameModeSelector } from './GameModeSelector';
 import { Trophy, Home, Info, Newspaper, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { motion } from 'framer-motion';
 
 interface NavbarProps {
   selectedMode: string;
@@ -16,6 +17,17 @@ interface NavbarProps {
 export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      setScrolled(offset > 50);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +40,20 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
   };
 
   return (
-    <div className="pt-6 pb-2">
-      <nav className="navbar rounded-xl">
+    <div className="pt-8 pb-2">
+      <motion.nav 
+        className={cn(
+          "navbar rounded-xl",
+          scrolled ? "shadow-xl" : "shadow-lg"
+        )}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex-shrink-0 animate-slide-in flex items-center">
+            <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="flex items-center">
                 <Trophy size={22} className="mr-2 text-yellow-400" />
                 <h1 className="logo-text">
@@ -43,82 +63,102 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
             </div>
 
             {/* Center - Main Navigation */}
-            <div className="hidden lg:flex items-center space-x-6 animate-slide-in" style={{ animationDelay: '0.1s' }}>
-              <Link 
-                to="/" 
-                className={cn(
-                  "flex items-center text-white/80 hover:text-white transition-colors duration-200",
-                  !activePage && "text-white font-medium"
-                )}
-              >
-                <Home size={18} className="mr-2" />
-                <span>Rankings</span>
-              </Link>
-              <Link 
-                to="/about" 
-                className={cn(
-                  "flex items-center text-white/80 hover:text-white transition-colors duration-200",
-                  activePage === "about" && "text-white font-medium"
-                )}
-              >
-                <Info size={18} className="mr-2" />
-                <span>About Us</span>
-              </Link>
-              <Link 
-                to="/news" 
-                className={cn(
-                  "flex items-center text-white/80 hover:text-white transition-colors duration-200",
-                  activePage === "news" && "text-white font-medium"
-                )}
-              >
-                <Newspaper size={18} className="mr-2" />
-                <span>News</span>
-              </Link>
+            <div className="hidden lg:flex items-center space-x-6">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    !activePage && "text-white font-medium"
+                  )}
+                >
+                  <Home size={18} className="mr-2" />
+                  <span>Rankings</span>
+                </Link>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/about" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    activePage === "about" && "text-white font-medium"
+                  )}
+                >
+                  <Info size={18} className="mr-2" />
+                  <span>About Us</span>
+                </Link>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/news" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    activePage === "news" && "text-white font-medium"
+                  )}
+                >
+                  <Newspaper size={18} className="mr-2" />
+                  <span>News</span>
+                </Link>
+              </motion.div>
             </div>
 
             {/* Right - Search & External Links */}
-            <div className="hidden md:flex items-center space-x-5 animate-slide-in" style={{ animationDelay: '0.2s' }}>
-              <form onSubmit={handleSearch} className="relative">
+            <div className="hidden md:flex items-center space-x-5">
+              <motion.form 
+                onSubmit={handleSearch} 
+                className="relative"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
                 <Input
                   type="text"
                   placeholder="Search player..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-40 lg:w-48 h-9"
+                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-9"
                 />
                 <Search size={15} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
-              </form>
+              </motion.form>
               
-              <a 
+              <motion.a 
                 href="https://youtube.com" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
               >
                 <Youtube size={20} />
-              </a>
-              <a 
+              </motion.a>
+              
+              <motion.a 
                 href="https://discord.gg" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
               >
                 <MessageCircle size={20} />
-              </a>
+              </motion.a>
             </div>
             
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center">
-              <button 
+              <motion.button 
                 onClick={toggleMobileMenu} 
                 className="text-white/70 hover:text-white"
+                whileTap={{ scale: 0.9 }}
               >
                 {mobileMenuOpen ? (
                   <X size={24} />
                 ) : (
                   <Menu size={24} />
                 )}
-              </button>
+              </motion.button>
             </div>
           </div>
 
@@ -143,7 +183,13 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
           
           {/* Mobile Navigation Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden py-3 px-2 border-t border-white/10 animate-fade-in">
+            <motion.div 
+              className="md:hidden py-3 px-2 border-t border-white/10"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <div className="flex flex-col space-y-2">
                 <Link 
                   to="/" 
@@ -194,10 +240,10 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                   </a>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
-      </nav>
+      </motion.nav>
     </div>
   );
 }

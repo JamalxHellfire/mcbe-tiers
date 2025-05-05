@@ -148,7 +148,7 @@
 }
 
 .tier-1 .tier-header {
-  @apply text-tier-1 border-tier-1/50 shadow-lg;
+  @apply text-tier-1 border-tier-1/50 shadow-glow-gold;
 }
 
 .tier-1 .tier-section:hover {
@@ -160,7 +160,7 @@
 }
 
 .tier-2 .tier-header {
-  @apply text-tier-2 border-tier-2/50 shadow-lg;
+  @apply text-tier-2 border-tier-2/50 shadow-glow-orange;
 }
 
 .tier-2 .tier-section:hover {
@@ -172,7 +172,7 @@
 }
 
 .tier-3 .tier-header {
-  @apply text-tier-3 border-tier-3/50 shadow-lg;
+  @apply text-tier-3 border-tier-3/50 shadow-glow-purple;
 }
 
 .tier-3 .tier-section:hover {
@@ -184,7 +184,7 @@
 }
 
 .tier-4 .tier-header {
-  @apply text-tier-4 border-tier-4/50 shadow-lg;
+  @apply text-tier-4 border-tier-4/50 shadow-glow-blue;
 }
 
 .tier-4 .tier-section:hover {
@@ -196,7 +196,7 @@
 }
 
 .tier-5 .tier-header {
-  @apply text-tier-5 border-tier-5/50 shadow-lg;
+  @apply text-tier-5 border-tier-5/50 shadow-glow-green;
 }
 
 .tier-5 .tier-section:hover {

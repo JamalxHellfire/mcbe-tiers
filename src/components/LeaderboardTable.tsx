@@ -8,9 +8,10 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Trophy } from 'lucide-react';
+import { Trophy, Award } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface LeaderboardTableProps {
   onPlayerClick: (player: any) => void;
@@ -26,13 +27,28 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
     region: ['NA', 'EU', 'ASIA', 'OCE'][i % 4],
     tiers: `T${(i % 5) + 1}`,
     avatar: `https://crafthead.net/avatar/MHF_Steve${i}`,
-    badge: i < 3 ? 'Combat Master' : 'Combat Ace',
+    badge: i < 3 ? 'Combat Master' : i < 10 ? 'Combat Ace' : i < 20 ? 'Combat Cadet' : 'Combat Rookie',
     points: 350 - (i * 12),
     device: ['Mobile', 'Console', 'PC'][i % 3]
   }));
   
+  // Function to get badge color
+  const getBadgeColor = (badge: string) => {
+    switch(badge) {
+      case 'Combat Master': return 'text-yellow-400';
+      case 'Combat Ace': return 'text-orange-400';
+      case 'Combat Cadet': return 'text-purple-400';
+      default: return 'text-blue-400';
+    }
+  };
+  
   return (
-    <div className="w-full animate-fade-in">
+    <motion.div 
+      className="w-full"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
       <div className="rounded-xl overflow-hidden bg-[#0B0B0F]/80 backdrop-blur-md border border-white/5 shadow-lg">
         <Table className="w-full">
           <TableHeader>
@@ -58,21 +74,29 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
               else if (player.position === 3) borderClass = 'border-l-4 border-orange-300';
               
               return (
-                <TableRow 
+                <motion.tr 
                   key={player.position}
                   className={cn(
                     "cursor-pointer transition-colors",
                     borderClass,
                     bgClass
                   )}
-                  style={{ animationDelay: `${player.position * 0.05}s` }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: player.position * 0.03 }}
                   onClick={() => onPlayerClick(player)}
                 >
                   <TableCell className="font-bold text-center text-lg py-4 w-12">
                     {player.position}
                   </TableCell>
                   <TableCell className="w-12 py-3">
-                    <Avatar className="h-9 w-9 border-2 border-white/10">
+                    <Avatar className={cn(
+                      "h-9 w-9 border-2",
+                      player.region === 'NA' ? 'border-red-400/30' : 
+                      player.region === 'EU' ? 'border-green-400/30' :
+                      player.region === 'ASIA' ? 'border-blue-400/30' : 
+                      'border-purple-400/30'
+                    )}>
                       <AvatarImage src={player.avatar} alt={player.name} />
                       <AvatarFallback>{player.name.slice(0, 2)}</AvatarFallback>
                     </Avatar>
@@ -81,9 +105,12 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
                     <div className="flex flex-col">
                       <span className="font-bold text-base">{player.displayName}</span>
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-white/60">
-                          <Trophy size={14} className="inline mr-1 text-yellow-400" />
-                          {player.points} points
+                        <span className={cn(
+                          "text-xs flex items-center",
+                          getBadgeColor(player.badge)
+                        )}>
+                          <Award size={14} className="mr-1" />
+                          {player.badge}
                         </span>
                       </div>
                     </div>
@@ -99,17 +126,15 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
                       {player.region}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right pr-4">
-                    <span className="text-tier-1 font-semibold">
-                      {player.tiers}
-                    </span>
+                  <TableCell className="text-right pr-4 font-medium text-yellow-500">
+                    {player.points}
                   </TableCell>
-                </TableRow>
+                </motion.tr>
               );
             })}
           </TableBody>
         </Table>
       </div>
-    </div>
+    </motion.div>
   );
 }
