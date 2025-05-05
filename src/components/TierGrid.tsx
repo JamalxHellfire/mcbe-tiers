@@ -1,55 +1,77 @@
 
 import React from 'react';
-import { Grid2x2, LayoutList } from 'lucide-react';
+import { Trophy, Shield } from 'lucide-react';
+import { PlayerRow } from './PlayerRow';
 
-export function TierGrid() {
+interface TierGridProps {
+  selectedMode: string;
+  onPlayerClick: (player: any) => void;
+}
+
+export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
   // Array of 5 tiers
   const tiers = [1, 2, 3, 4, 5];
-
+  
+  // Placeholder data for players
+  const getPlaceholderPlayers = (tier: number) => {
+    const playerCount = 5 + Math.floor(Math.random() * 3);
+    return Array.from({ length: playerCount }, (_, i) => ({
+      id: `player-${tier}-${i}`,
+      name: `Player_T${tier}_${i+1}`,
+      displayName: `Player T${tier} ${i+1}`,
+      region: ['NA', 'EU', 'ASIA', 'OCE'][Math.floor(Math.random() * 4)],
+      avatar: `https://crafthead.net/avatar/MHF_Steve${i}`,
+      tier: tier,
+      points: Math.floor(300 - ((tier - 1) * 50) - (i * 10)),
+      badge: i < 2 ? 'Elite' : 'Pro'
+    }));
+  };
+  
   // Animation class for staggered tier appearance
   const getStaggeredAnimationClass = (index: number) => {
-    return `animate-staggered-fade-${index + 1}`;
+    return `animate-staggered-fade-${Math.min(index + 1, 5)}`;
   };
 
   return (
-    <div className="content-container">
-      <div className="grid grid-cols-1 gap-8">
-        {tiers.map((tier, index) => (
+    <div className="space-y-8 md:space-y-12 pb-8">
+      {tiers.map((tier, index) => {
+        const players = getPlaceholderPlayers(tier);
+        
+        return (
           <div
             key={tier}
             className={`tier-row tier-${tier} ${getStaggeredAnimationClass(index)}`}
           >
-            <h2 className="tier-header text-2xl md:text-3xl relative mb-6">
-              Tier {tier}
-              <div className={`absolute -bottom-3 left-0 w-full h-1 bg-tier-${tier}`}></div>
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* High Tier Section */}
-              <div className="tier-section-container">
-                <h3 className="text-sm uppercase tracking-widest text-white/70 font-semibold mb-3 flex items-center">
-                  <Grid2x2 className="mr-2 opacity-70" size={16} />
-                  High Tier {tier}
-                </h3>
-                <div className="tier-section h-full animate-glow-pulse">
-                  <p className="tier-placeholder">No players yet</p>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="tier-header text-2xl md:text-3xl flex items-center">
+                <Trophy className={`text-tier-${tier} mr-2`} size={24} />
+                Tier {tier}
+                <div className={`ml-3 px-3 py-1 rounded text-xs font-medium bg-tier-${tier}/20 text-tier-${tier}`}>
+                  {players.length} Players
                 </div>
+              </h2>
+
+              <div className="hidden md:flex items-center space-x-1">
+                <span className="text-white/40 text-sm">{selectedMode} Mode</span>
+                <Shield size={16} className="text-white/30" />
               </div>
+            </div>
 
-              {/* Low Tier Section */}
-              <div className="tier-section-container">
-                <h3 className="text-sm uppercase tracking-widest text-white/70 font-semibold mb-3 flex items-center">
-                  <LayoutList className="mr-2 opacity-70" size={16} />
-                  Low Tier {tier}
-                </h3>
-                <div className="tier-section h-full animate-glow-pulse">
-                  <p className="tier-placeholder">No players yet</p>
-                </div>
+            <div className="bg-dark-surface/40 backdrop-blur-md rounded-xl overflow-hidden border border-white/5">
+              <div className="grid grid-cols-1 divide-y divide-white/5">
+                {players.map((player, playerIndex) => (
+                  <PlayerRow 
+                    key={player.id} 
+                    player={player} 
+                    onClick={() => onPlayerClick(player)} 
+                    delay={playerIndex * 0.05}
+                  />
+                ))}
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

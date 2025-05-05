@@ -10,10 +10,10 @@ interface GameModeSelectorProps {
 export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelectorProps) {
   // Game modes including labels and icon components
   const modes = [
-    { id: 'overall', label: 'Overall', icon: <Trophy size={18} className="mr-1" /> },
+    { id: 'overall', label: 'Overall', icon: <Trophy size={18} className="mode-icon" /> },
     { id: 'crystal', label: 'Crystal', icon: <span className="mode-icon">🟣</span> },
-    { id: 'sword', label: 'Sword', icon: <Sword size={18} className="mr-1" /> },
-    { id: 'axe', label: 'Axe', icon: <Axe size={18} className="mr-1" /> },
+    { id: 'sword', label: 'Sword', icon: <Sword size={18} className="mode-icon" /> },
+    { id: 'axe', label: 'Axe', icon: <Axe size={18} className="mode-icon" /> },
     { id: 'mace', label: 'Mace', icon: <span className="mode-icon">🔨</span> },
     { id: 'bedwars', label: 'Bedwars', icon: <span className="mode-icon">🛏️</span> },
     { id: 'smp', label: 'SMP', icon: <span className="mode-icon">🌍</span> },
@@ -22,7 +22,7 @@ export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelecto
   ];
 
   return (
-    <div className="game-mode-selector flex items-center space-x-1 overflow-x-auto pb-1 px-1">
+    <div className="game-mode-selector flex items-center space-x-2 justify-center overflow-x-auto pb-1 px-1">
       {modes.map((mode) => (
         <button
           key={mode.id}
