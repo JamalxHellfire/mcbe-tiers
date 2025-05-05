@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Trophy, Shield } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
@@ -34,14 +34,14 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
   return (
     <div className="w-full animate-fade-in">
       <div className="rounded-xl overflow-hidden bg-[#0B0B0F]/80 backdrop-blur-md border border-white/5 shadow-lg">
-        <Table>
+        <Table className="w-full">
           <TableHeader>
             <TableRow className="bg-[#121218]/90">
-              <TableHead className="w-16 text-center font-semibold text-sm text-gray-400 uppercase">#</TableHead>
-              <TableHead className="w-12 md:w-16"></TableHead>
-              <TableHead className="font-semibold text-sm text-gray-400 uppercase">Player</TableHead>
-              <TableHead className="hidden md:table-cell font-semibold text-sm text-center text-gray-400 uppercase">Region</TableHead>
-              <TableHead className="font-semibold text-sm text-gray-400 uppercase text-right pr-4">Tiers</TableHead>
+              <TableHead className="w-12 text-center font-semibold text-sm text-gray-400">#</TableHead>
+              <TableHead className="w-12"></TableHead>
+              <TableHead className="font-semibold text-sm text-gray-400">Player</TableHead>
+              <TableHead className="hidden sm:table-cell font-semibold text-sm text-center text-gray-400">Region</TableHead>
+              <TableHead className="font-semibold text-sm text-gray-400 text-right pr-4">Points</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,28 +68,27 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
                   style={{ animationDelay: `${player.position * 0.05}s` }}
                   onClick={() => onPlayerClick(player)}
                 >
-                  <TableCell className="font-bold text-center text-xl py-4 w-12">
+                  <TableCell className="font-bold text-center text-lg py-4 w-12">
                     {player.position}
                   </TableCell>
-                  <TableCell className="w-12 md:w-16 py-3">
-                    <Avatar className="h-10 w-10 border-2 border-white/10">
+                  <TableCell className="w-12 py-3">
+                    <Avatar className="h-9 w-9 border-2 border-white/10">
                       <AvatarImage src={player.avatar} alt={player.name} />
                       <AvatarFallback>{player.name.slice(0, 2)}</AvatarFallback>
                     </Avatar>
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex flex-col">
-                      <span className="font-bold text-base md:text-lg">{player.displayName}</span>
+                      <span className="font-bold text-base">{player.displayName}</span>
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-yellow-400">
-                          <Trophy size={14} className="inline mr-1" />
-                          {player.badge}
+                        <span className="text-xs text-white/60">
+                          <Trophy size={14} className="inline mr-1 text-yellow-400" />
+                          {player.points} points
                         </span>
-                        <span className="text-xs text-gray-400">({player.points} points)</span>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-center">
+                  <TableCell className="hidden sm:table-cell text-center">
                     <span className={cn(
                       "px-2 py-1 rounded text-xs font-medium",
                       player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
@@ -101,21 +100,15 @@ export function LeaderboardTable({ onPlayerClick }: LeaderboardTableProps) {
                     </span>
                   </TableCell>
                   <TableCell className="text-right pr-4">
-                    <div className="flex justify-end items-center gap-1">
-                      <Shield size={16} className="text-white/40" />
-                      <span className="px-2 py-1 rounded text-xs bg-gray-800/70 text-white">
-                        {player.tiers}
-                      </span>
-                    </div>
+                    <span className="text-tier-1 font-semibold">
+                      {player.tiers}
+                    </span>
                   </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
-      </div>
-      <div className="text-center mt-4 text-sm text-gray-500">
-        Early version - Player rankings and tiers will be updated soon
       </div>
     </div>
   );
