@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Player, GamemodeScore, Staff, NewsPost } from "@/types";
+import { Player, GamemodeScore, Staff, NewsPost, Admin } from "@/types";
 
 // Players API
 export const fetchPlayers = async (): Promise<Player[]> => {
@@ -14,6 +14,7 @@ export const fetchPlayers = async (): Promise<Player[]> => {
 };
 
 export const fetchPlayersByGamemode = async (gamemode: string): Promise<Player[]> => {
+  // Get players who have scores in this gamemode
   const { data, error } = await supabase
     .from("players")
     .select("*, gamemode_scores!inner(*)")
@@ -32,7 +33,7 @@ export const fetchGamemodeScores = async (): Promise<GamemodeScore[]> => {
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  return data as GamemodeScore[] || [];
 };
 
 export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<GamemodeScore[]> => {
@@ -43,7 +44,7 @@ export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<G
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  return data as GamemodeScore[] || [];
 };
 
 export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{player: Player, scores: GamemodeScore[]}> => {
@@ -64,7 +65,10 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
   
   if (scoresError) throw scoresError;
   
-  return { player, scores: scores || [] };
+  return { 
+    player: player as Player, 
+    scores: scores as GamemodeScore[] || [] 
+  };
 };
 
 // Staff API
@@ -74,7 +78,7 @@ export const fetchStaff = async (): Promise<Staff[]> => {
     .select("*");
     
   if (error) throw error;
-  return data || [];
+  return data as Staff[] || [];
 };
 
 // News API
@@ -85,7 +89,7 @@ export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
     .order("created_at", { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  return data as NewsPost[] || [];
 };
 
 export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
@@ -96,7 +100,7 @@ export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
     .order("created_at", { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  return data as NewsPost[] || [];
 };
 
 // Admin Authentication
@@ -110,6 +114,3 @@ export const verifyAdminPin = async (pin: string): Promise<boolean> => {
   if (error) throw error;
   return !!data;
 };
-
-// Let's setup an RPC function for admin PIN verification
-// This should be implemented with SQL functions on the Supabase side

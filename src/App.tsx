@@ -13,10 +13,11 @@ import Admin from "./pages/Admin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Staff from "./pages/Staff";
 
-// Create a client outside the component
-const queryClient = new QueryClient();
-
 function App() {
+  // Create a client instance inside the component
+  // This ensures proper React context is available when hooks are used
+  const queryClient = new QueryClient();
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
