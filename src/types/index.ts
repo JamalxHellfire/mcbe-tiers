@@ -11,6 +11,7 @@ export interface Player {
   device?: string;
   global_points?: number;
   badges?: string[];
+  java_username?: string;
 }
 
 export interface GamemodeScore {
@@ -46,3 +47,27 @@ export interface Admin {
   role: string;
   created_at?: string;
 }
+
+export interface TierPointsMapping {
+  internal_tier: string;
+  display_tier: string;
+  points: number;
+}
+
+export const TIER_POINTS: TierPointsMapping[] = [
+  { internal_tier: "HT1", display_tier: "TIER 1", points: 50 },
+  { internal_tier: "LT1", display_tier: "TIER 1", points: 45 },
+  { internal_tier: "HT2", display_tier: "TIER 2", points: 40 },
+  { internal_tier: "LT2", display_tier: "TIER 2", points: 35 },
+  { internal_tier: "HT3", display_tier: "TIER 3", points: 30 },
+  { internal_tier: "LT3", display_tier: "TIER 3", points: 25 },
+  { internal_tier: "HT4", display_tier: "TIER 4", points: 20 },
+  { internal_tier: "LT4", display_tier: "TIER 4", points: 15 },
+  { internal_tier: "HT5", display_tier: "TIER 5", points: 10 },
+  { internal_tier: "LT5", display_tier: "TIER 5", points: 5 }
+];
+
+export const SUPPORTED_GAMEMODES = ["SMP", "Crystal", "Bedwars", "UHC", "Axe", "Pot", "Sword", "overall"];
+
+export const REGIONS = ["EU", "NA", "AS", "OCE", "AF"];
+export const DEVICES = ["Mobile", "PC", "Controller"];
