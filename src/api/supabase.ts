@@ -33,7 +33,7 @@ export const fetchGamemodeScores = async (): Promise<GamemodeScore[]> => {
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data as GamemodeScore[] || [];
+  return (data as unknown) as GamemodeScore[] || [];
 };
 
 export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<GamemodeScore[]> => {
@@ -44,7 +44,7 @@ export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<G
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data as GamemodeScore[] || [];
+  return (data as unknown) as GamemodeScore[] || [];
 };
 
 export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{player: Player, scores: GamemodeScore[]}> => {
@@ -67,7 +67,7 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
   
   return { 
     player: player as Player, 
-    scores: scores as GamemodeScore[] || [] 
+    scores: (scores as unknown) as GamemodeScore[] || [] 
   };
 };
 
@@ -78,7 +78,7 @@ export const fetchStaff = async (): Promise<Staff[]> => {
     .select("*");
     
   if (error) throw error;
-  return data as Staff[] || [];
+  return (data as unknown) as Staff[] || [];
 };
 
 // News API
@@ -89,7 +89,7 @@ export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
     .order("created_at", { ascending: false });
     
   if (error) throw error;
-  return data as NewsPost[] || [];
+  return (data as unknown) as NewsPost[] || [];
 };
 
 export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
@@ -100,7 +100,7 @@ export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
     .order("created_at", { ascending: false });
     
   if (error) throw error;
-  return data as NewsPost[] || [];
+  return (data as unknown) as NewsPost[] || [];
 };
 
 // Admin Authentication

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -14,6 +13,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const News = () => {
   const [selectedMode, setSelectedMode] = useState('overall');
