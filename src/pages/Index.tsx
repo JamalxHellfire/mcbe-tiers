@@ -7,8 +7,6 @@ import { Footer } from '../components/Footer';
 import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SearchBar } from '@/components/SearchBar';
-import { Player } from '@/types';
 
 const Index = () => {
   const [selectedMode, setSelectedMode] = useState('overall');
@@ -25,22 +23,13 @@ const Index = () => {
     setIsPlayerModalOpen(true);
   };
   
-  const handleSearchPlayerSelect = (player: Player) => {
-    setSelectedPlayer({ id: player.id });
-    setIsPlayerModalOpen(true);
-  };
-  
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
         selectedMode={selectedMode} 
         onSelectMode={handleModeChange} 
         navigate={navigate} 
-      >
-        <div className="ml-4">
-          <SearchBar onPlayerSelect={handleSearchPlayerSelect} />
-        </div>
-      </Navbar>
+      />
       
       <main className="flex-grow">
         <div className="content-container py-6 md:py-8">

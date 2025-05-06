@@ -38,7 +38,3 @@ enabled = false
 # Configuration for the Edge Function that verifies admin PINs
 [functions.verify-admin-pin]
 verify_jwt = false
-
-# Configuration for the Edge Function that handles mass registration
-[functions.register-players]
-verify_jwt = false

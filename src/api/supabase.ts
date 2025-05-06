@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Player, GamemodeScore, Staff, NewsPost, Admin, TIER_POINTS } from "@/types";
+import { Player, GamemodeScore, Staff, NewsPost, Admin } from "@/types";
 
 // Players API
 export const fetchPlayers = async (): Promise<Player[]> => {
@@ -33,7 +32,7 @@ export const fetchGamemodeScores = async (): Promise<GamemodeScore[]> => {
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data as GamemodeScore[] || [];
+  return (data as unknown) as GamemodeScore[] || [];
 };
 
 export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<GamemodeScore[]> => {
@@ -44,7 +43,7 @@ export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<G
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data as GamemodeScore[] || [];
+  return (data as unknown) as GamemodeScore[] || [];
 };
 
 export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{player: Player, scores: GamemodeScore[]}> => {
@@ -67,177 +66,53 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
   
   return { 
     player: player as Player, 
-    scores: scores as GamemodeScore[] || [] 
+    scores: (scores as unknown) as GamemodeScore[] || [] 
   };
 };
 
-// Staff API - Deprecated, keeping interface for compatibility
+// Staff API
 export const fetchStaff = async (): Promise<Staff[]> => {
-  return [];
+  const { data, error } = await supabase
+    .from("staff" as any)
+    .select("*");
+    
+  if (error) throw error;
+  return (data as unknown) as Staff[] || [];
 };
 
-// News API - Deprecated, keeping interface for compatibility
+// News API
 export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
-  return [];
+  const { data, error } = await supabase
+    .from("news_posts" as any)
+    .select("*")
+    .order("created_at", { ascending: false });
+    
+  if (error) throw error;
+  return (data as unknown) as NewsPost[] || [];
 };
 
 export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
-  return [];
+  const { data, error } = await supabase
+    .from("news_posts" as any)
+    .select("*")
+    .contains("tags", [tag])
+    .order("created_at", { ascending: false });
+    
+  if (error) throw error;
+  return (data as unknown) as NewsPost[] || [];
 };
 
 // Admin Authentication
 export const verifyAdminPin = async (pin: string): Promise<boolean> => {
-  // Use a generic approach to RPC calls for better TypeScript compatibility
+  // In a real app, this should use a proper auth mechanism
+  // For demo purposes, we're comparing the plain text pin
+  // In production, use bcrypt or Supabase Auth
+  
+  // Use a more generic approach to RPC calls for better TypeScript compatibility
   const { data, error } = await supabase.functions.invoke('verify-admin-pin', {
     body: { pin }
   });
   
   if (error) throw error;
   return !!data?.isValid;
-};
-
-// New functions for the MCBE TIERS features
-export const massRegisterPlayers = async (playerData: string): Promise<{ success: boolean, created: number, errors: string[] }> => {
-  const { data, error } = await supabase.functions.invoke('register-players', {
-    body: { playerData }
-  });
-  
-  if (error) throw error;
-  return data as { success: boolean, created: number, errors: string[] };
-};
-
-export const submitPlayerResult = async (
-  playerData: {
-    ign: string;
-    java_username: string;
-    device: string;
-    region: string;
-    gamemode: string;
-    internal_tier: string;
-  }
-): Promise<{ success: boolean, playerId: string }> => {
-  // First check if player exists
-  const { data: existingPlayers } = await supabase
-    .from("players")
-    .select("id")
-    .eq("ign", playerData.ign);
-  
-  let playerId: string;
-  
-  // Find tier points
-  const tierData = TIER_POINTS.find(t => t.internal_tier === playerData.internal_tier);
-  if (!tierData) throw new Error("Invalid tier selected");
-  
-  // Generate avatar URL
-  const avatar_url = `https://crafthead.net/avatar/${playerData.java_username}`;
-  
-  // If player doesn't exist, create them
-  if (!existingPlayers || existingPlayers.length === 0) {
-    const { data: newPlayer, error: createError } = await supabase
-      .from("players")
-      .insert({
-        ign: playerData.ign,
-        java_username: playerData.java_username,
-        avatar_url,
-        device: playerData.device,
-        region: playerData.region,
-        gamemode: playerData.gamemode, // Legacy field
-        tier_number: playerData.internal_tier, // Legacy field
-      })
-      .select("id")
-      .single();
-    
-    if (createError) throw createError;
-    playerId = newPlayer.id;
-  } else {
-    playerId = existingPlayers[0].id;
-    
-    // Update player info
-    const { error: updateError } = await supabase
-      .from("players")
-      .update({
-        java_username: playerData.java_username,
-        avatar_url,
-        device: playerData.device,
-        region: playerData.region,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", playerId);
-    
-    if (updateError) throw updateError;
-  }
-  
-  // Check if player already has a score for this gamemode
-  const { data: existingScores } = await supabase
-    .from("gamemode_scores" as any)
-    .select("id")
-    .eq("player_id", playerId)
-    .eq("gamemode", playerData.gamemode);
-  
-  // Insert or update score
-  if (!existingScores || existingScores.length === 0) {
-    const { error: scoreError } = await supabase
-      .from("gamemode_scores" as any)
-      .insert({
-        player_id: playerId,
-        gamemode: playerData.gamemode,
-        score: tierData.points,
-        internal_tier: playerData.internal_tier,
-        display_tier: tierData.display_tier,
-      });
-    
-    if (scoreError) throw scoreError;
-  } else {
-    const { error: updateScoreError } = await supabase
-      .from("gamemode_scores" as any)
-      .update({
-        score: tierData.points,
-        internal_tier: playerData.internal_tier,
-        display_tier: tierData.display_tier,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", existingScores[0].id);
-    
-    if (updateScoreError) throw updateScoreError;
-  }
-  
-  // Update player's global points
-  await updatePlayerGlobalPoints(playerId);
-  
-  return { success: true, playerId };
-};
-
-// Helper function to recalculate global points
-export const updatePlayerGlobalPoints = async (playerId: string): Promise<void> => {
-  // Get all scores for this player
-  const { data: scores, error } = await supabase
-    .from("gamemode_scores" as any)
-    .select("score")
-    .eq("player_id", playerId);
-  
-  if (error) throw error;
-  
-  // Calculate total points
-  const globalPoints = scores ? scores.reduce((total, score) => total + (score.score || 0), 0) : 0;
-  
-  // Update player's global points
-  const { error: updateError } = await supabase
-    .from("players")
-    .update({ global_points: globalPoints })
-    .eq("id", playerId);
-  
-  if (updateError) throw updateError;
-};
-
-export const searchPlayers = async (query: string): Promise<Player[]> => {
-  if (!query || query.trim().length < 2) return [];
-  
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .ilike("ign", `%${query}%`)
-    .limit(10);
-  
-  if (error) throw error;
-  return data || [];
 };
