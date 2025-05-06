@@ -29,6 +29,7 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
   const [playerData, setPlayerData] = useState<Player | null>(null);
   const [gamemodeScores, setGamemodeScores] = useState<GamemodeScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [avatarError, setAvatarError] = useState(false);
   
   useEffect(() => {
     if (!isOpen || !player.id) return;
@@ -36,6 +37,7 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setAvatarError(false);
         const { player: fetchedPlayer, scores } = await fetchPlayerWithGamemodeScores(player.id);
         setPlayerData(fetchedPlayer);
         setGamemodeScores(scores);
@@ -55,7 +57,7 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
     switch(device) {
       case 'PC': return <Monitor size={16} className="mr-1" />;
       case 'Mobile': return <Smartphone size={16} className="mr-1" />;
-      case 'Console': return <Gamepad size={16} className="mr-1" />;
+      case 'Controller': return <Gamepad size={16} className="mr-1" />;
       default: return <Monitor size={16} className="mr-1" />;
     }
   };
@@ -78,6 +80,10 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
+  };
+
+  const handleAvatarError = () => {
+    setAvatarError(true);
   };
   
   return (
@@ -114,8 +120,9 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
             <div className="flex flex-col items-center pt-2">
               <Avatar className="h-24 w-24 border-4 border-white/10">
                 <AvatarImage 
-                  src={playerData.avatar_url || `https://crafthead.net/avatar/${playerData.ign}`} 
-                  alt={playerData.ign} 
+                  src={avatarError ? '/default-avatar.png' : (playerData.avatar_url || '/default-avatar.png')} 
+                  alt={playerData.ign}
+                  onError={handleAvatarError}
                 />
                 <AvatarFallback>{playerData.ign?.slice(0, 2)}</AvatarFallback>
               </Avatar>

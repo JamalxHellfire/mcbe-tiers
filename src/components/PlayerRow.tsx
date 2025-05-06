@@ -20,6 +20,7 @@ interface PlayerRowProps {
 export function PlayerRow({ playerScore, onClick, delay = 0, compact = false, showGlobalRank = true }: PlayerRowProps) {
   const [player, setPlayer] = useState<Player | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [avatarError, setAvatarError] = useState(false);
   
   useEffect(() => {
     const fetchPlayerDetails = async () => {
@@ -63,6 +64,7 @@ export function PlayerRow({ playerScore, onClick, delay = 0, compact = false, sh
       case 'EU': return 'border-green-400/30';
       case 'ASIA': return 'border-blue-400/30';
       case 'OCE': return 'border-purple-400/30';
+      case 'AF': return 'border-yellow-400/30';
       default: return 'border-white/20';
     }
   };
@@ -82,6 +84,10 @@ export function PlayerRow({ playerScore, onClick, delay = 0, compact = false, sh
   const globalRank = player.global_points ? 
     Math.floor(1000 / (player.global_points + 10)) : // Mock calculation
     999;
+  
+  const handleAvatarError = () => {
+    setAvatarError(true);
+  };
   
   return (
     <motion.div 
@@ -103,7 +109,11 @@ export function PlayerRow({ playerScore, onClick, delay = 0, compact = false, sh
                 getRegionColor(player.region || ''),
                 compact ? "h-8 w-8 mr-2" : "h-10 w-10 mr-3"
               )}>
-                <AvatarImage src={player.avatar_url || `https://crafthead.net/avatar/${player.ign}`} alt={player.ign} />
+                <AvatarImage 
+                  src={avatarError ? '/default-avatar.png' : (player.avatar_url || `https://crafthead.net/avatar/${player.ign}`)} 
+                  alt={player.ign} 
+                  onError={handleAvatarError}
+                />
                 <AvatarFallback>{player.ign.slice(0, 2)}</AvatarFallback>
               </Avatar>
             </TooltipTrigger>
@@ -137,7 +147,9 @@ export function PlayerRow({ playerScore, onClick, delay = 0, compact = false, sh
                 player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
                 player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
                 player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
-                'bg-purple-900/30 text-purple-400'
+                player.region === 'OCE' ? 'bg-purple-900/30 text-purple-400' :
+                player.region === 'AF' ? 'bg-yellow-900/30 text-yellow-400' :
+                'bg-gray-900/30 text-gray-400'
               )}>
                 {player.region || 'Unknown'}
               </span>
@@ -164,7 +176,9 @@ export function PlayerRow({ playerScore, onClick, delay = 0, compact = false, sh
               player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
               player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
               player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
-              'bg-purple-900/30 text-purple-400'
+              player.region === 'OCE' ? 'bg-purple-900/30 text-purple-400' :
+              player.region === 'AF' ? 'bg-yellow-900/30 text-yellow-400' :
+              'bg-gray-900/30 text-gray-400'
             )}>
               {player.region || 'Unknown'}
             </span>

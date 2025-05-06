@@ -5,22 +5,22 @@ import { Footer } from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { KeyRound, LogIn } from 'lucide-react';
 import { verifyAdminPin } from '@/api/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Admin = () => {
-  const [selectedMode, setSelectedMode] = useState('overall');
   const [pin, setPin] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMode, setSelectedMode] = useState('overall');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  // Check if already authenticated
   useEffect(() => {
+    // Check if already authenticated
     const adminAuth = localStorage.getItem('mcbe_admin_auth');
     if (adminAuth === 'true') {
       navigate('/admin/dashboard');
@@ -30,36 +30,34 @@ const Admin = () => {
   const handleModeChange = (mode: string) => {
     setSelectedMode(mode);
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     
     if (!pin) {
-      setError('Please enter a PIN');
+      toast.error('Please enter admin PIN');
       return;
     }
     
-    setIsLoading(true);
+    setIsSubmitting(true);
     
     try {
-      // Check if pin is correct - hardcoded to "1234" as requested
       const isValid = await verifyAdminPin(pin);
       
       if (isValid) {
         localStorage.setItem('mcbe_admin_auth', 'true');
-        toast.success('Authentication successful!');
+        localStorage.setItem('mcbe_admin_login_time', Date.now().toString());
+        toast.success('Access granted. Welcome to the Admin Panel');
         navigate('/admin/dashboard');
       } else {
-        setError('Access Denied: Invalid PIN');
-        toast.error('Access Denied');
+        toast.error('🚫 Invalid Admin Code. Access Denied.');
+        console.log('Failed login attempt');
       }
     } catch (error) {
-      console.error('Authentication error:', error);
-      setError('Authentication failed. Please try again later.');
-      toast.error('Authentication failed');
+      console.error('Error verifying admin PIN:', error);
+      toast.error('Failed to verify PIN. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -79,56 +77,36 @@ const Admin = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="bg-dark-surface/90 border border-white/10 backdrop-blur-md p-6">
-            <div className="text-center mb-6">
-              <motion.h1 
-                className="text-2xl font-bold text-white"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
+          <Card className="border border-white/10 bg-dark-surface/80 backdrop-blur-md shadow-xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl text-center flex justify-center items-center gap-2">
+                <KeyRound className="text-yellow-500" />
                 Admin Access
-              </motion.h1>
-              <motion.p 
-                className="text-white/60 mt-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                Enter your PIN to access the admin dashboard
-              </motion.p>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Input
-                  type="password"
-                  placeholder="Enter PIN"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  className="bg-dark-surface/60 border-white/10 focus:border-white/30 text-white"
-                />
-                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    placeholder="Enter Admin PIN"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    className="bg-dark-surface/50 border-white/10"
+                    autoFocus
+                  />
+                </div>
+                
                 <Button 
                   type="submit" 
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
-                  {isLoading ? "Verifying..." : "Access Dashboard"}
+                  <LogIn className="mr-2 h-4 w-4" />
+                  {isSubmitting ? 'Verifying...' : 'Access Admin Panel'}
                 </Button>
-              </motion.div>
-            </form>
+              </form>
+            </CardContent>
           </Card>
         </motion.div>
       </main>
