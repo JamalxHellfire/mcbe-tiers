@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Player, GamemodeScore, Staff, NewsPost, Admin, TIER_POINTS } from "@/types";
 
@@ -27,23 +28,23 @@ export const fetchPlayersByGamemode = async (gamemode: string): Promise<Player[]
 // Gamemode Scores API
 export const fetchGamemodeScores = async (): Promise<GamemodeScore[]> => {
   const { data, error } = await supabase
-    .from("gamemode_scores")
+    .from("gamemode_scores" as any)
     .select("*")
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  return data as GamemodeScore[] || [];
 };
 
 export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<GamemodeScore[]> => {
   const { data, error } = await supabase
-    .from("gamemode_scores")
+    .from("gamemode_scores" as any)
     .select("*")
     .eq("gamemode", gamemode)
     .order("score", { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  return data as GamemodeScore[] || [];
 };
 
 export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{player: Player, scores: GamemodeScore[]}> => {
@@ -58,7 +59,7 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
   
   // Then get all gamemode scores
   const { data: scores, error: scoresError } = await supabase
-    .from("gamemode_scores")
+    .from("gamemode_scores" as any)
     .select("*")
     .eq("player_id", playerId);
   
@@ -168,7 +169,7 @@ export const submitPlayerResult = async (
   
   // Check if player already has a score for this gamemode
   const { data: existingScores } = await supabase
-    .from("gamemode_scores")
+    .from("gamemode_scores" as any)
     .select("id")
     .eq("player_id", playerId)
     .eq("gamemode", playerData.gamemode);
@@ -176,7 +177,7 @@ export const submitPlayerResult = async (
   // Insert or update score
   if (!existingScores || existingScores.length === 0) {
     const { error: scoreError } = await supabase
-      .from("gamemode_scores")
+      .from("gamemode_scores" as any)
       .insert({
         player_id: playerId,
         gamemode: playerData.gamemode,
@@ -188,7 +189,7 @@ export const submitPlayerResult = async (
     if (scoreError) throw scoreError;
   } else {
     const { error: updateScoreError } = await supabase
-      .from("gamemode_scores")
+      .from("gamemode_scores" as any)
       .update({
         score: tierData.points,
         internal_tier: playerData.internal_tier,
@@ -210,7 +211,7 @@ export const submitPlayerResult = async (
 export const updatePlayerGlobalPoints = async (playerId: string): Promise<void> => {
   // Get all scores for this player
   const { data: scores, error } = await supabase
-    .from("gamemode_scores")
+    .from("gamemode_scores" as any)
     .select("score")
     .eq("player_id", playerId);
   

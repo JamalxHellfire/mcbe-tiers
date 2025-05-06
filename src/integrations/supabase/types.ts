@@ -30,28 +30,87 @@ export type Database = {
         }
         Relationships: []
       }
-      players: {
+      gamemode_scores: {
         Row: {
-          created_at: string | null
+          created_at: string
+          display_tier: string
           gamemode: string
           id: string
+          internal_tier: string
+          player_id: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_tier: string
+          gamemode: string
+          id?: string
+          internal_tier: string
+          player_id: string
+          score: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_tier?: string
+          gamemode?: string
+          id?: string
+          internal_tier?: string
+          player_id?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamemode_scores_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          avatar_url: string | null
+          badges: string[] | null
+          created_at: string | null
+          device: string | null
+          gamemode: string
+          global_points: number | null
+          id: string
           ign: string
+          java_username: string | null
+          region: string | null
           tier_number: string
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          badges?: string[] | null
           created_at?: string | null
+          device?: string | null
           gamemode: string
+          global_points?: number | null
           id?: string
           ign: string
+          java_username?: string | null
+          region?: string | null
           tier_number: string
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          badges?: string[] | null
           created_at?: string | null
+          device?: string | null
           gamemode?: string
+          global_points?: number | null
           id?: string
           ign?: string
+          java_username?: string | null
+          region?: string | null
           tier_number?: string
           updated_at?: string | null
         }
