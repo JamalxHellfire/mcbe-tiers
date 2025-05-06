@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Player, GamemodeScore, Staff, NewsPost, Admin } from "@/types";
 
@@ -74,12 +73,9 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
 // Staff API - Use type assertion since table might not exist yet
 export const fetchStaff = async (): Promise<Staff[]> => {
   try {
-    const { data, error } = await supabase
-      .from("staff")
-      .select("*");
-      
-    if (error) throw error;
-    return (data || []) as Staff[];
+    // Since the staff table doesn't exist yet, we'll return an empty array
+    // This function will be updated when the staff table is created
+    return [] as Staff[];
   } catch (error) {
     console.error("Error fetching staff, table might not exist:", error);
     return [];
@@ -89,13 +85,9 @@ export const fetchStaff = async (): Promise<Staff[]> => {
 // News API - Use type assertion since table might not exist yet
 export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
   try {
-    const { data, error } = await supabase
-      .from("news_posts")
-      .select("*")
-      .order("created_at", { ascending: false });
-      
-    if (error) throw error;
-    return (data || []) as NewsPost[];
+    // Since the news_posts table doesn't exist yet, we'll return an empty array
+    // This function will be updated when the news_posts table is created
+    return [] as NewsPost[];
   } catch (error) {
     console.error("Error fetching news posts, table might not exist:", error);
     return [];
@@ -104,14 +96,9 @@ export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
 
 export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
   try {
-    const { data, error } = await supabase
-      .from("news_posts")
-      .select("*")
-      .filter("tags", "cs", `{${tag}}`)
-      .order("created_at", { ascending: false });
-      
-    if (error) throw error;
-    return (data || []) as NewsPost[];
+    // Since the news_posts table doesn't exist yet, we'll return an empty array
+    // This function will be updated when the news_posts table is created
+    return [] as NewsPost[];
   } catch (error) {
     console.error("Error fetching news by tag, table might not exist:", error);
     return [];
