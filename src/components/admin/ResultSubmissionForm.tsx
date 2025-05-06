@@ -44,7 +44,17 @@ export const ResultSubmissionForm = () => {
     setSuccess(false);
     
     try {
-      await submitPlayerResult(data);
+      // Make sure all fields are properly passed as required by the API
+      const playerData = {
+        ign: data.ign,
+        javaUsername: data.javaUsername,
+        device: data.device,
+        region: data.region,
+        gamemode: data.gamemode,
+        tier: data.tier
+      };
+      
+      await submitPlayerResult(playerData);
       toast.success(`Successfully submitted result for ${data.ign}`);
       setSuccess(true);
       form.reset();

@@ -71,36 +71,51 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
   };
 };
 
-// Staff API
+// Staff API - Use type assertion since table might not exist yet
 export const fetchStaff = async (): Promise<Staff[]> => {
-  const { data, error } = await supabase
-    .from("staff")
-    .select("*");
-    
-  if (error) throw error;
-  return data as Staff[] || [];
+  try {
+    const { data, error } = await supabase
+      .from("staff")
+      .select("*");
+      
+    if (error) throw error;
+    return (data || []) as Staff[];
+  } catch (error) {
+    console.error("Error fetching staff, table might not exist:", error);
+    return [];
+  }
 };
 
-// News API
+// News API - Use type assertion since table might not exist yet
 export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
-  const { data, error } = await supabase
-    .from("news_posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-    
-  if (error) throw error;
-  return data as NewsPost[] || [];
+  try {
+    const { data, error } = await supabase
+      .from("news_posts")
+      .select("*")
+      .order("created_at", { ascending: false });
+      
+    if (error) throw error;
+    return (data || []) as NewsPost[];
+  } catch (error) {
+    console.error("Error fetching news posts, table might not exist:", error);
+    return [];
+  }
 };
 
 export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
-  const { data, error } = await supabase
-    .from("news_posts")
-    .select("*")
-    .contains("tags", [tag])
-    .order("created_at", { ascending: false });
-    
-  if (error) throw error;
-  return data as NewsPost[] || [];
+  try {
+    const { data, error } = await supabase
+      .from("news_posts")
+      .select("*")
+      .filter("tags", "cs", `{${tag}}`)
+      .order("created_at", { ascending: false });
+      
+    if (error) throw error;
+    return (data || []) as NewsPost[];
+  } catch (error) {
+    console.error("Error fetching news by tag, table might not exist:", error);
+    return [];
+  }
 };
 
 // Admin Authentication and Functions
