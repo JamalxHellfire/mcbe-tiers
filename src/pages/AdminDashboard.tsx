@@ -5,16 +5,16 @@ import { Footer } from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { LogOut, Users, Trophy, Newspaper } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { PlayerManagement } from '@/components/admin/PlayerManagement';
-import { StaffManagement } from '@/components/admin/StaffManagement';
-import { NewsManagement } from '@/components/admin/NewsManagement';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AdminDashboard = () => {
   const [selectedMode, setSelectedMode] = useState('overall');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   // Check if authenticated
   useEffect(() => {
@@ -83,34 +83,7 @@ const AdminDashboard = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="bg-dark-surface/80 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6"
           >
-            <Tabs defaultValue="players" className="w-full">
-              <TabsList className="mb-6 bg-dark-surface/50">
-                <TabsTrigger value="players" className="flex items-center">
-                  <Trophy size={16} className="mr-2" />
-                  Players
-                </TabsTrigger>
-                <TabsTrigger value="staff" className="flex items-center">
-                  <Users size={16} className="mr-2" />
-                  Staff
-                </TabsTrigger>
-                <TabsTrigger value="news" className="flex items-center">
-                  <Newspaper size={16} className="mr-2" />
-                  News
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="players">
-                <PlayerManagement />
-              </TabsContent>
-              
-              <TabsContent value="staff">
-                <StaffManagement />
-              </TabsContent>
-              
-              <TabsContent value="news">
-                <NewsManagement />
-              </TabsContent>
-            </Tabs>
+            <PlayerManagement />
           </motion.div>
         </motion.div>
       </main>

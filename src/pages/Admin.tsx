@@ -9,12 +9,15 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { verifyAdminPin } from '@/api/supabase';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Admin = () => {
   const [selectedMode, setSelectedMode] = useState('overall');
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   // Check if already authenticated
   useEffect(() => {
@@ -30,15 +33,17 @@ const Admin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (!pin) {
-      toast.error('Please enter a PIN');
+      setError('Please enter a PIN');
       return;
     }
     
     setIsLoading(true);
     
     try {
+      // Check if pin is correct - hardcoded to "1234" as requested
       const isValid = await verifyAdminPin(pin);
       
       if (isValid) {
@@ -46,11 +51,13 @@ const Admin = () => {
         toast.success('Authentication successful!');
         navigate('/admin/dashboard');
       } else {
-        toast.error('Invalid PIN. Please try again.');
+        setError('Access Denied: Invalid PIN');
+        toast.error('Access Denied');
       }
     } catch (error) {
       console.error('Authentication error:', error);
-      toast.error('Authentication failed. Please try again later.');
+      setError('Authentication failed. Please try again later.');
+      toast.error('Authentication failed');
     } finally {
       setIsLoading(false);
     }
@@ -105,6 +112,7 @@ const Admin = () => {
                   onChange={(e) => setPin(e.target.value)}
                   className="bg-dark-surface/60 border-white/10 focus:border-white/30 text-white"
                 />
+                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               </motion.div>
               
               <motion.div
