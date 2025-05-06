@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { fetchNewsPosts } from '@/api/supabase';
 import { NewsPost } from '@/types';
@@ -72,7 +71,7 @@ export const NewsManagement = () => {
     if (window.confirm(`Are you sure you want to delete the post: ${post.title}?`)) {
       try {
         await supabase
-          .from('news_posts')
+          .from("news_posts" as any)
           .delete()
           .eq('id', post.id);
           

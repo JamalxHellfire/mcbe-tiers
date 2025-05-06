@@ -27,9 +27,8 @@ export const fetchPlayersByGamemode = async (gamemode: string): Promise<Player[]
 
 // Gamemode Scores API
 export const fetchGamemodeScores = async (): Promise<GamemodeScore[]> => {
-  // Use 'as any' to bypass TypeScript's strict checking
-  const { data, error } = await (supabase
-    .from("gamemode_scores") as any)
+  const { data, error } = await supabase
+    .from("gamemode_scores" as any)
     .select("*")
     .order("score", { ascending: false });
     
@@ -38,9 +37,8 @@ export const fetchGamemodeScores = async (): Promise<GamemodeScore[]> => {
 };
 
 export const fetchGamemodeScoresByGamemode = async (gamemode: string): Promise<GamemodeScore[]> => {
-  // Use 'as any' to bypass TypeScript's strict checking
-  const { data, error } = await (supabase
-    .from("gamemode_scores") as any)
+  const { data, error } = await supabase
+    .from("gamemode_scores" as any)
     .select("*")
     .eq("gamemode", gamemode)
     .order("score", { ascending: false });
@@ -60,9 +58,8 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
   if (playerError) throw playerError;
   
   // Then get all gamemode scores
-  // Use 'as any' to bypass TypeScript's strict checking
-  const { data: scores, error: scoresError } = await (supabase
-    .from("gamemode_scores") as any)
+  const { data: scores, error: scoresError } = await supabase
+    .from("gamemode_scores" as any)
     .select("*")
     .eq("player_id", playerId);
   
@@ -76,9 +73,8 @@ export const fetchPlayerWithGamemodeScores = async (playerId: string): Promise<{
 
 // Staff API
 export const fetchStaff = async (): Promise<Staff[]> => {
-  // Use 'as any' to bypass TypeScript's strict checking
-  const { data, error } = await (supabase
-    .from("staff") as any)
+  const { data, error } = await supabase
+    .from("staff" as any)
     .select("*");
     
   if (error) throw error;
@@ -87,9 +83,8 @@ export const fetchStaff = async (): Promise<Staff[]> => {
 
 // News API
 export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
-  // Use 'as any' to bypass TypeScript's strict checking
-  const { data, error } = await (supabase
-    .from("news_posts") as any)
+  const { data, error } = await supabase
+    .from("news_posts" as any)
     .select("*")
     .order("created_at", { ascending: false });
     
@@ -98,9 +93,8 @@ export const fetchNewsPosts = async (): Promise<NewsPost[]> => {
 };
 
 export const fetchNewsByTag = async (tag: string): Promise<NewsPost[]> => {
-  // Use 'as any' to bypass TypeScript's strict checking
-  const { data, error } = await (supabase
-    .from("news_posts") as any)
+  const { data, error } = await supabase
+    .from("news_posts" as any)
     .select("*")
     .contains("tags", [tag])
     .order("created_at", { ascending: false });
@@ -115,7 +109,7 @@ export const verifyAdminPin = async (pin: string): Promise<boolean> => {
   // For demo purposes, we're comparing the plain text pin
   // In production, use bcrypt or Supabase Auth
   const { data, error } = await supabase
-    .rpc("verify_admin_pin", { pin_to_check: pin });
+    .rpc("verify_admin_pin" as any, { pin_to_check: pin });
   
   if (error) throw error;
   return !!data;

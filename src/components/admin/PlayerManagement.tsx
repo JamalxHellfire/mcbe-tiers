@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { fetchPlayers, fetchGamemodeScores } from '@/api/supabase';
 import { Player, GamemodeScore } from '@/types';
@@ -83,13 +82,13 @@ export const PlayerManagement = () => {
       try {
         // Delete player's scores first due to foreign key constraint
         await supabase
-          .from('gamemode_scores')
+          .from("gamemode_scores" as any)
           .delete()
           .eq('player_id', player.id);
           
         // Then delete the player
         await supabase
-          .from('players')
+          .from("players")
           .delete()
           .eq('id', player.id);
           

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { fetchStaff } from '@/api/supabase';
 import { Staff } from '@/types';
@@ -71,7 +70,7 @@ export const StaffManagement = () => {
     if (window.confirm(`Are you sure you want to remove ${member.name} from staff?`)) {
       try {
         await supabase
-          .from('staff')
+          .from("staff" as any)
           .delete()
           .eq('id', member.id);
           
