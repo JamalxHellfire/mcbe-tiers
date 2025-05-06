@@ -1,66 +1,61 @@
 
-// Follow this setup guide to integrate the Deno runtime and alias imports:
-// https://docs.supabase.com/reference/storage/deno-runtime
+// This Edge Function handles admin PIN verification securely
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.0.0'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-// This function verifies admin PINs securely
-// It should be called from the admin login page
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.0.0';
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  // Enable CORS
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
-
+  
   try {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { pin } = await req.json();
-
+    const { pin } = await req.json()
+    
     if (!pin) {
       return new Response(
-        JSON.stringify({ success: false, error: 'PIN is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+        JSON.stringify({ error: 'PIN is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
-
+    
+    // Create a Supabase client for the function
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    
     // Query the admins table to check the PIN
-    // In a real app, this should use a secure password hashing mechanism
     const { data, error } = await supabase
       .from('admins')
       .select('id')
       .eq('hashed_pin', pin)
-      .single();
-
-    if (error) {
-      console.error('Error verifying PIN:', error);
+      .single()
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error verifying PIN:', error)
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to verify PIN' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+        JSON.stringify({ error: 'Failed to verify PIN' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
-
-    const isValid = !!data;
-
+    
+    // If data exists, the PIN is valid
+    const isValid = !!data
+    
     return new Response(
-      JSON.stringify({ success: true, isValid }),
+      JSON.stringify({ isValid }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Server error:', error);
+    )
+  } catch (err) {
+    console.error('Error in verify-admin-pin function:', err)
     return new Response(
-      JSON.stringify({ success: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})

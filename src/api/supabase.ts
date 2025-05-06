@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Player, GamemodeScore, Staff, NewsPost, Admin } from "@/types";
 
@@ -108,11 +107,12 @@ export const verifyAdminPin = async (pin: string): Promise<boolean> => {
   // In a real app, this should use a proper auth mechanism
   // For demo purposes, we're comparing the plain text pin
   // In production, use bcrypt or Supabase Auth
-  const { data, error } = await supabase
-    .rpc("verify_admin_pin" as unknown as string, { 
-      pin_to_check: pin 
-    } as unknown as Record<string, unknown>);
+  
+  // Use a more generic approach to RPC calls for better TypeScript compatibility
+  const { data, error } = await supabase.functions.invoke('verify-admin-pin', {
+    body: { pin }
+  });
   
   if (error) throw error;
-  return !!data;
+  return !!data?.isValid;
 };
