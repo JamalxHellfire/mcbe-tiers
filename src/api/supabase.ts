@@ -109,7 +109,7 @@ export const verifyAdminPin = async (pin: string): Promise<boolean> => {
   // For demo purposes, we're comparing the plain text pin
   // In production, use bcrypt or Supabase Auth
   const { data, error } = await supabase
-    .rpc("verify_admin_pin" as any, { pin_to_check: pin });
+    .rpc("verify_admin_pin", { pin_to_check: pin } as any);
   
   if (error) throw error;
   return !!data;
