@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { Database } from '@/integrations/supabase/types';
@@ -18,7 +17,7 @@ export type PlayerRegion = 'NA' | 'EU' | 'ASIA' | 'OCE';
 export type DeviceType = 'Mobile' | 'PC' | 'Console';
 export type GameMode = 'Crystal' | 'Sword' | 'SMP' | 'UHC' | 'Axe' | 'NethPot' | 'Bedwars' | 'Mace';
 
-interface PlayerCreateData {
+export interface PlayerCreateData {
   ign: string;
   java_username?: string;
   avatar_url?: string;
@@ -158,6 +157,7 @@ export const playerService = {
         return player;
       });
       
+      // Insert as an array of objects
       const { data, error } = await supabase
         .from('players')
         .insert(preparedData)
@@ -533,5 +533,109 @@ export const playerService = {
       toast.error(`Failed to wipe data: ${error.message}`);
       return false;
     }
+  },
+  
+  // Submit player result - new function for admin form submission
+  async submitPlayerResult(
+    ign: string,
+    gamemode: GameMode,
+    tier: TierLevel,
+    options: {
+      javaUsername?: string,
+      region?: PlayerRegion,
+      device?: DeviceType,
+      notes?: string
+    } = {}
+  ): Promise<boolean> {
+    try {
+      const { javaUsername, region, device, notes } = options;
+      
+      // First, check if the player exists
+      let player = await this.getPlayerByIGN(ign);
+      
+      if (!player) {
+        // Create the player if they don't exist
+        player = await this.createPlayer({
+          ign,
+          java_username: javaUsername,
+          device,
+          region
+        });
+        
+        if (!player) {
+          toast.error(`Could not create player: ${ign}`);
+          return false;
+        }
+      } else {
+        // Update the player's info if needed
+        if (
+          (javaUsername && player.java_username !== javaUsername) ||
+          (device && player.device !== device) ||
+          (region && player.region !== region)
+        ) {
+          await this.updatePlayer(player.id, {
+            java_username: javaUsername || player.java_username,
+            device: device || player.device,
+            region: region || player.region
+          });
+        }
+      }
+      
+      // Assign the tier to the player
+      const result = await this.assignTier({
+        playerId: player.id,
+        gamemode,
+        tier
+      });
+      
+      // Log the result submission
+      console.log(`Result submitted: ${ign} - ${gamemode} - ${tier} ${notes ? `- Notes: ${notes}` : ''}`);
+      
+      return !!result;
+    } catch (error: any) {
+      console.error('Result submission error:', error);
+      toast.error(`Failed to submit result: ${error.message}`);
+      return false;
+    }
+  },
+  
+  // Bulk submit player results
+  async bulkSubmitResults(
+    data: Array<{
+      ign: string,
+      gamemode: GameMode,
+      tier: TierLevel,
+      javaUsername?: string,
+      region?: PlayerRegion,
+      device?: DeviceType,
+      notes?: string
+    }>
+  ): Promise<{success: number, failed: number}> {
+    const results = {
+      success: 0,
+      failed: 0
+    };
+    
+    for (const entry of data) {
+      const success = await this.submitPlayerResult(
+        entry.ign,
+        entry.gamemode,
+        entry.tier,
+        {
+          javaUsername: entry.javaUsername,
+          region: entry.region,
+          device: entry.device,
+          notes: entry.notes
+        }
+      );
+      
+      if (success) {
+        results.success++;
+      } else {
+        results.failed++;
+      }
+    }
+    
+    return results;
   }
 };

@@ -26,6 +26,7 @@ export function useAdminPanel() {
         setIsAdminMode(true);
         toast.success('Admin access granted');
       } else {
+        adminService.logAdminActivity(`Failed login attempt with PIN: ${pinInputValue}`);
         toast.error('Invalid PIN. Access denied.');
       }
     } catch (error) {
@@ -69,7 +70,12 @@ export function useAdminPanel() {
         };
       });
       
-      return await playerService.massCreatePlayers(playerDataList);
+      const result = await playerService.massCreatePlayers(playerDataList);
+      
+      // Log admin activity
+      adminService.logAdminActivity(`Mass registered ${result} players`);
+      
+      return result;
     } catch (error) {
       console.error('Mass registration error:', error);
       toast.error('Failed to register players');
@@ -124,6 +130,9 @@ export function useAdminPanel() {
         tier
       });
       
+      // Log admin activity
+      adminService.logAdminActivity(`Assigned ${ign} to ${tier} in ${gamemode}`);
+      
       return !!result;
     } catch (error) {
       console.error('Result submission error:', error);
@@ -133,11 +142,25 @@ export function useAdminPanel() {
   };
   
   const generateFakePlayers = async (count: number) => {
-    return await playerService.generateFakePlayers(count);
+    const result = await playerService.generateFakePlayers(count);
+    
+    // Log admin activity if successful
+    if (result > 0) {
+      adminService.logAdminActivity(`Generated ${result} fake players`);
+    }
+    
+    return result;
   };
   
   const wipeAllData = async () => {
-    return await playerService.wipeAllData();
+    const result = await playerService.wipeAllData();
+    
+    // Log admin activity if successful
+    if (result) {
+      adminService.logAdminActivity(`Wiped all data from the database`);
+    }
+    
+    return result;
   };
   
   return {

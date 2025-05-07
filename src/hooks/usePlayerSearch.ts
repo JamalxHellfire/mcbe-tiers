@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { playerService, Player } from '@/services/playerService';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -42,7 +42,7 @@ export function usePlayerSearch() {
   };
   
   // When the debounced search term changes, search for players
-  useState(() => {
+  useEffect(() => {
     if (debouncedSearchTerm) {
       searchPlayers(debouncedSearchTerm);
     } else {
