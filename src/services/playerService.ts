@@ -157,20 +157,29 @@ export const playerService = {
         return player;
       });
       
-      // Insert as an array of objects
-      const { data, error } = await supabase
-        .from('players')
-        .insert(preparedData)
-        .select();
-
-      if (error) {
-        console.error('Error mass creating players:', error);
-        toast.error(`Failed to create players: ${error.message}`);
-        return 0;
+      // Insert players one by one to avoid type errors with bulk insert
+      let successCount = 0;
+      
+      for (const playerData of preparedData) {
+        const { data, error } = await supabase
+          .from('players')
+          .insert([playerData])
+          .select();
+          
+        if (!error && data) {
+          successCount += data.length;
+        } else if (error) {
+          console.error('Error creating player:', error);
+        }
       }
-
-      toast.success(`Successfully created ${data.length} players`);
-      return data.length;
+      
+      if (successCount > 0) {
+        toast.success(`Successfully created ${successCount} players`);
+      } else {
+        toast.error('Failed to create any players');
+      }
+      
+      return successCount;
     } catch (error: any) {
       console.error('Failed to mass create players:', error);
       toast.error(`Failed to create players: ${error.message}`);
@@ -438,28 +447,31 @@ export const playerService = {
         });
       }
       
-      // Insert all players in batch
-      const { data: insertedPlayers, error: insertError } = await supabase
-        .from('players')
-        .insert(fakePlayers)
-        .select('id, ign');
-        
-      if (insertError) {
-        console.error('Error creating fake players:', insertError);
-        toast.error(`Failed to create fake players: ${insertError.message}`);
+      // Insert players one by one to avoid type errors with bulk insert
+      let insertedCount = 0;
+      const insertedPlayerIds: string[] = [];
+      
+      for (const player of fakePlayers) {
+        const { data, error } = await supabase
+          .from('players')
+          .insert([player])
+          .select('id, ign');
+          
+        if (!error && data && data.length > 0) {
+          insertedCount++;
+          insertedPlayerIds.push(data[0].id);
+        }
+      }
+      
+      if (insertedCount === 0) {
+        toast.error('Failed to create any fake players');
         return 0;
       }
       
       // For each inserted player, assign random tiers for 1-3 random gamemodes
-      const tierAssignments: Array<{
-        player_id: string;
-        gamemode: GameMode;
-        score: number;
-        internal_tier: TierLevel;
-        display_tier: string;
-      }> = [];
+      let tierAssignmentCount = 0;
       
-      for (const player of insertedPlayers) {
+      for (const playerId of insertedPlayerIds) {
         // Randomly select 1-3 gamemodes for this player
         const playerGamemodes = [...gamemodes]
           .sort(() => 0.5 - Math.random())
@@ -468,30 +480,24 @@ export const playerService = {
         for (const gamemode of playerGamemodes) {
           // Assign a random tier
           const tier = tiers[Math.floor(Math.random() * tiers.length)];
-          tierAssignments.push({
-            player_id: player.id,
-            gamemode,
-            score: TIER_POINTS[tier],
-            internal_tier: tier,
-            display_tier: tier
-          });
+          const { error } = await supabase
+            .from('gamemode_scores')
+            .insert([{
+              player_id: playerId,
+              gamemode,
+              score: TIER_POINTS[tier],
+              internal_tier: tier,
+              display_tier: tier
+            }]);
+            
+          if (!error) {
+            tierAssignmentCount++;
+          }
         }
       }
       
-      // Insert all tier assignments in batch
-      if (tierAssignments.length > 0) {
-        const { error: tiersError } = await supabase
-          .from('gamemode_scores')
-          .insert(tierAssignments);
-          
-        if (tiersError) {
-          console.error('Error assigning tiers to fake players:', tiersError);
-          toast.error(`Failed to assign tiers to fake players: ${tiersError.message}`);
-        }
-      }
-      
-      toast.success(`Created ${insertedPlayers.length} fake players with random tiers`);
-      return insertedPlayers.length;
+      toast.success(`Created ${insertedCount} fake players with ${tierAssignmentCount} random tiers`);
+      return insertedCount;
     } catch (error: any) {
       console.error('Failed to generate fake players:', error);
       toast.error(`Failed to generate fake players: ${error.message}`);
