@@ -30,28 +30,87 @@ export type Database = {
         }
         Relationships: []
       }
-      players: {
+      gamemode_scores: {
         Row: {
-          created_at: string | null
+          created_at: string
+          display_tier: string
           gamemode: string
           id: string
+          internal_tier: string
+          player_id: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_tier: string
+          gamemode: string
+          id?: string
+          internal_tier: string
+          player_id: string
+          score: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_tier?: string
+          gamemode?: string
+          id?: string
+          internal_tier?: string
+          player_id?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamemode_scores_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          avatar_url: string | null
+          badges: string[] | null
+          created_at: string | null
+          device: string | null
+          gamemode: string
+          global_points: number | null
+          id: string
           ign: string
+          java_username: string | null
+          region: string | null
           tier_number: string
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          badges?: string[] | null
           created_at?: string | null
+          device?: string | null
           gamemode: string
+          global_points?: number | null
           id?: string
           ign: string
+          java_username?: string | null
+          region?: string | null
           tier_number: string
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          badges?: string[] | null
           created_at?: string | null
+          device?: string | null
           gamemode?: string
+          global_points?: number | null
           id?: string
           ign?: string
+          java_username?: string | null
+          region?: string | null
           tier_number?: string
           updated_at?: string | null
         }
@@ -62,10 +121,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_tier_points: {
+        Args: { tier_value: string }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      device_type: "Mobile" | "PC" | "Console"
+      game_mode:
+        | "Crystal"
+        | "Sword"
+        | "SMP"
+        | "UHC"
+        | "Axe"
+        | "NethPot"
+        | "Bedwars"
+        | "Mace"
+      player_region: "NA" | "EU" | "ASIA" | "OCE"
+      tier_level:
+        | "LT5"
+        | "HT5"
+        | "LT4"
+        | "HT4"
+        | "LT3"
+        | "HT3"
+        | "LT2"
+        | "HT2"
+        | "LT1"
+        | "HT1"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -180,6 +263,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      device_type: ["Mobile", "PC", "Console"],
+      game_mode: [
+        "Crystal",
+        "Sword",
+        "SMP",
+        "UHC",
+        "Axe",
+        "NethPot",
+        "Bedwars",
+        "Mace",
+      ],
+      player_region: ["NA", "EU", "ASIA", "OCE"],
+      tier_level: [
+        "LT5",
+        "HT5",
+        "LT4",
+        "HT4",
+        "LT3",
+        "HT3",
+        "LT2",
+        "HT2",
+        "LT1",
+        "HT1",
+      ],
+    },
   },
 } as const
