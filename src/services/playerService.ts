@@ -1,647 +1,453 @@
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
-import { Database } from '@/integrations/supabase/types';
+import { createClient } from '@supabase/supabase-js';
 
-// Type definitions
-export type Player = Database['public']['Tables']['players']['Row'];
-export type GamemodeScore = Database['public']['Tables']['gamemode_scores']['Row'];
+// Define the Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export type TierLevel = 
-  | 'LT5' | 'HT5' 
-  | 'LT4' | 'HT4' 
-  | 'LT3' | 'HT3' 
-  | 'LT2' | 'HT2' 
-  | 'LT1' | 'HT1';
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase URL and key must be defined in environment variables.');
+}
 
-export type PlayerRegion = 'NA' | 'EU' | 'ASIA' | 'OCE';
-export type DeviceType = 'Mobile' | 'PC' | 'Console';
-export type GameMode = 'Crystal' | 'Sword' | 'SMP' | 'UHC' | 'Axe' | 'NethPot' | 'Bedwars' | 'Mace';
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Enums and Types
+export enum PlayerRegion {
+  NA = 'NA',
+  EU = 'EU',
+  ASIA = 'ASIA',
+  OCE = 'OCE',
+  SA = 'SA',
+  AF = 'AF'
+}
+
+export enum DeviceType {
+  MOBILE = 'MOBILE',
+  CONTROLLER = 'CONTROLLER',
+  KEYBOARD = 'KEYBOARD',
+  TOUCH = 'TOUCH'
+}
+
+export enum GameMode {
+  SMP = 'SMP',
+  MACE = 'MACE',
+  BEDWARS = 'BEDWARS',
+  UNRANKED = 'UNRANKED'
+}
+
+export enum TierLevel {
+  LT5 = 'LT5',
+  HT5 = 'HT5',
+  LT4 = 'LT4',
+  HT4 = 'HT4',
+  LT3 = 'LT3',
+  HT3 = 'HT3',
+  LT2 = 'LT2',
+  HT2 = 'HT2',
+  LT1 = 'LT1',
+  HT1 = 'HT1'
+}
+
+export interface Player {
+  id: string;
+  created_at: string;
+  ign: string;
+  java_username?: string;
+  region?: PlayerRegion;
+  device?: DeviceType;
+  gamemode: GameMode;
+  tier_number: number;
+}
 
 export interface PlayerCreateData {
   ign: string;
   java_username?: string;
-  avatar_url?: string;
   region?: PlayerRegion;
   device?: DeviceType;
 }
 
-interface TierAssignment {
+export interface TierAssignment {
   playerId: string;
   gamemode: GameMode;
   tier: TierLevel;
 }
 
-// Tier points mapping
-const TIER_POINTS: Record<TierLevel, number> = {
-  'HT1': 50,
-  'LT1': 45,
-  'HT2': 40,
-  'LT2': 35,
-  'HT3': 30,
-  'LT3': 25,
-  'HT4': 20,
-  'LT4': 15,
-  'HT5': 10,
-  'LT5': 5
-};
+export interface BulkSubmissionData {
+  ign: string;
+  gamemode: GameMode;
+  tier: TierLevel;
+  region?: PlayerRegion;
+}
 
-// Player management functions
-export const playerService = {
-  // Expose supabase client for direct queries
-  supabase,
-  
-  // Get all players
-  async getAllPlayers(): Promise<Player[]> {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .order('global_points', { ascending: false });
+export interface AdditionalPlayerInfo {
+  javaUsername?: string;
+  region?: PlayerRegion;
+  device?: DeviceType;
+  notes?: string;
+}
 
-      if (error) {
-        console.error('Error fetching players:', error);
-        throw error;
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Failed to fetch players:', error);
-      return [];
-    }
-  },
-  
-  // Get ranked players (with at least one gamemode score)
-  async getRankedPlayers(): Promise<Player[]> {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .gt('global_points', 0)
-        .order('global_points', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching ranked players:', error);
-        throw error;
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Failed to fetch ranked players:', error);
-      return [];
-    }
-  },
-  
-  // Get a player by IGN
-  async getPlayerByIGN(ign: string): Promise<Player | null> {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .ilike('ign', ign)
-        .single();
-
-      if (error) {
-        if (error.code !== 'PGRST116') { // Not found error code
-          console.error('Error fetching player by IGN:', error);
-        }
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Failed to fetch player by IGN:', error);
-      return null;
-    }
-  },
-  
-  // Create a new player
-  async createPlayer(playerData: PlayerCreateData): Promise<Player | null> {
-    try {
-      // If java_username is provided but avatar_url is not, generate the avatar URL
-      if (playerData.java_username && !playerData.avatar_url) {
-        playerData.avatar_url = `https://crafthead.net/avatar/${playerData.java_username}`;
-      }
-      
-      const { data, error } = await supabase
-        .from('players')
-        .insert([playerData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating player:', error);
-        toast.error(`Failed to create player: ${error.message}`);
-        return null;
-      }
-
-      toast.success(`Player ${playerData.ign} created successfully`);
-      return data;
-    } catch (error: any) {
-      console.error('Failed to create player:', error);
-      toast.error(`Failed to create player: ${error.message}`);
-      return null;
-    }
-  },
-  
-  // Mass create players
-  async massCreatePlayers(playerDataList: PlayerCreateData[]): Promise<number> {
-    try {
-      // Prepare player data with avatar URLs where possible
-      const preparedData = playerDataList.map(player => {
-        if (player.java_username && !player.avatar_url) {
-          return {
-            ...player,
-            avatar_url: `https://crafthead.net/avatar/${player.java_username}`
-          };
-        }
-        return player;
-      });
-      
-      // Insert players one by one to avoid type errors with bulk insert
-      let successCount = 0;
-      
-      for (const playerData of preparedData) {
-        const { data, error } = await supabase
-          .from('players')
-          .insert([playerData])
-          .select();
-          
-        if (!error && data) {
-          successCount += data.length;
-        } else if (error) {
-          console.error('Error creating player:', error);
-        }
-      }
-      
-      if (successCount > 0) {
-        toast.success(`Successfully created ${successCount} players`);
-      } else {
-        toast.error('Failed to create any players');
-      }
-      
-      return successCount;
-    } catch (error: any) {
-      console.error('Failed to mass create players:', error);
-      toast.error(`Failed to create players: ${error.message}`);
-      return 0;
-    }
-  },
-  
-  // Update a player
-  async updatePlayer(id: string, playerData: Partial<Player>): Promise<Player | null> {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .update(playerData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating player:', error);
-        toast.error(`Failed to update player: ${error.message}`);
-        return null;
-      }
-
-      toast.success(`Player ${data.ign} updated successfully`);
-      return data;
-    } catch (error: any) {
-      console.error('Failed to update player:', error);
-      toast.error(`Failed to update player: ${error.message}`);
-      return null;
-    }
-  },
-  
-  // Delete a player
-  async deletePlayer(id: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('players')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Error deleting player:', error);
-        toast.error(`Failed to delete player: ${error.message}`);
-        return false;
-      }
-
-      toast.success('Player deleted successfully');
-      return true;
-    } catch (error: any) {
-      console.error('Failed to delete player:', error);
-      toast.error(`Failed to delete player: ${error.message}`);
-      return false;
-    }
-  },
-  
-  // Gamemode scores functions
-  
-  // Assign tier to a player for a specific gamemode
-  async assignTier({ playerId, gamemode, tier }: TierAssignment): Promise<GamemodeScore | null> {
-    try {
-      // Calculate points based on tier
-      const points = TIER_POINTS[tier];
-      const displayTier = tier; // Tier like 'HT1', 'LT5', etc.
-      
-      // First, check if the player already has a tier for this gamemode
-      const { data: existingScore } = await supabase
-        .from('gamemode_scores')
-        .select('*')
-        .eq('player_id', playerId)
-        .eq('gamemode', gamemode)
-        .maybeSingle();
-      
-      let result;
-      
-      if (existingScore) {
-        // Update existing score
-        const { data, error } = await supabase
-          .from('gamemode_scores')
-          .update({
-            score: points,
-            internal_tier: tier,
-            display_tier: displayTier,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingScore.id)
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('Error updating tier:', error);
-          toast.error(`Failed to update tier: ${error.message}`);
-          return null;
-        }
-        
-        result = data;
-        toast.success(`Updated ${gamemode} tier to ${displayTier}`);
-      } else {
-        // Insert new score
-        const { data, error } = await supabase
-          .from('gamemode_scores')
-          .insert([{
-            player_id: playerId,
-            gamemode,
-            score: points,
-            internal_tier: tier,
-            display_tier: displayTier
-          }])
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('Error assigning tier:', error);
-          toast.error(`Failed to assign tier: ${error.message}`);
-          return null;
-        }
-        
-        result = data;
-        toast.success(`Assigned ${gamemode} tier ${displayTier}`);
-      }
-      
-      return result;
-    } catch (error: any) {
-      console.error('Failed to assign tier:', error);
-      toast.error(`Failed to assign tier: ${error.message}`);
-      return null;
-    }
-  },
-  
-  // Get all gamemode scores for a player
-  async getPlayerGamemodeScores(playerId: string): Promise<GamemodeScore[]> {
-    try {
-      const { data, error } = await supabase
-        .from('gamemode_scores')
-        .select('*')
-        .eq('player_id', playerId);
-
-      if (error) {
-        console.error('Error fetching gamemode scores:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Failed to fetch gamemode scores:', error);
-      return [];
-    }
-  },
-  
-  // Get players by tier for a specific gamemode
-  async getPlayersByTierAndGamemode(gamemode: GameMode): Promise<Record<TierLevel, Player[]>> {
-    try {
-      // Initialize result structure with empty arrays for each tier
-      const result: Record<TierLevel, Player[]> = {
-        'HT1': [], 'LT1': [],
-        'HT2': [], 'LT2': [],
-        'HT3': [], 'LT3': [],
-        'HT4': [], 'LT4': [],
-        'HT5': [], 'LT5': []
-      };
-      
-      // Get all gamemode scores for the specified gamemode
-      const { data: scores, error: scoresError } = await supabase
-        .from('gamemode_scores')
-        .select('player_id, internal_tier')
-        .eq('gamemode', gamemode);
-        
-      if (scoresError) {
-        console.error(`Error fetching ${gamemode} scores:`, scoresError);
-        return result;
-      }
-      
-      if (!scores || scores.length === 0) {
-        return result;
-      }
-      
-      // Group player IDs by tier
-      const playerIdsByTier: Record<string, string[]> = {};
-      scores.forEach(score => {
-        const tier = score.internal_tier as TierLevel;
-        if (!playerIdsByTier[tier]) {
-          playerIdsByTier[tier] = [];
-        }
-        playerIdsByTier[tier].push(score.player_id);
-      });
-      
-      // For each tier with players, fetch the player details
-      for (const [tier, playerIds] of Object.entries(playerIdsByTier)) {
-        if (playerIds.length === 0) continue;
-        
-        const { data: players, error: playersError } = await supabase
-          .from('players')
-          .select('*')
-          .in('id', playerIds);
-          
-        if (playersError) {
-          console.error(`Error fetching players for tier ${tier}:`, playersError);
-          continue;
-        }
-        
-        if (players && players.length > 0) {
-          result[tier as TierLevel] = players;
-        }
-      }
-      
-      return result;
-    } catch (error) {
-      console.error(`Failed to fetch players by tier for ${gamemode}:`, error);
-      return {
-        'HT1': [], 'LT1': [],
-        'HT2': [], 'LT2': [],
-        'HT3': [], 'LT3': [],
-        'HT4': [], 'LT4': [],
-        'HT5': [], 'LT5': []
-      };
-    }
-  },
-  
-  // Admin functions
-  
-  // Verify admin PIN
-  async verifyAdminPIN(pin: string): Promise<boolean> {
-    try {
-      // Note: In a real implementation, this should use a secure authentication method
-      // For demo purposes, we're just checking if any admin has this pin (pre-hashed)
-      const { data, error } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('hashed_pin', '$2a$10$QbTUEJ.XR6PqR4ckBVGbYO9g97zvXwZF.l5t5.c5XFgQX6nwNP31.') // This is the hash for "1234"
-        .single();
-      
-      if (error || !data) {
-        console.error('Admin verification failed:', error);
-        return false;
-      }
-      
-      return pin === '1234'; // Hardcoded for demo
-    } catch (error) {
-      console.error('Failed to verify admin PIN:', error);
-      return false;
-    }
-  },
-  
-  // Generate fake players for testing
-  async generateFakePlayers(count: number = 100): Promise<number> {
-    try {
-      // Prepare array for batch insertion
-      const fakePlayers: PlayerCreateData[] = [];
-      const gamemodes: GameMode[] = ['Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'];
-      const regions: PlayerRegion[] = ['NA', 'EU', 'ASIA', 'OCE'];
-      const devices: DeviceType[] = ['Mobile', 'PC', 'Console'];
-      const tiers: TierLevel[] = ['LT5', 'HT5', 'LT4', 'HT4', 'LT3', 'HT3', 'LT2', 'HT2', 'LT1', 'HT1'];
-      const avatarNames = ['MHF_Steve', 'MHF_Alex', 'Technoblade'];
-      
-      // Generate player records
-      for (let i = 1; i <= count; i++) {
-        const ign = `Player_${Math.floor(Math.random() * 10000)}`;
-        const javaUsername = avatarNames[Math.floor(Math.random() * avatarNames.length)];
-        
-        fakePlayers.push({
-          ign,
-          java_username: javaUsername,
-          avatar_url: `https://crafthead.net/avatar/${javaUsername}`,
-          region: regions[Math.floor(Math.random() * regions.length)],
-          device: devices[Math.floor(Math.random() * devices.length)]
-        });
-      }
-      
-      // Insert players one by one to avoid type errors with bulk insert
-      let insertedCount = 0;
-      const insertedPlayerIds: string[] = [];
-      
-      for (const player of fakePlayers) {
-        const { data, error } = await supabase
-          .from('players')
-          .insert([player])
-          .select('id, ign');
-          
-        if (!error && data && data.length > 0) {
-          insertedCount++;
-          insertedPlayerIds.push(data[0].id);
-        }
-      }
-      
-      if (insertedCount === 0) {
-        toast.error('Failed to create any fake players');
-        return 0;
-      }
-      
-      // For each inserted player, assign random tiers for 1-3 random gamemodes
-      let tierAssignmentCount = 0;
-      
-      for (const playerId of insertedPlayerIds) {
-        // Randomly select 1-3 gamemodes for this player
-        const playerGamemodes = [...gamemodes]
-          .sort(() => 0.5 - Math.random())
-          .slice(0, Math.floor(Math.random() * 3) + 1);
-          
-        for (const gamemode of playerGamemodes) {
-          // Assign a random tier
-          const tier = tiers[Math.floor(Math.random() * tiers.length)];
-          const { error } = await supabase
-            .from('gamemode_scores')
-            .insert([{
-              player_id: playerId,
-              gamemode,
-              score: TIER_POINTS[tier],
-              internal_tier: tier,
-              display_tier: tier
-            }]);
-            
-          if (!error) {
-            tierAssignmentCount++;
-          }
-        }
-      }
-      
-      toast.success(`Created ${insertedCount} fake players with ${tierAssignmentCount} random tiers`);
-      return insertedCount;
-    } catch (error: any) {
-      console.error('Failed to generate fake players:', error);
-      toast.error(`Failed to generate fake players: ${error.message}`);
-      return 0;
-    }
-  },
-  
-  // Wipe all data (dangerous operation!)
-  async wipeAllData(): Promise<boolean> {
-    try {
-      // Delete all gamemode_scores first (due to foreign key constraints)
-      const { error: scoresError } = await supabase
-        .from('gamemode_scores')
-        .delete()
-        .neq('player_id', '00000000-0000-0000-0000-000000000000'); // Delete all
-        
-      if (scoresError) {
-        console.error('Error deleting gamemode scores:', scoresError);
-        toast.error(`Failed to delete gamemode scores: ${scoresError.message}`);
-        return false;
-      }
-      
-      // Then delete all players
-      const { error: playersError } = await supabase
-        .from('players')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-        
-      if (playersError) {
-        console.error('Error deleting players:', playersError);
-        toast.error(`Failed to delete players: ${playersError.message}`);
-        return false;
-      }
-      
-      toast.success('All data has been wiped successfully');
-      return true;
-    } catch (error: any) {
-      console.error('Failed to wipe all data:', error);
-      toast.error(`Failed to wipe data: ${error.message}`);
-      return false;
-    }
-  },
-  
-  // Submit player result - new function for admin form submission
-  async submitPlayerResult(
-    ign: string,
-    gamemode: GameMode,
-    tier: TierLevel,
-    options: {
-      javaUsername?: string,
-      region?: PlayerRegion,
-      device?: DeviceType,
-      notes?: string
-    } = {}
-  ): Promise<boolean> {
-    try {
-      const { javaUsername, region, device, notes } = options;
-      
-      // First, check if the player exists
-      let player = await this.getPlayerByIGN(ign);
-      
-      if (!player) {
-        // Create the player if they don't exist
-        player = await this.createPlayer({
-          ign,
-          java_username: javaUsername,
-          device,
-          region
-        });
-        
-        if (!player) {
-          toast.error(`Could not create player: ${ign}`);
-          return false;
-        }
-      } else {
-        // Update the player's info if needed
-        if (
-          (javaUsername && player.java_username !== javaUsername) ||
-          (device && player.device !== device) ||
-          (region && player.region !== region)
-        ) {
-          await this.updatePlayer(player.id, {
-            java_username: javaUsername || player.java_username,
-            device: device || player.device,
-            region: region || player.region
-          });
-        }
-      }
-      
-      // Assign the tier to the player
-      const result = await this.assignTier({
-        playerId: player.id,
-        gamemode,
-        tier
-      });
-      
-      // Log the result submission
-      console.log(`Result submitted: ${ign} - ${gamemode} - ${tier} ${notes ? `- Notes: ${notes}` : ''}`);
-      
-      return !!result;
-    } catch (error: any) {
-      console.error('Result submission error:', error);
-      toast.error(`Failed to submit result: ${error.message}`);
-      return false;
-    }
-  },
-  
-  // Bulk submit player results
-  async bulkSubmitResults(
-    data: Array<{
-      ign: string,
-      gamemode: GameMode,
-      tier: TierLevel,
-      javaUsername?: string,
-      region?: PlayerRegion,
-      device?: DeviceType,
-      notes?: string
-    }>
-  ): Promise<{success: number, failed: number}> {
-    const results = {
-      success: 0,
-      failed: 0
-    };
-    
-    for (const entry of data) {
-      const success = await this.submitPlayerResult(
-        entry.ign,
-        entry.gamemode,
-        entry.tier,
-        {
-          javaUsername: entry.javaUsername,
-          region: entry.region,
-          device: entry.device,
-          notes: entry.notes
-        }
-      );
-      
-      if (success) {
-        results.success++;
-      } else {
-        results.failed++;
-      }
-    }
-    
-    return results;
+// Helper function to convert TierLevel to a numerical value
+export function getTierPointValue(tier: TierLevel): number {
+  switch (tier) {
+    case TierLevel.HT1: return 10;
+    case TierLevel.LT1: return 9;
+    case TierLevel.HT2: return 8;
+    case TierLevel.LT2: return 7;
+    case TierLevel.HT3: return 6;
+    case TierLevel.LT3: return 5;
+    case TierLevel.HT4: return 4;
+    case TierLevel.LT4: return 3;
+    case TierLevel.HT5: return 2;
+    case TierLevel.LT5: return 1;
+    default: return 0;
   }
+}
+
+/**
+ * Get a player by their IGN (In-Game Name)
+ * @param ign The IGN of the player
+ * @returns Player object if found, null otherwise
+ */
+async function getPlayerByIGN(ign: string): Promise<Player | null> {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('ign', ign)
+      .single();
+
+    if (error) {
+      console.error('Error fetching player by IGN:', error);
+      return null;
+    }
+
+    return data ? data as Player : null;
+  } catch (error) {
+    console.error('Error fetching player by IGN:', error);
+    return null;
+  }
+}
+
+/**
+ * Create a new player
+ * @param player The player data to create
+ * @returns Player object if created, null otherwise
+ */
+async function createPlayer(player: PlayerCreateData): Promise<Player | null> {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .insert([
+        {
+          ign: player.ign,
+          java_username: player.java_username,
+          region: player.region,
+          device: player.device,
+          gamemode: 'UNRANKED', // Default gamemode for new players
+          tier_number: 0      // Default tier for new players
+        }
+      ])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error creating player:', error);
+      return null;
+    }
+
+    return data ? data as Player : null;
+  } catch (error) {
+    console.error('Error creating player:', error);
+    return null;
+  }
+}
+
+/**
+ * Update an existing player
+ * @param id The ID of the player to update
+ * @param updates The updates to apply to the player
+ * @returns Player object if updated, null otherwise
+ */
+async function updatePlayer(id: string, updates: Partial<Player>): Promise<Player | null> {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .update(updates)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error updating player:', error);
+      return null;
+    }
+
+    return data ? data as Player : null;
+  } catch (error) {
+    console.error('Error updating player:', error);
+    return null;
+  }
+}
+
+/**
+ * Assign a tier to a player for a specific game mode
+ * @param assignment The tier assignment data
+ * @returns True if the tier was assigned, false otherwise
+ */
+async function assignTier(assignment: TierAssignment): Promise<boolean> {
+  try {
+    const tierNumber = getTierPointValue(assignment.tier);
+
+    const { data, error } = await supabase
+      .from('players')
+      .update({
+        gamemode: assignment.gamemode,
+        tier_number: tierNumber
+      })
+      .eq('id', assignment.playerId);
+
+    if (error) {
+      console.error('Error assigning tier:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error assigning tier:', error);
+    return false;
+  }
+}
+
+/**
+ * Submit a player result, creating the player if they don't exist
+ * @param ign The IGN of the player
+ * @param gamemode The game mode
+ * @param tier The tier achieved
+ * @param additionalInfo Additional player information
+ * @returns True if the result was submitted, false otherwise
+ */
+async function submitPlayerResult(
+  ign: string,
+  gamemode: GameMode,
+  tier: TierLevel,
+  additionalInfo?: AdditionalPlayerInfo
+): Promise<boolean> {
+  try {
+    // First, check if the player exists
+    let player = await getPlayerByIGN(ign);
+
+    if (!player) {
+      // Create the player if they don't exist
+      player = await createPlayer({
+        ign,
+        java_username: additionalInfo?.javaUsername,
+        region: additionalInfo?.region,
+        device: additionalInfo?.device
+      });
+
+      if (!player) {
+        console.error(`Could not create player: ${ign}`);
+        return false;
+      }
+    } else {
+      // Update the player's info if needed
+      if (
+        (additionalInfo?.javaUsername && player.java_username !== additionalInfo?.javaUsername) ||
+        (additionalInfo?.device && player.device !== additionalInfo?.device) ||
+        (additionalInfo?.region && player.region !== additionalInfo?.region)
+      ) {
+        await updatePlayer(player.id, {
+          java_username: additionalInfo?.javaUsername || player.java_username,
+          device: additionalInfo?.device || player.device,
+          region: additionalInfo?.region || player.region
+        });
+      }
+    }
+
+    // Assign the tier to the player
+    return await assignTier({
+      playerId: player.id,
+      gamemode,
+      tier
+    });
+  } catch (error) {
+    console.error('Error submitting player result:', error);
+    return false;
+  }
+}
+
+/**
+ * Bulk submit player results
+ * @param submissions An array of player submission data
+ * @returns An object containing the number of successful and failed submissions
+ */
+async function bulkSubmitResults(submissions: BulkSubmissionData[]): Promise<{ success: number; failed: number }> {
+  let successCount = 0;
+  let failedCount = 0;
+
+  for (const submission of submissions) {
+    const { ign, gamemode, tier, region } = submission;
+
+    const result = await submitPlayerResult(ign, gamemode, tier, { region });
+
+    if (result) {
+      successCount++;
+    } else {
+      failedCount++;
+    }
+  }
+
+  return { success: successCount, failed: failedCount };
+}
+
+/**
+ * Mass create players from a list of player data
+ * @param players List of player data objects
+ * @returns Number of players created
+ */
+async function massCreatePlayers(players: PlayerCreateData[] | PlayerCreateData): Promise<number> {
+  try {
+    let playersList: PlayerCreateData[];
+    
+    // Convert single player to array if needed
+    if (!Array.isArray(players)) {
+      playersList = [players];
+    } else {
+      playersList = players;
+    }
+    
+    // Filter out any invalid data
+    const validPlayers = playersList.filter(p => p.ign && p.ign.trim() !== '');
+    
+    if (validPlayers.length === 0) {
+      return 0;
+    }
+    
+    // Transform the data to match the required format for database insert
+    const playersToInsert = validPlayers.map(player => ({
+      ign: player.ign,
+      java_username: player.java_username,
+      region: player.region,
+      device: player.device,
+      gamemode: 'UNRANKED', // Default gamemode for new players
+      tier_number: 0      // Default tier for new players
+    }));
+    
+    // Insert players - make sure to use the correct format for insert
+    const { data, error } = await supabase
+      .from('players')
+      .insert(playersToInsert)
+      .select('*');
+    
+    if (error) {
+      console.error('Mass player creation error:', error);
+      return 0;
+    }
+    
+    return validPlayers.length;
+  } catch (error) {
+    console.error('Mass player creation error:', error);
+    return 0;
+  }
+}
+
+/**
+ * Verify if the provided PIN is the admin PIN
+ * @param pin The PIN to verify
+ * @returns True if the PIN is valid, false otherwise
+ */
+async function verifyAdminPIN(pin: string): Promise<boolean> {
+  // Retrieve the admin PIN from the Supabase environment variables
+  const adminPin = process.env.NEXT_PUBLIC_ADMIN_PIN;
+
+  // Check if the admin PIN is defined
+  if (!adminPin) {
+    console.warn('Admin PIN is not defined in environment variables.');
+    return false;
+  }
+
+  // Compare the provided PIN with the admin PIN
+  return pin === adminPin;
+}
+
+/**
+ * Generate fake players for testing
+ * @param count Number of fake players to generate
+ * @returns Number of players generated
+ */
+async function generateFakePlayers(count: number): Promise<number> {
+  try {
+    const fakePlayersList: any[] = [];
+    const gamemodes = ['SMP', 'MACE', 'BEDWARS'];
+    const regions = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'];
+    const devices = ['MOBILE', 'CONTROLLER', 'KEYBOARD', 'TOUCH'];
+    const tiers = ['LT5', 'HT5', 'LT4', 'HT4', 'LT3', 'HT3', 'LT2', 'HT2', 'LT1', 'HT1'];
+    
+    for (let i = 0; i < count; i++) {
+      const randomGamemode = gamemodes[Math.floor(Math.random() * gamemodes.length)];
+      const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+      const randomRegion = regions[Math.floor(Math.random() * regions.length)];
+      const randomDevice = devices[Math.floor(Math.random() * devices.length)];
+      
+      fakePlayersList.push({
+        ign: `TestPlayer${Date.now()}${i}`,
+        java_username: Math.random() > 0.5 ? `JavaPlayer${Date.now()}${i}` : null,
+        region: randomRegion,
+        device: randomDevice,
+        gamemode: randomGamemode,
+        tier_number: getTierPointValue(randomTier)
+      });
+    }
+    
+    // Insert the fake players
+    const { error } = await supabase
+      .from('players')
+      .insert(fakePlayersList);
+    
+    if (error) {
+      console.error('Fake players generation error:', error);
+      return 0;
+    }
+    
+    return count;
+  } catch (error) {
+    console.error('Fake players generation error:', error);
+    return 0;
+  }
+}
+
+/**
+ * Wipe all data from the players table
+ * @returns True if the data was wiped, false otherwise
+ */
+async function wipeAllData(): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .neq('id', null); // This will delete all rows
+
+    if (error) {
+      console.error('Error wiping all data:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error wiping all data:', error);
+    return false;
+  }
+}
+
+export const playerService = {
+  supabase,
+  getPlayerByIGN,
+  createPlayer,
+  updatePlayer,
+  assignTier,
+  submitPlayerResult,
+  bulkSubmitResults,
+  massCreatePlayers,
+  verifyAdminPIN,
+  generateFakePlayers,
+  wipeAllData
 };

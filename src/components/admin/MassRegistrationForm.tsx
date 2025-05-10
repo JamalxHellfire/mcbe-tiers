@@ -1,154 +1,158 @@
 
 import React, { useState } from 'react';
-import { playerService } from '@/services/playerService';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Loader2, Upload, RefreshCw } from 'lucide-react';
 import { adminService } from '@/services/adminService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Loader2, FileSpreadsheet, UserPlus } from 'lucide-react';
-import { toast } from 'sonner';
+import { playerService } from '@/services/playerService';
 
 const MassRegistrationForm: React.FC = () => {
-  const [playersData, setPlayersData] = useState<string>('');
-  const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [playersList, setPlayersList] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [processingStats, setProcessingStats] = useState<{
+    total: number;
+    processed: number;
+    success: number;
+    failed: number;
+  } | null>(null);
 
-  // Import CSV/Text data
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        
-        if (content) {
-          setPlayersData(content);
-          toast.success('File imported successfully');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-        toast.error('Failed to parse the imported file');
-      }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    reader.readAsText(file);
-    
-    // Reset the file input
-    e.target.value = '';
-  };
-
-  // Form validation
-  const validateData = (): boolean => {
-    if (!playersData.trim()) {
+    if (!playersList.trim()) {
       toast.error('Please enter player data');
-      return false;
+      return;
     }
     
-    return true;
-  };
-
-  // Form submission
-  const handleRegister = async () => {
-    if (!validateData()) return;
-    
-    setIsRegistering(true);
+    setIsProcessing(true);
+    setProcessingStats({
+      total: 0,
+      processed: 0,
+      success: 0,
+      failed: 0
+    });
     
     try {
-      const count = await playerService.massRegisterPlayers(playersData);
+      // Execute the mass registration
+      const result = await playerService.massCreatePlayers(
+        playersList
+          .trim()
+          .split('\n')
+          .filter(line => line.trim() !== '')
+          .map(line => {
+            const [ign, javaUsername] = line.split(',').map(part => part.trim());
+            return {
+              ign,
+              java_username: javaUsername || undefined
+            };
+          })
+      );
       
-      if (count > 0) {
-        // Log admin activity
-        adminService.logAdminActivity(
-          `Mass registered ${count} players`
-        );
-        
-        // Clear form
-        setPlayersData('');
-        
-        toast.success(`Successfully registered ${count} players`);
-      } else {
-        toast.error('Failed to register any players');
+      // Log activity
+      adminService.logAdminActivity(`Mass registered ${result} players`);
+      
+      toast.success(`Successfully registered ${result} players`);
+      setProcessingStats({
+        total: result,
+        processed: result,
+        success: result,
+        failed: 0
+      });
+      
+      // Clear form if successful
+      if (result > 0) {
+        setPlayersList('');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Mass registration error:', error);
       toast.error('Failed to register players');
+      setProcessingStats(prev => prev ? {
+        ...prev,
+        failed: prev.total - prev.success
+      } : null);
     } finally {
-      setIsRegistering(false);
+      setIsProcessing(false);
     }
   };
-
+  
+  const clearForm = () => {
+    setPlayersList('');
+    setProcessingStats(null);
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Mass Player Registration</CardTitle>
-        <CardDescription>
-          Register multiple players at once using a CSV-style format.
-          Format: IGN,JavaUsername (optional)
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* File Import */}
-        <div className="space-y-2">
-          <Label>Import from File</Label>
-          <div className="flex gap-2">
-            <input 
-              type="file" 
-              accept=".csv,.txt" 
-              onChange={handleImport}
-              className="hidden"
-              id="register-file-import"
-            />
-            <Button 
-              variant="outline" 
-              onClick={() => document.getElementById('register-file-import')?.click()}
-              className="w-full flex gap-2"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Import CSV/TXT File
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Import a CSV or text file with format: IGN,JavaUsername
-          </p>
-        </div>
-
-        {/* Player Data Textarea */}
-        <div className="space-y-2">
-          <Label htmlFor="players-data">Players Data</Label>
-          <Textarea
-            id="players-data"
-            placeholder="Player1,JavaUsername1&#10;Player2,JavaUsername2&#10;Player3"
-            value={playersData}
-            onChange={(e) => setPlayersData(e.target.value)}
-            rows={12}
-          />
-          <p className="text-xs text-muted-foreground">
-            Enter players in format: IGN,JavaUsername (JavaUsername is optional)
-          </p>
-        </div>
-
-        {/* Register Button */}
-        <Button 
-          onClick={handleRegister}
-          disabled={isRegistering || !playersData.trim()} 
-          className="w-full flex gap-2"
-        >
-          {isRegistering ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Registering...
-            </>
-          ) : (
-            <>
-              <UserPlus className="h-4 w-4" />
-              Register Players
-            </>
-          )}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-medium">Mass Player Registration</h2>
+        <Button variant="outline" size="sm" onClick={clearForm}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Clear
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <div className="p-4 bg-muted/40 rounded-md">
+        <p className="text-sm text-muted-foreground mb-2">
+          Enter each player on a new line using the format: <strong>IGN,JavaUsername</strong> (JavaUsername is optional)
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Example:<br />
+          PlayerOne,JavaPlayerOne<br />
+          PlayerTwo<br />
+          PlayerThree,JavaPlayerThree
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit}>
+        <Textarea
+          value={playersList}
+          onChange={(e) => setPlayersList(e.target.value)}
+          placeholder="Enter players list here..."
+          className="min-h-[200px] font-mono text-sm"
+        />
+        
+        {processingStats && (
+          <div className="mt-4 p-3 bg-muted/30 rounded-md">
+            <div className="text-sm">
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <div className="font-medium">Total</div>
+                  <div>{processingStats.total}</div>
+                </div>
+                <div>
+                  <div className="font-medium">Processed</div>
+                  <div>{processingStats.processed}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-green-600">Success</div>
+                  <div>{processingStats.success}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-red-600">Failed</div>
+                  <div>{processingStats.failed}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="mt-4">
+          <Button type="submit" className="w-full" disabled={isProcessing}>
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Register Players
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 

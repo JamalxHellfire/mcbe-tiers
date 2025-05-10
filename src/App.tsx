@@ -1,12 +1,12 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
 import Index from './pages/Index';
 import About from './pages/About';
 import News from './pages/News';
 import NotFound from './pages/NotFound';
-import AdminPanel from './pages/AdminPanel'; // Add import
+import AdminPanel from './pages/AdminPanel';
 import { Toaster } from './components/ui/sonner';
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
             <Route path="/news" element={<News />} />
-            <Route path="/admin-panel" element={<AdminPanel />} /> {/* Add new route */}
+            <Route path="/admin-panel" element={<AdminPanel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
