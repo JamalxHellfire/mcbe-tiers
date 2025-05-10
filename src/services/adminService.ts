@@ -2,7 +2,7 @@
 // Simple service to manage admin authentication state using localStorage
 export const adminService = {
   isAdmin(): boolean {
-    return localStorage.getItem('isAdmin') === 'true';
+    return localStorage.getItem('isAdmin') === 'true' && this.checkExpiration();
   },
   
   setAdmin(value: boolean): void {

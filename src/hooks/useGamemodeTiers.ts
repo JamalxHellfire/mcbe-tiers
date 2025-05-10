@@ -1,35 +1,32 @@
 
 import { useState, useEffect } from 'react';
 import { playerService, GameMode, Player, TierLevel } from '@/services/playerService';
+import { useQuery } from '@tanstack/react-query';
 
 export function useGamemodeTiers(gamemode: GameMode) {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tierData, setTierData] = useState<Record<TierLevel, Player[]>>({
-    'HT1': [], 'LT1': [],
-    'HT2': [], 'LT2': [],
-    'HT3': [], 'LT3': [],
-    'HT4': [], 'LT4': [],
-    'HT5': [], 'LT5': []
-  });
-  
-  useEffect(() => {
-    const fetchTierData = async () => {
+  const { 
+    data: tierData = {
+      'HT1': [], 'LT1': [],
+      'HT2': [], 'LT2': [],
+      'HT3': [], 'LT3': [],
+      'HT4': [], 'LT4': [],
+      'HT5': [], 'LT5': []
+    }, 
+    isLoading: loading, 
+    error 
+  } = useQuery({
+    queryKey: ['tierData', gamemode],
+    queryFn: async () => {
       try {
-        setLoading(true);
         const data = await playerService.getPlayersByTierAndGamemode(gamemode);
-        setTierData(data);
-        setError(null);
+        return data;
       } catch (err: any) {
         console.error(`Error fetching ${gamemode} tier data:`, err);
-        setError(err.message || 'Failed to load tier data');
-      } finally {
-        setLoading(false);
+        throw new Error(err.message || 'Failed to load tier data');
       }
-    };
-    
-    fetchTierData();
-  }, [gamemode]);
+    },
+    staleTime: 60000, // 1 minute
+  });
   
-  return { tierData, loading, error };
+  return { tierData, loading, error: error ? (error as Error).message : null };
 }

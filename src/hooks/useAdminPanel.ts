@@ -1,13 +1,24 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useAdminPanel() {
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
   const [pinInputValue, setPinInputValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  
+  const queryClient = useQueryClient();
+
+  // Check admin expiration on mount
+  useEffect(() => {
+    const isStillAdmin = adminService.checkExpiration();
+    if (isAdminMode !== isStillAdmin) {
+      setIsAdminMode(isStillAdmin);
+    }
+  }, []);
 
   // Auth functions
   const handlePinSubmit = async () => {
@@ -43,9 +54,9 @@ export function useAdminPanel() {
     toast.info('Admin session ended');
   };
   
-  // Player management functions
-  const massRegisterPlayers = async (playersList: string) => {
-    try {
+  // Player management mutations
+  const massRegisterPlayersMutation = useMutation({
+    mutationFn: async (playersList: string) => {
       if (!playersList.trim()) {
         toast.error('Please enter player data');
         return 0;
@@ -70,22 +81,30 @@ export function useAdminPanel() {
       });
       
       return await playerService.massCreatePlayers(playerDataList);
-    } catch (error) {
-      console.error('Mass registration error:', error);
-      toast.error('Failed to register players');
-      return 0;
+    },
+    onSuccess: (count) => {
+      if (count > 0) {
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      }
     }
-  };
+  });
   
-  const submitPlayerResult = async (
-    ign: string,
-    javaUsername: string | undefined,
-    device: DeviceType | undefined,
-    region: PlayerRegion | undefined,
-    gamemode: GameMode,
-    tier: TierLevel
-  ) => {
-    try {
+  const submitPlayerResultMutation = useMutation({
+    mutationFn: async ({
+      ign,
+      javaUsername,
+      device,
+      region,
+      gamemode,
+      tier
+    }: {
+      ign: string,
+      javaUsername?: string,
+      device?: DeviceType,
+      region?: PlayerRegion,
+      gamemode: GameMode,
+      tier: TierLevel
+    }) => {
       // First, check if the player exists
       let player = await playerService.getPlayerByIGN(ign);
       
@@ -125,19 +144,62 @@ export function useAdminPanel() {
       });
       
       return !!result;
-    } catch (error) {
-      console.error('Result submission error:', error);
-      toast.error('Failed to submit result');
-      return false;
+    },
+    onSuccess: (success, variables) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      }
     }
+  });
+  
+  const generateFakePlayersMutation = useMutation({
+    mutationFn: (count: number) => playerService.generateFakePlayers(count),
+    onSuccess: (count) => {
+      if (count > 0) {
+        queryClient.invalidateQueries();
+      }
+    }
+  });
+  
+  const wipeAllDataMutation = useMutation({
+    mutationFn: () => playerService.wipeAllData(),
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries();
+      }
+    }
+  });
+  
+  // Wrapper functions for mutations
+  const massRegisterPlayers = (playersList: string) => {
+    return massRegisterPlayersMutation.mutateAsync(playersList);
   };
   
-  const generateFakePlayers = async (count: number) => {
-    return await playerService.generateFakePlayers(count);
+  const submitPlayerResult = (
+    ign: string,
+    javaUsername: string | undefined,
+    device: DeviceType | undefined,
+    region: PlayerRegion | undefined,
+    gamemode: GameMode,
+    tier: TierLevel
+  ) => {
+    return submitPlayerResultMutation.mutateAsync({
+      ign,
+      javaUsername,
+      device,
+      region,
+      gamemode,
+      tier
+    });
   };
   
-  const wipeAllData = async () => {
-    return await playerService.wipeAllData();
+  const generateFakePlayers = (count: number) => {
+    return generateFakePlayersMutation.mutateAsync(count);
+  };
+  
+  const wipeAllData = () => {
+    return wipeAllDataMutation.mutateAsync();
   };
   
   return {

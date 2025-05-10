@@ -231,8 +231,15 @@ export const playerService = {
   // Assign tier to a player for a specific gamemode
   async assignTier({ playerId, gamemode, tier }: TierAssignment): Promise<GamemodeScore | null> {
     try {
+      // Validate that tier is a valid TierLevel
+      if (!Object.keys(TIER_POINTS).includes(tier)) {
+        console.error(`Invalid tier: ${tier}`);
+        toast.error(`Invalid tier: ${tier}`);
+        return null;
+      }
+      
       // Calculate points based on tier
-      const points = TIER_POINTS[tier];
+      const points = TIER_POINTS[tier as TierLevel];
       const displayTier = tier; // Tier like 'HT1', 'LT5', etc.
       
       // First, check if the player already has a tier for this gamemode

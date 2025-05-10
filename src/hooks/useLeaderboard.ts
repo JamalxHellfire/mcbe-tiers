@@ -1,29 +1,22 @@
 
 import { useState, useEffect } from 'react';
 import { playerService, Player } from '@/services/playerService';
+import { useQuery } from '@tanstack/react-query';
 
 export function useLeaderboard() {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
+  const { data: players = [], isLoading: loading, error } = useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: async () => {
       try {
-        setLoading(true);
         const data = await playerService.getRankedPlayers();
-        setPlayers(data);
-        setError(null);
+        return data;
       } catch (err: any) {
         console.error('Error fetching leaderboard:', err);
-        setError(err.message || 'Failed to load leaderboard');
-      } finally {
-        setLoading(false);
+        throw new Error(err.message || 'Failed to load leaderboard');
       }
-    };
-    
-    fetchLeaderboard();
-  }, []);
+    },
+    staleTime: 60000, // 1 minute
+  });
   
-  return { players, loading, error };
+  return { players, loading, error: error ? (error as Error).message : null };
 }

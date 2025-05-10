@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { playerService, Player } from '@/services/playerService';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -11,43 +11,38 @@ export function usePlayerSearch() {
   
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   
-  const searchPlayers = async (term: string) => {
-    if (!term || term.length < 2) {
-      setPlayers([]);
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Use supabase directly for ilike search
-      const { data, error } = await playerService.supabase
-        .from('players')
-        .select('*')
-        .ilike('ign', `%${term}%`)
-        .limit(10);
-        
-      if (error) {
+  useEffect(() => {
+    const searchPlayers = async () => {
+      if (!debouncedSearchTerm || debouncedSearchTerm.length < 2) {
+        setPlayers([]);
+        return;
+      }
+      
+      setLoading(true);
+      
+      try {
+        // Use supabase directly for ilike search
+        const { data, error } = await playerService.supabase
+          .from('players')
+          .select('*')
+          .ilike('ign', `%${debouncedSearchTerm}%`)
+          .limit(10);
+          
+        if (error) {
+          console.error('Player search error:', error);
+          setPlayers([]);
+        } else {
+          setPlayers(data || []);
+        }
+      } catch (error) {
         console.error('Player search error:', error);
         setPlayers([]);
-      } else {
-        setPlayers(data || []);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Player search error:', error);
-      setPlayers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // When the debounced search term changes, search for players
-  useState(() => {
-    if (debouncedSearchTerm) {
-      searchPlayers(debouncedSearchTerm);
-    } else {
-      setPlayers([]);
-    }
+    };
+
+    searchPlayers();
   }, [debouncedSearchTerm]);
   
   return {
