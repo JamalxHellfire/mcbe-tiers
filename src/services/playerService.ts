@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Define the Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://ygggfrjwrddpigblfowy.supabase.co";
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnZ2dmcmp3cmRkcGlnYmxmb3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3MTkyMDMsImV4cCI6MjA2MTI5NTIwM30.eAafDrsDXOJlqO8940KQVTje8BTZjnY4450CiP3NfDM";
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Supabase URL and key must be defined in environment variables.');
@@ -356,14 +356,8 @@ async function massCreatePlayers(players: PlayerCreateData[] | PlayerCreateData)
  * @returns True if the PIN is valid, false otherwise
  */
 async function verifyAdminPIN(pin: string): Promise<boolean> {
-  // Retrieve the admin PIN from the Supabase environment variables
-  const adminPin = process.env.NEXT_PUBLIC_ADMIN_PIN;
-
-  // Check if the admin PIN is defined
-  if (!adminPin) {
-    console.warn('Admin PIN is not defined in environment variables.');
-    return false;
-  }
+  // Retrieve the admin PIN from environment variables or use a default one for development
+  const adminPin = import.meta.env.VITE_ADMIN_PIN || "1234";
 
   // Compare the provided PIN with the admin PIN
   return pin === adminPin;

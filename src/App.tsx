@@ -7,7 +7,7 @@ import About from './pages/About';
 import News from './pages/News';
 import NotFound from './pages/NotFound';
 import AdminPanel from './pages/AdminPanel';
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
