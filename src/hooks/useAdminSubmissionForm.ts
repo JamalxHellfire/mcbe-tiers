@@ -30,8 +30,8 @@ export function useAdminSubmissionForm() {
   // Single submission form state
   const [formData, setFormData] = useState<FormData>({
     ign: '',
-    gamemode: GameMode.SMP,
-    tier: TierLevel.LT5,
+    gamemode: 'SMP',
+    tier: 'LT5',
     javaUsername: '',
     notes: ''
   });
@@ -39,8 +39,8 @@ export function useAdminSubmissionForm() {
   // Bulk submission form state
   const [bulkFormData, setBulkFormData] = useState<BulkSubmission>({
     igns: '',
-    gamemode: GameMode.SMP,
-    tier: TierLevel.LT5
+    gamemode: 'SMP',
+    tier: 'LT5'
   });
   
   // Form processing states
@@ -128,8 +128,8 @@ export function useAdminSubmissionForm() {
         // Reset form
         setFormData({
           ign: '',
-          gamemode: GameMode.SMP,
-          tier: TierLevel.LT5,
+          gamemode: 'SMP',
+          tier: 'LT5',
           javaUsername: '',
           notes: ''
         });
@@ -169,8 +169,8 @@ export function useAdminSubmissionForm() {
         // Reset form if at least one submission succeeded
         setBulkFormData({
           igns: '',
-          gamemode: GameMode.SMP,
-          tier: TierLevel.LT5
+          gamemode: 'SMP',
+          tier: 'LT5'
         });
       }
     } catch (error) {
@@ -246,8 +246,8 @@ export function useAdminSubmissionForm() {
   const resetBulkForm = () => {
     setBulkFormData({
       igns: '',
-      gamemode: GameMode.SMP,
-      tier: TierLevel.LT5
+      gamemode: 'SMP',
+      tier: 'LT5'
     });
   };
   

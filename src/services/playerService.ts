@@ -11,47 +11,51 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Enums and Types - Updated to match string literals used in components
-export enum PlayerRegion {
-  NA = 'NA',
-  EU = 'EU',
-  ASIA = 'ASIA',
-  OCE = 'OCE',
-  SA = 'SA',
-  AF = 'AF'
-}
+// Update enums to use string literal types to match component usage
+export type PlayerRegion = 'NA' | 'EU' | 'ASIA' | 'OCE' | 'SA' | 'AF';
+export const PlayerRegion = {
+  NA: 'NA' as PlayerRegion,
+  EU: 'EU' as PlayerRegion,
+  ASIA: 'ASIA' as PlayerRegion,
+  OCE: 'OCE' as PlayerRegion,
+  SA: 'SA' as PlayerRegion,
+  AF: 'AF' as PlayerRegion
+};
 
-export enum DeviceType {
-  MOBILE = 'Mobile',
-  CONTROLLER = 'Console',
-  KEYBOARD = 'PC',
-  TOUCH = 'Touch'
-}
+export type DeviceType = 'Mobile' | 'Console' | 'PC' | 'Touch';
+export const DeviceType = {
+  MOBILE: 'Mobile' as DeviceType,
+  CONTROLLER: 'Console' as DeviceType,
+  KEYBOARD: 'PC' as DeviceType,
+  TOUCH: 'Touch' as DeviceType
+};
 
-export enum GameMode {
-  SMP = 'SMP',
-  MACE = 'Mace',
-  BEDWARS = 'Bedwars',
-  CRYSTAL = 'Crystal',
-  SWORD = 'Sword',
-  UHC = 'UHC',
-  AXE = 'Axe',
-  NETHPOT = 'NethPot',
-  UNRANKED = 'UNRANKED'
-}
+export type GameMode = 'SMP' | 'Mace' | 'Bedwars' | 'Crystal' | 'Sword' | 'UHC' | 'Axe' | 'NethPot' | 'UNRANKED';
+export const GameMode = {
+  SMP: 'SMP' as GameMode,
+  MACE: 'Mace' as GameMode,
+  BEDWARS: 'Bedwars' as GameMode,
+  CRYSTAL: 'Crystal' as GameMode,
+  SWORD: 'Sword' as GameMode,
+  UHC: 'UHC' as GameMode,
+  AXE: 'Axe' as GameMode,
+  NETHPOT: 'NethPot' as GameMode,
+  UNRANKED: 'UNRANKED' as GameMode
+};
 
-export enum TierLevel {
-  LT5 = 'LT5',
-  HT5 = 'HT5',
-  LT4 = 'LT4',
-  HT4 = 'HT4',
-  LT3 = 'LT3',
-  HT3 = 'HT3',
-  LT2 = 'LT2',
-  HT2 = 'HT2',
-  LT1 = 'LT1',
-  HT1 = 'HT1'
-}
+export type TierLevel = 'LT5' | 'HT5' | 'LT4' | 'HT4' | 'LT3' | 'HT3' | 'LT2' | 'HT2' | 'LT1' | 'HT1';
+export const TierLevel = {
+  LT5: 'LT5' as TierLevel,
+  HT5: 'HT5' as TierLevel,
+  LT4: 'LT4' as TierLevel,
+  HT4: 'HT4' as TierLevel,
+  LT3: 'LT3' as TierLevel,
+  HT3: 'HT3' as TierLevel,
+  LT2: 'LT2' as TierLevel,
+  HT2: 'HT2' as TierLevel,
+  LT1: 'LT1' as TierLevel,
+  HT1: 'HT1' as TierLevel
+};
 
 export interface Player {
   id: string;
