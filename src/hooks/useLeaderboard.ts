@@ -2,34 +2,28 @@
 import { useState, useEffect } from 'react';
 import { playerService, Player } from '@/services/playerService';
 
-export function useLeaderboard(limit: number = 100) {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+export function useLeaderboard() {
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [players, setPlayers] = useState<Player[]>([]);
+  
   useEffect(() => {
-    const fetchPlayers = async () => {
-      setIsLoading(true);
-      setError(null);
-      
+    const fetchLeaderboard = async () => {
       try {
-        const data = await playerService.getRankedPlayers(limit);
+        setLoading(true);
+        const data = await playerService.getRankedPlayers();
         setPlayers(data);
-      } catch (err) {
+        setError(null);
+      } catch (err: any) {
         console.error('Error fetching leaderboard:', err);
-        setError('Failed to fetch leaderboard');
-        setPlayers([]);
+        setError(err.message || 'Failed to load leaderboard');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
-    fetchPlayers();
-  }, [limit]);
-
-  return {
-    players,
-    isLoading,
-    error
-  };
+    fetchLeaderboard();
+  }, []);
+  
+  return { players, loading, error };
 }
