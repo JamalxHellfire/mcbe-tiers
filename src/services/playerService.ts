@@ -111,16 +111,16 @@ export interface GamemodeScore {
 // Helper function to convert TierLevel to a numerical value
 export function getTierPointValue(tier: TierLevel): number {
   switch (tier) {
-    case TierLevel.HT1: return 10;
-    case TierLevel.LT1: return 9;
-    case TierLevel.HT2: return 8;
-    case TierLevel.LT2: return 7;
-    case TierLevel.HT3: return 6;
-    case TierLevel.LT3: return 5;
-    case TierLevel.HT4: return 4;
-    case TierLevel.LT4: return 3;
-    case TierLevel.HT5: return 2;
-    case TierLevel.LT5: return 1;
+    case 'HT1': return 10;
+    case 'LT1': return 9;
+    case 'HT2': return 8;
+    case 'LT2': return 7;
+    case 'HT3': return 6;
+    case 'LT3': return 5;
+    case 'HT4': return 4;
+    case 'LT4': return 3;
+    case 'HT5': return 2;
+    case 'LT5': return 1;
     default: return 0;
   }
 }
@@ -165,7 +165,7 @@ async function createPlayer(player: PlayerCreateData): Promise<Player | null> {
           java_username: player.java_username,
           region: player.region,
           device: player.device,
-          gamemode: 'UNRANKED', // Default gamemode for new players
+          gamemode: 'UNRANKED' as GameMode, // Default gamemode for new players
           tier_number: 0      // Default tier for new players
         }
       ])
@@ -351,7 +351,7 @@ async function massCreatePlayers(players: PlayerCreateData[] | PlayerCreateData)
       java_username: player.java_username,
       region: player.region,
       device: player.device,
-      gamemode: 'UNRANKED', // Default gamemode for new players
+      gamemode: 'UNRANKED' as GameMode, // Default gamemode for new players
       tier_number: 0      // Default tier for new players
     }));
     
@@ -394,16 +394,16 @@ async function verifyAdminPIN(pin: string): Promise<boolean> {
 async function generateFakePlayers(count: number): Promise<number> {
   try {
     const fakePlayersList: any[] = [];
-    const gamemodes = ['SMP', 'MACE', 'BEDWARS'];
+    const gamemodes = ['SMP', 'Mace', 'Bedwars'];
     const regions = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'];
-    const devices = ['MOBILE', 'CONTROLLER', 'KEYBOARD', 'TOUCH'];
+    const devices = ['Mobile', 'Console', 'PC', 'Touch'];
     const tiers = ['LT5', 'HT5', 'LT4', 'HT4', 'LT3', 'HT3', 'LT2', 'HT2', 'LT1', 'HT1'];
     
     for (let i = 0; i < count; i++) {
-      const randomGamemode = gamemodes[Math.floor(Math.random() * gamemodes.length)];
-      const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
-      const randomRegion = regions[Math.floor(Math.random() * regions.length)];
-      const randomDevice = devices[Math.floor(Math.random() * devices.length)];
+      const randomGamemode = gamemodes[Math.floor(Math.random() * gamemodes.length)] as GameMode;
+      const randomTier = tiers[Math.floor(Math.random() * tiers.length)] as TierLevel;
+      const randomRegion = regions[Math.floor(Math.random() * regions.length)] as PlayerRegion;
+      const randomDevice = devices[Math.floor(Math.random() * devices.length)] as DeviceType;
       
       fakePlayersList.push({
         ign: `TestPlayer${Date.now()}${i}`,
