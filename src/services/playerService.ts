@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Enums and Types
+// Enums and Types - Update to match string literals used in components
 export enum PlayerRegion {
   NA = 'NA',
   EU = 'EU',
@@ -21,16 +21,21 @@ export enum PlayerRegion {
 }
 
 export enum DeviceType {
-  MOBILE = 'MOBILE',
-  CONTROLLER = 'CONTROLLER',
-  KEYBOARD = 'KEYBOARD',
-  TOUCH = 'TOUCH'
+  MOBILE = 'Mobile',
+  CONTROLLER = 'Console',
+  KEYBOARD = 'PC',
+  TOUCH = 'Touch'
 }
 
 export enum GameMode {
   SMP = 'SMP',
-  MACE = 'MACE',
-  BEDWARS = 'BEDWARS',
+  MACE = 'Mace',
+  BEDWARS = 'Bedwars',
+  CRYSTAL = 'Crystal',
+  SWORD = 'Sword',
+  UHC = 'UHC',
+  AXE = 'Axe',
+  NETHPOT = 'NethPot',
   UNRANKED = 'UNRANKED'
 }
 
@@ -56,6 +61,7 @@ export interface Player {
   device?: DeviceType;
   gamemode: GameMode;
   tier_number: number;
+  avatar_url?: string;
 }
 
 export interface PlayerCreateData {
@@ -432,6 +438,77 @@ async function wipeAllData(): Promise<boolean> {
   }
 }
 
+/**
+ * Get gamemode scores for a player
+ * @param playerId The player ID to get scores for
+ */
+async function getPlayerGamemodeScores(playerId: string): Promise<GamemodeScore[]> {
+  try {
+    const { data, error } = await supabase
+      .from('gamemode_scores')
+      .select('*')
+      .eq('player_id', playerId);
+      
+    if (error) {
+      console.error('Error fetching player gamemode scores:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching player gamemode scores:', error);
+    return [];
+  }
+}
+
+/**
+ * Get players by tier and gamemode for hooks/useGamemodeTiers.ts
+ */
+async function getPlayersByTierAndGamemode(gamemode: GameMode, tier: TierLevel): Promise<Player[]> {
+  try {
+    // This is a placeholder implementation
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('gamemode', gamemode)
+      .eq('tier_number', getTierPointValue(tier));
+      
+    if (error) {
+      console.error('Error fetching players by tier and gamemode:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching players by tier and gamemode:', error);
+    return [];
+  }
+}
+
+/**
+ * Get ranked players for hooks/useLeaderboard.ts
+ */
+async function getRankedPlayers(limit: number = 100): Promise<Player[]> {
+  try {
+    // This is a placeholder implementation
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .order('global_points', { ascending: false })
+      .limit(limit);
+      
+    if (error) {
+      console.error('Error fetching ranked players:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching ranked players:', error);
+    return [];
+  }
+}
+
 export const playerService = {
   supabase,
   getPlayerByIGN,
@@ -443,5 +520,8 @@ export const playerService = {
   massCreatePlayers,
   verifyAdminPIN,
   generateFakePlayers,
-  wipeAllData
+  wipeAllData,
+  getPlayerGamemodeScores,
+  getPlayersByTierAndGamemode,
+  getRankedPlayers
 };

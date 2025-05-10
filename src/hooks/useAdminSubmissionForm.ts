@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   playerService, 
@@ -31,8 +30,8 @@ export function useAdminSubmissionForm() {
   // Single submission form state
   const [formData, setFormData] = useState<FormData>({
     ign: '',
-    gamemode: 'SMP',
-    tier: 'LT5',
+    gamemode: GameMode.SMP,
+    tier: TierLevel.LT5,
     javaUsername: '',
     notes: ''
   });
@@ -40,8 +39,8 @@ export function useAdminSubmissionForm() {
   // Bulk submission form state
   const [bulkFormData, setBulkFormData] = useState<BulkSubmission>({
     igns: '',
-    gamemode: 'SMP',
-    tier: 'LT5'
+    gamemode: GameMode.SMP,
+    tier: TierLevel.LT5
   });
   
   // Form processing states
@@ -129,8 +128,8 @@ export function useAdminSubmissionForm() {
         // Reset form
         setFormData({
           ign: '',
-          gamemode: 'SMP',
-          tier: 'LT5',
+          gamemode: GameMode.SMP,
+          tier: TierLevel.LT5,
           javaUsername: '',
           notes: ''
         });
@@ -170,8 +169,8 @@ export function useAdminSubmissionForm() {
         // Reset form if at least one submission succeeded
         setBulkFormData({
           igns: '',
-          gamemode: 'SMP',
-          tier: 'LT5'
+          gamemode: GameMode.SMP,
+          tier: TierLevel.LT5
         });
       }
     } catch (error) {
@@ -240,6 +239,15 @@ export function useAdminSubmissionForm() {
       javaUsername: player.java_username || '',
       region: player.region as PlayerRegion || undefined,
       device: player.device as DeviceType || undefined
+    });
+  };
+  
+  // Reset bulk form
+  const resetBulkForm = () => {
+    setBulkFormData({
+      igns: '',
+      gamemode: GameMode.SMP,
+      tier: TierLevel.LT5
     });
   };
   
