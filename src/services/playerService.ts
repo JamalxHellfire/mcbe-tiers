@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Define the Supabase client
@@ -10,7 +11,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Enums and Types - Update to match string literals used in components
+// Enums and Types - Updated to match string literals used in components
 export enum PlayerRegion {
   NA = 'NA',
   EU = 'EU',
@@ -89,6 +90,18 @@ export interface AdditionalPlayerInfo {
   region?: PlayerRegion;
   device?: DeviceType;
   notes?: string;
+}
+
+// Interface for gamemode scores
+export interface GamemodeScore {
+  id: string;
+  player_id: string;
+  gamemode: string;
+  internal_tier: string;
+  display_tier: string;
+  score: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Helper function to convert TierLevel to a numerical value
