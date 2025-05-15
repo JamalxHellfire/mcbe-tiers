@@ -1,14 +1,40 @@
 
 import { useState, useEffect } from 'react';
-import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel } from '@/services/playerService';
+import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface NewsArticle {
+  id?: string;
+  title: string;
+  description: string;
+  author: string;
+  created_at?: string;
+}
 
 export function useAdminPanel() {
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
   const [pinInputValue, setPinInputValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  
+  // Player search state
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [searchResults, setSearchResults] = useState<Player[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  
+  // News state
+  const [newsFormData, setNewsFormData] = useState<{
+    title: string;
+    description: string;
+    author: string;
+  }>({
+    title: '',
+    description: '',
+    author: ''
+  });
   
   const queryClient = useQueryClient();
 
@@ -53,6 +79,60 @@ export function useAdminPanel() {
     setIsAdminMode(false);
     toast.info('Admin session ended');
   };
+
+  // Search for players by IGN
+  const searchPlayerByIGN = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .ilike('ign', `%${query}%`)
+        .limit(10);
+        
+      if (error) {
+        console.error('Error searching for players:', error);
+        toast.error('Failed to search for players');
+        setSearchResults([]);
+      } else {
+        setSearchResults(data || []);
+      }
+    } catch (error) {
+      console.error('Player search error:', error);
+      toast.error('An error occurred during player search');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
+  // Load player details
+  const loadPlayerDetails = async (playerId: string) => {
+    try {
+      const player = await playerService.getPlayerById(playerId);
+      if (player) {
+        const tiers = await playerService.getPlayerTiers(playerId);
+        setSelectedPlayer({ ...player, tiers });
+      } else {
+        toast.error('Player not found');
+        setSelectedPlayer(null);
+      }
+    } catch (error) {
+      console.error('Error loading player details:', error);
+      toast.error('Failed to load player details');
+    }
+  };
+  
+  // Clear selected player
+  const clearSelectedPlayer = () => {
+    setSelectedPlayer(null);
+  };
   
   // Player management mutations
   const massRegisterPlayersMutation = useMutation({
@@ -85,6 +165,7 @@ export function useAdminPanel() {
     onSuccess: (count) => {
       if (count > 0) {
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        toast.success(`Successfully registered ${count} players`);
       }
     }
   });
@@ -153,11 +234,109 @@ export function useAdminPanel() {
     }
   });
   
+  const updatePlayerMutation = useMutation({
+    mutationFn: async ({
+      playerId,
+      javaUsername,
+      region,
+      device,
+    }: {
+      playerId: string,
+      javaUsername?: string,
+      region?: PlayerRegion,
+      device?: DeviceType
+    }) => {
+      return await playerService.updatePlayer(playerId, {
+        java_username: javaUsername,
+        region,
+        device
+      });
+    },
+    onSuccess: (success, variables) => {
+      if (success) {
+        toast.success('Player updated successfully');
+        loadPlayerDetails(variables.playerId);
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      } else {
+        toast.error('Failed to update player');
+      }
+    }
+  });
+  
+  const updatePlayerTierMutation = useMutation({
+    mutationFn: async ({
+      playerId,
+      gamemode,
+      tier
+    }: {
+      playerId: string,
+      gamemode: GameMode,
+      tier: TierLevel
+    }) => {
+      return await playerService.assignTier({
+        playerId,
+        gamemode,
+        tier
+      });
+    },
+    onSuccess: (success, variables) => {
+      if (success) {
+        toast.success(`Updated ${variables.gamemode} tier to ${variables.tier}`);
+        loadPlayerDetails(variables.playerId);
+        queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      } else {
+        toast.error(`Failed to update ${variables.gamemode} tier`);
+      }
+    }
+  });
+  
+  const deletePlayerMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      return await playerService.deletePlayer(playerId);
+    },
+    onSuccess: (success, playerId) => {
+      if (success) {
+        toast.success('Player deleted successfully');
+        setSelectedPlayer(null);
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      } else {
+        toast.error('Failed to delete player');
+      }
+    }
+  });
+  
+  const banPlayerMutation = useMutation({
+    mutationFn: async (player: Player) => {
+      return await playerService.banPlayer(player);
+    },
+    onSuccess: (success, player) => {
+      if (success) {
+        toast.success(`${player.ign} has been banned`);
+        setSelectedPlayer(null);
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      } else {
+        toast.error(`Failed to ban ${player.ign}`);
+      }
+    }
+  });
+  
   const generateFakePlayersMutation = useMutation({
     mutationFn: (count: number) => playerService.generateFakePlayers(count),
     onSuccess: (count) => {
       if (count > 0) {
         queryClient.invalidateQueries();
+        toast.success(`Successfully generated ${count} fake players`);
+      }
+    }
+  });
+  
+  const generateRealisticPlayersMutation = useMutation({
+    mutationFn: (count: number) => playerService.generateRealisticPlayers(count),
+    onSuccess: (count) => {
+      if (count > 0) {
+        queryClient.invalidateQueries();
+        toast.success(`Successfully generated ${count} realistic players`);
       }
     }
   });
@@ -167,8 +346,57 @@ export function useAdminPanel() {
     onSuccess: (success) => {
       if (success) {
         queryClient.invalidateQueries();
+        toast.success('All player data has been wiped');
       }
     }
+  });
+  
+  // News mutations
+  const submitNewsMutation = useMutation({
+    mutationFn: async (newsData: NewsArticle) => {
+      const { data, error } = await supabase
+        .from('news')
+        .insert({
+          title: newsData.title,
+          description: newsData.description,
+          author: newsData.author
+        });
+        
+      if (error) {
+        console.error('Error submitting news:', error);
+        throw new Error('Failed to submit news article');
+      }
+      
+      return true;
+    },
+    onSuccess: () => {
+      toast.success('News article published successfully');
+      setNewsFormData({
+        title: '',
+        description: '',
+        author: ''
+      });
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+    }
+  });
+  
+  // Fetch news articles
+  const { data: newsArticles = [] } = useQuery({
+    queryKey: ['news'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching news:', error);
+        throw new Error('Failed to fetch news articles');
+      }
+      
+      return data || [];
+    },
+    staleTime: 60000, // 1 minute
   });
   
   // Wrapper functions for mutations
@@ -194,13 +422,75 @@ export function useAdminPanel() {
     });
   };
   
+  const updatePlayer = (
+    playerId: string,
+    javaUsername?: string,
+    region?: PlayerRegion,
+    device?: DeviceType
+  ) => {
+    return updatePlayerMutation.mutateAsync({
+      playerId,
+      javaUsername,
+      region,
+      device
+    });
+  };
+  
+  const updatePlayerTier = (
+    playerId: string,
+    gamemode: GameMode,
+    tier: TierLevel
+  ) => {
+    return updatePlayerTierMutation.mutateAsync({
+      playerId,
+      gamemode,
+      tier
+    });
+  };
+  
+  const deletePlayer = (playerId: string) => {
+    return deletePlayerMutation.mutateAsync(playerId);
+  };
+  
+  const banPlayer = (player: Player) => {
+    return banPlayerMutation.mutateAsync(player);
+  };
+  
   const generateFakePlayers = (count: number) => {
     return generateFakePlayersMutation.mutateAsync(count);
+  };
+  
+  const generateRealisticPlayers = (count: number) => {
+    return generateRealisticPlayersMutation.mutateAsync(count);
   };
   
   const wipeAllData = () => {
     return wipeAllDataMutation.mutateAsync();
   };
+  
+  const submitNews = () => {
+    return submitNewsMutation.mutateAsync(newsFormData);
+  };
+  
+  // Handle news form input changes
+  const handleNewsInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewsFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle search input changes with debouncing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        searchPlayerByIGN(searchQuery);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   return {
     isAdminMode,
@@ -212,6 +502,25 @@ export function useAdminPanel() {
     massRegisterPlayers,
     submitPlayerResult,
     generateFakePlayers,
-    wipeAllData
+    generateRealisticPlayers,
+    wipeAllData,
+    // Player search and edit
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    isSearching,
+    selectedPlayer,
+    setSelectedPlayer,
+    loadPlayerDetails,
+    clearSelectedPlayer,
+    updatePlayer,
+    updatePlayerTier,
+    deletePlayer,
+    banPlayer,
+    // News
+    newsFormData,
+    handleNewsInputChange,
+    submitNews,
+    newsArticles
   };
 }

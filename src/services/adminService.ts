@@ -38,6 +38,11 @@ export const adminService = {
   
   logoutAdmin(): void {
     this.setAdmin(false);
+  },
+
+  verifyAdminPIN(pin: string): boolean {
+    // Hardcoded PIN for admin access
+    return pin === '1234';
   }
 };
 
