@@ -22,6 +22,9 @@ export interface Player {
   created_at?: string | null;
   updated_at?: string | null;
   tiers?: Record<GameMode, TierResult>; // Adding tiers as an optional property
+  // Add these fields to match database schema
+  gamemode?: GameMode;
+  tier_number?: TierLevel;
 }
 
 interface PlayerCreateData {
@@ -86,7 +89,8 @@ export const playerService = {
       return [];
     }
     
-    return data || [];
+    // Use type assertion to ensure compatibility
+    return (data || []) as Player[];
   },
   
   // Get a specific player by ID
@@ -102,7 +106,8 @@ export const playerService = {
       return null;
     }
     
-    return data || null;
+    // Use type assertion for compatibility
+    return data as Player | null;
   },
   
   // Get a player by IGN
@@ -120,7 +125,8 @@ export const playerService = {
       return null;
     }
     
-    return data || null;
+    // Use type assertion for compatibility
+    return data as Player | null;
   },
   
   // Create a new player
@@ -140,8 +146,8 @@ export const playerService = {
         region: playerData.region,
         device: playerData.device,
         avatar_url: avatarUrl,
-        gamemode: 'Crystal', // Default gamemode
-        tier_number: 'LT5', // Default tier
+        gamemode: 'Crystal' as GameMode, // Default gamemode
+        tier_number: 'LT5' as TierLevel, // Default tier
       })
       .select()
       .single();
@@ -151,7 +157,7 @@ export const playerService = {
       return null;
     }
     
-    return data;
+    return data as Player;
   },
   
   // Mass create players from a list
@@ -585,7 +591,7 @@ export const playerService = {
     for (let i = 0; i < players.length; i += batchSize) {
       const batch = players.slice(i, i + batchSize);
       
-      // Process players to prepare for insertion
+      // Process players to prepare for insertion with required fields
       const preparedPlayers = await Promise.all(
         batch.map(async (player) => {
           let avatarUrl = null;
@@ -603,6 +609,8 @@ export const playerService = {
             region: player.region,
             device: player.device,
             avatar_url: avatarUrl,
+            gamemode: 'Crystal' as GameMode, // Default gamemode
+            tier_number: 'LT5' as TierLevel, // Default tier
           };
         })
       );

@@ -16,9 +16,11 @@ import { NewsArticle } from '@/hooks/useNews';
 
 interface NewsArticleCardProps {
   article: NewsArticle;
+  onClick?: (article: NewsArticle) => void;
 }
 
-export function NewsArticleCard({ article }: NewsArticleCardProps) {
+// Export as a named export
+export function NewsArticleCard({ article, onClick }: NewsArticleCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Format the date
@@ -27,6 +29,14 @@ export function NewsArticleCard({ article }: NewsArticleCardProps) {
     month: 'long',
     day: 'numeric'
   });
+  
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(article);
+    } else {
+      setIsDialogOpen(true);
+    }
+  };
   
   return (
     <>
@@ -39,7 +49,7 @@ export function NewsArticleCard({ article }: NewsArticleCardProps) {
       >
         <Card 
           className="h-full cursor-pointer hover:bg-dark-surface/50 transition-colors"
-          onClick={() => setIsDialogOpen(true)}
+          onClick={handleCardClick}
         >
           <CardContent className="p-6 flex flex-col justify-between h-full">
             <div>

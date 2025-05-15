@@ -5,8 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { GithubIcon, InstagramIcon, LinkedinIcon, TwitterIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+// Fix named imports
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 
 const About = () => {
   // Create empty props for Navbar to satisfy TypeScript

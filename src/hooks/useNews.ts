@@ -1,7 +1,17 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, NewsArticle } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+
+// Export the NewsArticle type properly
+export interface NewsArticle {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  created_at: string;
+  updated_at?: string | null;
+}
 
 export function useNews() {
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -15,7 +25,6 @@ export function useNews() {
     queryKey: ['news'],
     queryFn: async () => {
       try {
-        // Use raw query due to type limitations
         const { data, error } = await supabase
           .from('news')
           .select('*')

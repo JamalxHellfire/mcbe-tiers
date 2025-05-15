@@ -1,11 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { supabase, NewsArticle } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { NewsArticle } from '@/hooks/useNews';
 
-export { NewsArticle };
+// Fix this export to use 'export type'
+export type { NewsArticle };
 
 export function useAdminPanel() {
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());

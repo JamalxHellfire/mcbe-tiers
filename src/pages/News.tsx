@@ -5,10 +5,11 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNews } from '@/hooks/useNews';
-import NewsArticleCard from '@/components/NewsArticleCard';
+import { NewsArticleCard } from '@/components/NewsArticleCard';
 
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+// Fix named imports
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 
 const News = () => {
   const { newsArticles, loading, selectedArticle, openArticle, closeArticle } = useNews();
