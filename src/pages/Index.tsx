@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { TierGrid } from '../components/TierGrid';
 import { LeaderboardTable } from '../components/LeaderboardTable';
@@ -7,9 +7,10 @@ import { Footer } from '../components/Footer';
 import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GameMode } from '@/services/playerService';
 
 const Index = () => {
-  const [selectedMode, setSelectedMode] = useState('overall');
+  const [selectedMode, setSelectedMode] = useState<string>('overall');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -22,6 +23,12 @@ const Index = () => {
     setSelectedPlayer(player);
     setIsPlayerModalOpen(true);
   };
+  
+  const gamemodes: GameMode[] = [
+    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
+  ];
+  
+  const isValidGamemode = selectedMode === 'overall' || gamemodes.includes(selectedMode as GameMode);
   
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
@@ -43,21 +50,31 @@ const Index = () => {
           </motion.h1>
           
           {/* Conditionally render layout based on selected mode */}
-          <AnimatePresence mode="wait">
+          {isValidGamemode ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedMode}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {selectedMode === 'overall' ? (
+                  <LeaderboardTable onPlayerClick={handlePlayerClick} />
+                ) : (
+                  <TierGrid selectedMode={selectedMode} onPlayerClick={handlePlayerClick} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          ) : (
             <motion.div
-              key={selectedMode}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              className="text-center py-8 text-white/60"
             >
-              {selectedMode === 'overall' ? (
-                <LeaderboardTable onPlayerClick={handlePlayerClick} />
-              ) : (
-                <TierGrid selectedMode={selectedMode} onPlayerClick={handlePlayerClick} />
-              )}
+              Invalid game mode selected. Please choose a valid mode.
             </motion.div>
-          </AnimatePresence>
+          )}
         </div>
       </main>
       
