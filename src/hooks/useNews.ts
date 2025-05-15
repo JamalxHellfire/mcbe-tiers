@@ -13,6 +13,13 @@ export interface NewsArticle {
   updated_at?: string | null;
 }
 
+// Add a new interface for article creation that doesn't require id and created_at
+export interface NewsArticleCreate {
+  title: string;
+  description: string;
+  author: string;
+}
+
 export function useNews() {
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   

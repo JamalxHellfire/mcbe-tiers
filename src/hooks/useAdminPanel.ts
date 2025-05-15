@@ -1,16 +1,16 @@
-
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { NewsArticle } from '@/hooks/useNews';
+import { NewsArticle, NewsArticleCreate } from '@/hooks/useNews';
 
-// Fix this export to use 'export type'
-export type { NewsArticle };
+// Export the types correctly
+export type { NewsArticle, NewsArticleCreate };
 
 export function useAdminPanel() {
+  
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
   const [pinInputValue, setPinInputValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -22,11 +22,7 @@ export function useAdminPanel() {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   
   // News state
-  const [newsFormData, setNewsFormData] = useState<{
-    title: string;
-    description: string;
-    author: string;
-  }>({
+  const [newsFormData, setNewsFormData] = useState<NewsArticleCreate>({
     title: '',
     description: '',
     author: ''
@@ -348,9 +344,9 @@ export function useAdminPanel() {
     }
   });
   
-  // News mutations
+  // News mutations - updated to use NewsArticleCreate instead of NewsArticle
   const submitNewsMutation = useMutation({
-    mutationFn: async (newsData: NewsArticle) => {
+    mutationFn: async (newsData: NewsArticleCreate) => {
       // Use raw query to work with tables not defined in types
       const { error } = await supabase
         .from('news')
@@ -358,7 +354,7 @@ export function useAdminPanel() {
           title: newsData.title,
           description: newsData.description,
           author: newsData.author
-        } as any); // Use type assertion as any to bypass TypeScript checking
+        } as any);
         
       if (error) {
         console.error('Error submitting news:', error);
@@ -490,7 +486,7 @@ export function useAdminPanel() {
     
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  
+
   return {
     isAdminMode,
     pinInputValue,
