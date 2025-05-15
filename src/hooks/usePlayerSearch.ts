@@ -1,56 +1,52 @@
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from './useDebounce';
 import { playerService, Player } from '@/services/playerService';
-import { useDebounce } from '@/hooks/useDebounce';
 
 export function usePlayerSearch() {
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [query, setQuery] = useState<string>('');
+  const debouncedQuery = useDebounce(query, 300);
+  const [results, setResults] = useState<Player[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const searchPlayers = async () => {
-      if (!debouncedSearchTerm || debouncedSearchTerm.length < 2) {
-        setPlayers([]);
+      if (!debouncedQuery || debouncedQuery.length < 2) {
+        setResults([]);
         return;
       }
       
-      setLoading(true);
+      setIsLoading(true);
+      setError(null);
       
       try {
-        // Use supabase directly for ilike search
-        const { data, error } = await playerService.supabase
-          .from('players')
-          .select('*')
-          .ilike('ign', `%${debouncedSearchTerm}%`)
-          .limit(10);
+        // Use direct try/catch query without supabase reference
+        const { data, error } = await fetch(`/api/players/search?query=${encodeURIComponent(debouncedQuery)}`)
+          .then(res => res.json());
           
         if (error) {
-          console.error('Player search error:', error);
-          setPlayers([]);
-        } else {
-          setPlayers(data || []);
+          throw new Error(error.message || 'Error searching players');
         }
-      } catch (error) {
-        console.error('Player search error:', error);
-        setPlayers([]);
+        
+        setResults(data || []);
+      } catch (err) {
+        console.error('Player search error:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setResults([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
+    
     searchPlayers();
-  }, [debouncedSearchTerm]);
+  }, [debouncedQuery]);
   
   return {
-    searchTerm,
-    setSearchTerm,
-    loading,
-    players,
-    selectedPlayer,
-    setSelectedPlayer
+    query,
+    setQuery,
+    results,
+    isLoading,
+    error
   };
 }

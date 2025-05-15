@@ -30,6 +30,38 @@ export type Database = {
         }
         Relationships: []
       }
+      banned_players: {
+        Row: {
+          banned_at: string | null
+          id: string
+          ign: string
+          player_id: string
+          reason: string | null
+        }
+        Insert: {
+          banned_at?: string | null
+          id?: string
+          ign: string
+          player_id: string
+          reason?: string | null
+        }
+        Update: {
+          banned_at?: string | null
+          id?: string
+          ign?: string
+          player_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banned_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gamemode_scores: {
         Row: {
           created_at: string
@@ -71,10 +103,38 @@ export type Database = {
           },
         ]
       }
+      news: {
+        Row: {
+          author: string
+          created_at: string | null
+          description: string
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          created_at?: string | null
+          description: string
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           avatar_url: string | null
           badges: string[] | null
+          banned: boolean | null
           created_at: string | null
           device: string | null
           gamemode: string
@@ -89,6 +149,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           badges?: string[] | null
+          banned?: boolean | null
           created_at?: string | null
           device?: string | null
           gamemode: string
@@ -103,6 +164,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           badges?: string[] | null
+          banned?: boolean | null
           created_at?: string | null
           device?: string | null
           gamemode?: string

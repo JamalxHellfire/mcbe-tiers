@@ -12,14 +12,16 @@ export type TierLevel = 'LT5' | 'HT5' | 'LT4' | 'HT4' | 'LT3' | 'HT3' | 'LT2' | 
 export interface Player {
   id: string;
   ign: string;
-  java_username?: string;
-  region?: PlayerRegion;
-  device?: DeviceType;
-  global_points?: number;
-  avatar_url?: string;
-  badges?: string[];
-  created_at?: string;
-  updated_at?: string;
+  java_username?: string | null;
+  region?: PlayerRegion | null;
+  device?: DeviceType | null;
+  global_points?: number | null;
+  avatar_url?: string | null;
+  badges?: string[] | null;
+  banned?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  tiers?: Record<GameMode, TierResult>; // Adding tiers as an optional property
 }
 
 interface PlayerCreateData {
@@ -43,7 +45,7 @@ export interface TierAssignment {
   tier: TierLevel;
 }
 
-interface TierResult {
+export interface TierResult {
   tier: TierLevel;
   gamemode: GameMode;
   score: number;

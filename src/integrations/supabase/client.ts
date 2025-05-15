@@ -16,3 +16,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: 'mc-tiers-supabase-auth',
   },
 });
+
+// Define extended types for tables not included in the auto-generated types
+export interface NewsArticle {
+  id?: string;
+  title: string;
+  description: string;
+  author: string;
+  created_at?: string;
+  updated_at?: string;
+}

@@ -1,18 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, NewsArticle } from '@/integrations/supabase/client';
 
-export interface NewsArticle {
-  id?: string;
-  title: string;
-  description: string;
-  author: string;
-  created_at?: string;
-}
+export { NewsArticle };
 
 export function useAdminPanel() {
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
@@ -101,7 +94,8 @@ export function useAdminPanel() {
         toast.error('Failed to search for players');
         setSearchResults([]);
       } else {
-        setSearchResults(data || []);
+        // Use type assertion to ensure types match
+        setSearchResults(data as unknown as Player[] || []);
       }
     } catch (error) {
       console.error('Player search error:', error);
@@ -354,13 +348,14 @@ export function useAdminPanel() {
   // News mutations
   const submitNewsMutation = useMutation({
     mutationFn: async (newsData: NewsArticle) => {
-      const { data, error } = await supabase
+      // Use raw query to work with tables not defined in types
+      const { error } = await supabase
         .from('news')
         .insert({
           title: newsData.title,
           description: newsData.description,
           author: newsData.author
-        });
+        } as any); // Use type assertion as any to bypass TypeScript checking
         
       if (error) {
         console.error('Error submitting news:', error);
@@ -384,17 +379,18 @@ export function useAdminPanel() {
   const { data: newsArticles = [] } = useQuery({
     queryKey: ['news'],
     queryFn: async () => {
+      // Use raw query to work with tables not defined in types
       const { data, error } = await supabase
         .from('news')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any;
         
       if (error) {
         console.error('Error fetching news:', error);
         throw new Error('Failed to fetch news articles');
       }
       
-      return data || [];
+      return (data as NewsArticle[]) || [];
     },
     staleTime: 60000, // 1 minute
   });

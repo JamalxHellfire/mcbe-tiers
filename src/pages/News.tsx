@@ -1,85 +1,108 @@
 
 import React, { useState } from 'react';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
 import { useNews } from '@/hooks/useNews';
-import { NewsArticleCard } from '@/components/NewsArticleCard';
-import { Loader2 } from 'lucide-react';
+import NewsArticleCard from '@/components/NewsArticleCard';
+
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const News = () => {
-  const { newsArticles, loading, error } = useNews();
-  const [displayCount, setDisplayCount] = useState(6);
+  const { newsArticles, loading, selectedArticle, openArticle, closeArticle } = useNews();
+  const [visibleArticles, setVisibleArticles] = useState(10);
   
-  const loadMore = () => {
-    setDisplayCount(prev => prev + 6);
+  // Create empty props for Navbar to satisfy TypeScript
+  const navbarProps = {
+    selectedMode: '',
+    onSelectMode: () => {},
+    navigate: () => {}
   };
-  
-  const visibleArticles = newsArticles.slice(0, displayCount);
-  const hasMoreArticles = displayCount < newsArticles.length;
-  
+
+  const loadMore = () => {
+    setVisibleArticles(prev => prev + 10);
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-dark">
-      <Navbar />
+    <div className="min-h-screen bg-gradient-dark">
+      <Navbar {...navbarProps} />
       
-      <main className="flex-grow">
-        <div className="content-container py-8">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="section-heading mb-8"
+      <div className="container mx-auto py-12 px-4">
+        <motion.h1
+          className="text-4xl font-bold text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Latest News
+        </motion.h1>
+        
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          </div>
+        ) : newsArticles.length > 0 ? (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, staggerChildren: 0.1 }}
           >
-            Latest News
-          </motion.h1>
-          
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-400 py-12">
-              <p>Error loading news: {error}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4">
-                Try Again
-              </Button>
-            </div>
-          ) : newsArticles.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="text-center py-12"
-            >
-              <p className="text-muted-foreground">No news articles available at the moment.</p>
-            </motion.div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {visibleArticles.map((article) => (
-                  <NewsArticleCard key={article.id} article={article} />
-                ))}
-              </div>
-              
-              {hasMoreArticles && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
-                  className="flex justify-center mt-10"
-                >
-                  <Button onClick={loadMore} size="lg">
-                    Load More
-                  </Button>
-                </motion.div>
-              )}
-            </>
-          )}
-        </div>
-      </main>
+            {newsArticles.slice(0, visibleArticles).map((article, index) => (
+              <NewsArticleCard
+                key={article.id || index}
+                article={article}
+                onClick={() => openArticle(article)}
+              />
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            className="text-center py-20 text-muted-foreground"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            No news articles available at this time.
+          </motion.div>
+        )}
+        
+        {newsArticles.length > visibleArticles && (
+          <div className="flex justify-center mt-8">
+            <Button onClick={loadMore} className="animate-fade">
+              Load More
+            </Button>
+          </div>
+        )}
+      </div>
       
       <Footer />
+      
+      <AnimatePresence>
+        {selectedArticle && (
+          <AlertDialog open={!!selectedArticle} onOpenChange={(open) => !open && closeArticle()}>
+            <AlertDialogContent className="max-w-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-2xl font-bold">{selectedArticle.title}</AlertDialogTitle>
+                <AlertDialogDescription className="text-base whitespace-pre-wrap">
+                  {selectedArticle.description}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="mt-4 text-sm text-muted-foreground flex justify-between items-center">
+                <span>By: {selectedArticle.author}</span>
+                <span>
+                  {selectedArticle.created_at && new Date(selectedArticle.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <Button onClick={closeArticle}>Close</Button>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
