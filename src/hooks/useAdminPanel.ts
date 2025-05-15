@@ -314,16 +314,7 @@ export function useAdminPanel() {
     }
   });
   
-  const generateFakePlayersMutation = useMutation({
-    mutationFn: (count: number) => playerService.generateFakePlayers(count),
-    onSuccess: (count) => {
-      if (count > 0) {
-        queryClient.invalidateQueries();
-        toast.success(`Successfully generated ${count} fake players`);
-      }
-    }
-  });
-  
+  // Keep only the realistic players generation feature
   const generateRealisticPlayersMutation = useMutation({
     mutationFn: (count: number) => playerService.generateRealisticPlayers(count),
     onSuccess: (count) => {
@@ -451,10 +442,6 @@ export function useAdminPanel() {
     return banPlayerMutation.mutateAsync(player);
   };
   
-  const generateFakePlayers = (count: number) => {
-    return generateFakePlayersMutation.mutateAsync(count);
-  };
-  
   const generateRealisticPlayers = (count: number) => {
     return generateRealisticPlayersMutation.mutateAsync(count);
   };
@@ -496,7 +483,6 @@ export function useAdminPanel() {
     handleLogout,
     massRegisterPlayers,
     submitPlayerResult,
-    generateFakePlayers,
     generateRealisticPlayers,
     wipeAllData,
     // Player search and edit
