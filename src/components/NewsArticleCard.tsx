@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { NewsArticle } from '@/hooks/useNews';
+import { NewsArticle } from '@/hooks/useAdminPanel';
 
 interface NewsArticleCardProps {
   article: NewsArticle;

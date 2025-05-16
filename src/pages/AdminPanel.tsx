@@ -11,14 +11,13 @@ import { useAdminPanel, NewsArticle } from '@/hooks/useAdminPanel';
 import { PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, User, X, Edit, UserX, Trash2, Save, RefreshCw } from 'lucide-react';
+import { Search, User, X, Edit, UserX, Trash2, Save, RefreshCw, Pencil, Check, XCircle } from 'lucide-react';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -31,7 +30,6 @@ const AdminPanel = () => {
     handleLogout,
     submitPlayerResult,
     massRegisterPlayers,
-    // Don't include generateFakePlayers as we're removing it
     generateRealisticPlayers,
     wipeAllData,
     // Player search and edit
@@ -51,6 +49,11 @@ const AdminPanel = () => {
     newsFormData,
     handleNewsInputChange,
     submitNews,
+    updateNews,
+    deleteNews,
+    startEditingNews,
+    cancelEditingNews,
+    editingNewsId,
     newsArticles
   } = useAdminPanel();
   
@@ -60,16 +63,23 @@ const AdminPanel = () => {
   const [region, setRegion] = useState<PlayerRegion | undefined>(undefined);
   const [device, setDevice] = useState<DeviceType | undefined>(undefined);
   
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState({
+    ign: false,
+    javaUsername: false,
+    region: false
+  });
+  
   // Track selected tiers for each gamemode
-  const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | null>>({
-    'Crystal': null,
-    'Sword': null,
-    'SMP': null,
-    'UHC': null,
-    'Axe': null,
-    'NethPot': null,
-    'Bedwars': null,
-    'Mace': null
+  const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
+    'Crystal': "NA",
+    'Sword': "NA",
+    'SMP': "NA",
+    'UHC': "NA",
+    'Axe': "NA",
+    'NethPot': "NA",
+    'Bedwars': "NA",
+    'Mace': "NA"
   });
   
   const [massPlayersText, setMassPlayersText] = useState('');
@@ -109,17 +119,25 @@ const AdminPanel = () => {
     }
   }, [isAdminMode, navigate]);
   
+  // Validate form before submission
+  const validateForm = () => {
+    const errors = {
+      ign: !ign.trim(),
+      javaUsername: !javaUsername.trim(),
+      region: !region
+    };
+    
+    setFormErrors(errors);
+    
+    return !Object.values(errors).some(isError => isError);
+  };
+  
   // Handle player submission for a specific gamemode
   const handleSubmitPlayerForGamemode = async (gamemode: GameMode) => {
     const selectedTier = tierSelections[gamemode];
     
-    if (!ign) {
-      toast.error('Player IGN is required');
-      return;
-    }
-    
-    if (!selectedTier) {
-      toast.error(`Please select a tier for ${gamemode}`);
+    // Validate form
+    if (!validateForm()) {
       return;
     }
     
@@ -146,25 +164,19 @@ const AdminPanel = () => {
   
   // Handle multiple gamemode submissions at once
   const handleSubmitAllSelectedTiers = async () => {
-    if (!ign) {
-      toast.error('Player IGN is required');
-      return;
-    }
-    
-    const selectedGamemodes = Object.entries(tierSelections)
-      .filter(([_, tier]) => tier !== null)
-      .map(([gamemode]) => gamemode as GameMode);
-      
-    if (selectedGamemodes.length === 0) {
-      toast.error('Please select at least one tier');
+    // Validate form
+    if (!validateForm()) {
       return;
     }
     
     let successCount = 0;
+    let hasAttempts = false;
     
-    for (const gamemode of selectedGamemodes) {
+    for (const gamemode of Object.keys(tierSelections) as GameMode[]) {
       const tier = tierSelections[gamemode];
-      if (tier) {
+      // Only submit if a specific tier is selected (not "NA")
+      if (tier !== "NA") {
+        hasAttempts = true;
         try {
           const success = await submitPlayerResult(
             ign,
@@ -184,26 +196,37 @@ const AdminPanel = () => {
       }
     }
     
+    if (!hasAttempts) {
+      toast.info('No tiers were selected for submission');
+      return;
+    }
+    
     if (successCount > 0) {
       toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
       // Reset tier selections
       setTierSelections({
-        'Crystal': null,
-        'Sword': null,
-        'SMP': null,
-        'UHC': null,
-        'Axe': null,
-        'NethPot': null,
-        'Bedwars': null,
-        'Mace': null
+        'Crystal': "NA",
+        'Sword': "NA",
+        'SMP': "NA",
+        'UHC': "NA",
+        'Axe': "NA",
+        'NethPot': "NA",
+        'Bedwars': "NA",
+        'Mace': "NA"
       });
+      
+      // Reset form
+      setIgn('');
+      setJavaUsername('');
+      setRegion(undefined);
+      setDevice(undefined);
     } else {
       toast.error('Failed to submit any tier rankings');
     }
   };
   
   // Handle tier selection change
-  const handleTierChange = (gamemode: GameMode, tier: TierLevel | null) => {
+  const handleTierChange = (gamemode: GameMode, tier: TierLevel | "NA") => {
     setTierSelections(prev => ({
       ...prev,
       [gamemode]: tier
@@ -213,6 +236,17 @@ const AdminPanel = () => {
   // Handle player update
   const handleUpdatePlayer = async () => {
     if (!selectedPlayer) return;
+    
+    // Validate form
+    if (!editPlayerForm.java_username.trim()) {
+      toast.error('Java username is required');
+      return;
+    }
+    
+    if (!editPlayerForm.region) {
+      toast.error('Region is required');
+      return;
+    }
     
     try {
       await updatePlayer(
@@ -310,6 +344,7 @@ const AdminPanel = () => {
   
   // Handle news submission
   const handleSubmitNews = async () => {
+    // Validate form
     if (!newsFormData.title.trim()) {
       toast.error('News title is required');
       return;
@@ -326,10 +361,24 @@ const AdminPanel = () => {
     }
     
     try {
-      await submitNews();
+      if (editingNewsId) {
+        await updateNews();
+      } else {
+        await submitNews();
+      }
     } catch (err) {
       console.error('Error submitting news:', err);
       toast.error('An error occurred while publishing news');
+    }
+  };
+  
+  // Handle news delete
+  const handleDeleteNews = async (newsId: string) => {
+    try {
+      await deleteNews(newsId);
+    } catch (err) {
+      console.error('Error deleting news:', err);
+      toast.error('An error occurred while deleting news');
     }
   };
   
@@ -411,35 +460,58 @@ const AdminPanel = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-6">
-                  {/* Player Info */}
+                  {/* Player Info with validation */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="ign">IGN (In-Game Name) *</Label>
+                      <Label htmlFor="ign" className={formErrors.ign ? "text-destructive" : ""}>
+                        IGN (In-Game Name) *
+                      </Label>
                       <Input 
                         id="ign" 
                         value={ign} 
-                        onChange={(e) => setIgn(e.target.value)}
+                        onChange={(e) => {
+                          setIgn(e.target.value);
+                          setFormErrors(prev => ({ ...prev, ign: false }));
+                        }}
                         placeholder="Player's in-game name"
+                        className={formErrors.ign ? "border-destructive" : ""}
                       />
+                      {formErrors.ign && (
+                        <p className="text-xs text-destructive">IGN is required</p>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="javaUsername">Java Username (for avatar)</Label>
+                      <Label htmlFor="javaUsername" className={formErrors.javaUsername ? "text-destructive" : ""}>
+                        Java Username (for avatar) *
+                      </Label>
                       <Input 
                         id="javaUsername" 
                         value={javaUsername} 
-                        onChange={(e) => setJavaUsername(e.target.value)}
+                        onChange={(e) => {
+                          setJavaUsername(e.target.value);
+                          setFormErrors(prev => ({ ...prev, javaUsername: false }));
+                        }}
                         placeholder="Java edition username"
+                        className={formErrors.javaUsername ? "border-destructive" : ""}
                       />
+                      {formErrors.javaUsername && (
+                        <p className="text-xs text-destructive">Java username is required</p>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="region">Region</Label>
+                      <Label htmlFor="region" className={formErrors.region ? "text-destructive" : ""}>
+                        Region *
+                      </Label>
                       <Select 
                         value={region} 
-                        onValueChange={(value) => setRegion(value as PlayerRegion)}
+                        onValueChange={(value) => {
+                          setRegion(value as PlayerRegion);
+                          setFormErrors(prev => ({ ...prev, region: false }));
+                        }}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={formErrors.region ? "border-destructive" : ""}>
                           <SelectValue placeholder="Select region" />
                         </SelectTrigger>
                         <SelectContent>
@@ -451,6 +523,9 @@ const AdminPanel = () => {
                           <SelectItem value="AF">Africa (AF)</SelectItem>
                         </SelectContent>
                       </Select>
+                      {formErrors.region && (
+                        <p className="text-xs text-destructive">Region is required</p>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
@@ -483,7 +558,22 @@ const AdminPanel = () => {
                           </CardHeader>
                           <CardContent className="p-4">
                             <div className="flex flex-col gap-2">
-                              {/* Tier options as checkboxes */}
+                              {/* Add Not Ranked option */}
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={`${gamemode}-NA`}
+                                  name={`tier-${gamemode}`}
+                                  checked={tierSelections[gamemode] === "NA"}
+                                  onChange={() => handleTierChange(gamemode, "NA")}
+                                  className="h-4 w-4 rounded border border-gray-300 focus:ring-2 focus:ring-primary accent-gray-500"
+                                />
+                                <label htmlFor={`${gamemode}-NA`} className="text-sm text-gray-400">
+                                  Not Ranked
+                                </label>
+                              </div>
+                              
+                              {/* Tier options as radio buttons */}
                               {(['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5', 'Retired'] as TierLevel[]).map((tier) => (
                                 <div key={`${gamemode}-${tier}`} className="flex items-center space-x-2">
                                   <input
@@ -513,13 +603,6 @@ const AdminPanel = () => {
                                   </label>
                                 </div>
                               ))}
-                              {/* Option to clear selection */}
-                              <button
-                                onClick={() => handleTierChange(gamemode, null)}
-                                className="text-xs text-muted-foreground hover:text-primary mt-2"
-                              >
-                                Clear
-                              </button>
                             </div>
                           </CardContent>
                         </Card>
@@ -530,10 +613,10 @@ const AdminPanel = () => {
                     <div className="mt-6 flex justify-end">
                       <Button 
                         onClick={handleSubmitAllSelectedTiers}
-                        disabled={!ign || Object.values(tierSelections).every(tier => tier === null) || isSubmitting}
+                        disabled={!ign || isSubmitting}
                         className="px-6"
                       >
-                        {isSubmitting ? 'Processing...' : 'Submit All Selected Tiers'}
+                        {isSubmitting ? 'Processing...' : 'Submit Player Results'}
                       </Button>
                     </div>
                   </div>
@@ -661,22 +744,26 @@ const AdminPanel = () => {
                           {/* Player Details Form */}
                           <div className="space-y-3 pt-3">
                             <div className="space-y-2">
-                              <Label htmlFor="edit-java">Java Username</Label>
+                              <Label htmlFor="edit-java">Java Username *</Label>
                               <Input
                                 id="edit-java"
                                 value={editPlayerForm.java_username}
                                 onChange={(e) => setEditPlayerForm(prev => ({ ...prev, java_username: e.target.value }))}
                                 placeholder="Java edition username"
+                                className={!editPlayerForm.java_username ? "border-destructive" : ""}
                               />
+                              {!editPlayerForm.java_username && (
+                                <p className="text-xs text-destructive">Java username is required</p>
+                              )}
                             </div>
                             
                             <div className="space-y-2">
-                              <Label htmlFor="edit-region">Region</Label>
+                              <Label htmlFor="edit-region">Region *</Label>
                               <Select
                                 value={editPlayerForm.region}
                                 onValueChange={(value) => setEditPlayerForm(prev => ({ ...prev, region: value as PlayerRegion }))}
                               >
-                                <SelectTrigger>
+                                <SelectTrigger className={!editPlayerForm.region ? "border-destructive" : ""}>
                                   <SelectValue placeholder="Select region" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -688,6 +775,9 @@ const AdminPanel = () => {
                                   <SelectItem value="AF">Africa (AF)</SelectItem>
                                 </SelectContent>
                               </Select>
+                              {!editPlayerForm.region && (
+                                <p className="text-xs text-destructive">Region is required</p>
+                              )}
                             </div>
                             
                             <div className="space-y-2">
@@ -710,7 +800,7 @@ const AdminPanel = () => {
                             <Button 
                               className="w-full mt-2" 
                               onClick={handleUpdatePlayer}
-                              disabled={isSubmitting}
+                              disabled={isSubmitting || !editPlayerForm.java_username || !editPlayerForm.region}
                             >
                               <Save className="mr-2 h-4 w-4" />
                               Update Player Info
@@ -838,52 +928,84 @@ const AdminPanel = () => {
           <TabsContent value="news">
             <Card>
               <CardHeader>
-                <CardTitle>News Management</CardTitle>
-                <CardDescription>Create and publish news articles for the site</CardDescription>
+                <CardTitle>
+                  {editingNewsId ? 'Edit News Article' : 'Create News Article'}
+                </CardTitle>
+                <CardDescription>
+                  {editingNewsId ? 'Update existing news article' : 'Create and publish news articles for the site'}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="news-title">Title</Label>
+                    <Label htmlFor="news-title" className={!newsFormData.title ? "text-destructive" : ""}>
+                      Title *
+                    </Label>
                     <Input
                       id="news-title"
                       name="title"
                       value={newsFormData.title}
                       onChange={handleNewsInputChange}
                       placeholder="News title"
+                      className={!newsFormData.title ? "border-destructive" : ""}
                     />
+                    {!newsFormData.title && (
+                      <p className="text-xs text-destructive">Title is required</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="news-description">Description</Label>
+                    <Label htmlFor="news-description" className={!newsFormData.description ? "text-destructive" : ""}>
+                      Description *
+                    </Label>
                     <Textarea
                       id="news-description"
                       name="description"
                       value={newsFormData.description}
                       onChange={handleNewsInputChange}
                       placeholder="News content"
-                      className="min-h-[200px]"
+                      className={`min-h-[200px] ${!newsFormData.description ? "border-destructive" : ""}`}
                     />
+                    {!newsFormData.description && (
+                      <p className="text-xs text-destructive">Description is required</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="news-author">Author</Label>
+                    <Label htmlFor="news-author" className={!newsFormData.author ? "text-destructive" : ""}>
+                      Author *
+                    </Label>
                     <Input
                       id="news-author"
                       name="author"
                       value={newsFormData.author}
                       onChange={handleNewsInputChange}
                       placeholder="Author name"
+                      className={!newsFormData.author ? "border-destructive" : ""}
                     />
+                    {!newsFormData.author && (
+                      <p className="text-xs text-destructive">Author is required</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-end">
+              <CardFooter className="flex justify-between">
+                {editingNewsId && (
+                  <Button 
+                    variant="outline" 
+                    onClick={cancelEditingNews}
+                  >
+                    Cancel Editing
+                  </Button>
+                )}
                 <Button 
                   onClick={handleSubmitNews} 
                   disabled={!newsFormData.title || !newsFormData.description || !newsFormData.author || isSubmitting}
                 >
-                  {isSubmitting ? 'Publishing...' : 'Publish News'}
+                  {isSubmitting 
+                    ? (editingNewsId ? 'Updating...' : 'Publishing...')
+                    : (editingNewsId ? 'Update News' : 'Publish News')
+                  }
                 </Button>
               </CardFooter>
             </Card>
@@ -901,15 +1023,53 @@ const AdminPanel = () => {
                       animate={{ opacity: 1 }}
                       className="border rounded-md p-4"
                     >
-                      <h4 className="font-medium">{article.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {article.description}
-                      </p>
-                      <div className="text-xs text-muted-foreground mt-2 flex justify-between">
-                        <span>By: {article.author}</span>
-                        <span>
-                          {new Date(article.created_at).toLocaleDateString()}
-                        </span>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{article.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {article.description}
+                          </p>
+                          <div className="text-xs text-muted-foreground mt-2 flex justify-between">
+                            <span>By: {article.author}</span>
+                            <span>
+                              {new Date(article.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2 ml-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => startEditingNews(article)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete News Article</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this news article? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteNews(article.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     </motion.div>
                   ))

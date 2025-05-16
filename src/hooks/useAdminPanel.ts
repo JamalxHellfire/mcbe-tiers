@@ -1,13 +1,27 @@
+
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { NewsArticle, NewsArticleCreate } from '@/hooks/useNews';
 
-// Export the types correctly
-export type { NewsArticle, NewsArticleCreate };
+// Define interfaces for news articles
+export interface NewsArticle {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+// Add a new interface for article creation that doesn't require id and created_at
+export type NewsArticleCreate = {
+  title: string;
+  description: string;
+  author: string;
+};
 
 export function useAdminPanel() {
   
@@ -27,6 +41,9 @@ export function useAdminPanel() {
     description: '',
     author: ''
   });
+
+  // News editing state
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   
   const queryClient = useQueryClient();
 
@@ -177,8 +194,14 @@ export function useAdminPanel() {
       device?: DeviceType,
       region?: PlayerRegion,
       gamemode: GameMode,
-      tier: TierLevel
+      tier: TierLevel | "NA"
     }) => {
+      // Validate required fields
+      if (!ign) {
+        toast.error('Player IGN is required');
+        return false;
+      }
+
       // First, check if the player exists
       let player = await playerService.getPlayerByIGN(ign);
       
@@ -210,18 +233,25 @@ export function useAdminPanel() {
         }
       }
       
+      // If tier is "NA" (unranked), no need to assign tier
+      if (tier === "NA") {
+        return true;
+      }
+      
       // Assign the tier to the player
       const result = await playerService.assignTier({
         playerId: player.id,
         gamemode,
-        tier
+        tier: tier as TierLevel // Safe cast as we've checked it's not "NA"
       });
       
       return !!result;
     },
     onSuccess: (success, variables) => {
       if (success) {
-        queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
+        if (variables.tier !== "NA") {
+          queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
+        }
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       }
     }
@@ -338,6 +368,22 @@ export function useAdminPanel() {
   // News mutations - updated to use NewsArticleCreate instead of NewsArticle
   const submitNewsMutation = useMutation({
     mutationFn: async (newsData: NewsArticleCreate) => {
+      // Validate required fields
+      if (!newsData.title.trim()) {
+        toast.error('News title is required');
+        return false;
+      }
+      
+      if (!newsData.description.trim()) {
+        toast.error('News description is required');
+        return false;
+      }
+      
+      if (!newsData.author.trim()) {
+        toast.error('Author name is required');
+        return false;
+      }
+      
       // Use raw query to work with tables not defined in types
       const { error } = await supabase
         .from('news')
@@ -365,8 +411,78 @@ export function useAdminPanel() {
     }
   });
   
+  // Update news mutation
+  const updateNewsMutation = useMutation({
+    mutationFn: async ({ id, newsData }: { id: string, newsData: NewsArticleCreate }) => {
+      // Validate required fields
+      if (!newsData.title.trim()) {
+        toast.error('News title is required');
+        return false;
+      }
+      
+      if (!newsData.description.trim()) {
+        toast.error('News description is required');
+        return false;
+      }
+      
+      if (!newsData.author.trim()) {
+        toast.error('Author name is required');
+        return false;
+      }
+      
+      // Use raw query to update the news article
+      const { error } = await supabase
+        .from('news')
+        .update({
+          title: newsData.title,
+          description: newsData.description,
+          author: newsData.author,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error updating news:', error);
+        throw new Error('Failed to update news article');
+      }
+      
+      return true;
+    },
+    onSuccess: () => {
+      toast.success('News article updated successfully');
+      setNewsFormData({
+        title: '',
+        description: '',
+        author: ''
+      });
+      setEditingNewsId(null);
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+    }
+  });
+  
+  // Delete news mutation
+  const deleteNewsMutation = useMutation({
+    mutationFn: async (newsId: string) => {
+      const { error } = await supabase
+        .from('news')
+        .delete()
+        .eq('id', newsId);
+        
+      if (error) {
+        console.error('Error deleting news:', error);
+        throw new Error('Failed to delete news article');
+      }
+      
+      return true;
+    },
+    onSuccess: () => {
+      toast.success('News article deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['news'] });
+    }
+  });
+  
   // Fetch news articles
-  const { data: newsArticles = [] } = useQuery({
+  const { data: newsArticles = [], isLoading: loadingNews } = useQuery({
     queryKey: ['news'],
     queryFn: async () => {
       // Use raw query to work with tables not defined in types
@@ -385,6 +501,26 @@ export function useAdminPanel() {
     staleTime: 60000, // 1 minute
   });
   
+  // Start editing a news article
+  const startEditingNews = (article: NewsArticle) => {
+    setNewsFormData({
+      title: article.title,
+      description: article.description,
+      author: article.author
+    });
+    setEditingNewsId(article.id);
+  };
+  
+  // Cancel editing a news article
+  const cancelEditingNews = () => {
+    setNewsFormData({
+      title: '',
+      description: '',
+      author: ''
+    });
+    setEditingNewsId(null);
+  };
+  
   // Wrapper functions for mutations
   const massRegisterPlayers = (playersList: string) => {
     return massRegisterPlayersMutation.mutateAsync(playersList);
@@ -396,8 +532,24 @@ export function useAdminPanel() {
     device: DeviceType | undefined,
     region: PlayerRegion | undefined,
     gamemode: GameMode,
-    tier: TierLevel
+    tier: TierLevel | "NA"
   ) => {
+    // Validate mandatory fields
+    if (!ign) {
+      toast.error('Player IGN is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!region) {
+      toast.error('Player region is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!javaUsername) {
+      toast.error('Java username is required');
+      return Promise.resolve(false);
+    }
+    
     return submitPlayerResultMutation.mutateAsync({
       ign,
       javaUsername,
@@ -414,6 +566,17 @@ export function useAdminPanel() {
     region?: PlayerRegion,
     device?: DeviceType
   ) => {
+    // Validate mandatory fields for updates
+    if (!javaUsername) {
+      toast.error('Java username is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!region) {
+      toast.error('Player region is required');
+      return Promise.resolve(false);
+    }
+    
     return updatePlayerMutation.mutateAsync({
       playerId,
       javaUsername,
@@ -451,7 +614,39 @@ export function useAdminPanel() {
   };
   
   const submitNews = () => {
+    // Server-side validation
+    if (!newsFormData.title.trim()) {
+      toast.error('News title is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!newsFormData.description.trim()) {
+      toast.error('News description is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!newsFormData.author.trim()) {
+      toast.error('Author name is required');
+      return Promise.resolve(false);
+    }
+    
     return submitNewsMutation.mutateAsync(newsFormData);
+  };
+  
+  const updateNews = () => {
+    if (!editingNewsId) {
+      toast.error('No news article selected for editing');
+      return Promise.resolve(false);
+    }
+    
+    return updateNewsMutation.mutateAsync({
+      id: editingNewsId,
+      newsData: newsFormData
+    });
+  };
+  
+  const deleteNews = (newsId: string) => {
+    return deleteNewsMutation.mutateAsync(newsId);
   };
   
   // Handle news form input changes
@@ -502,6 +697,12 @@ export function useAdminPanel() {
     newsFormData,
     handleNewsInputChange,
     submitNews,
-    newsArticles
+    updateNews,
+    deleteNews,
+    startEditingNews,
+    cancelEditingNews,
+    editingNewsId,
+    newsArticles,
+    loadingNews
   };
 }
