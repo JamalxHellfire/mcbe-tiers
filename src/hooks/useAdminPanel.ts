@@ -6,23 +6,6 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define interfaces for news articles
-export interface NewsArticle {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  created_at: string;
-  updated_at?: string | null;
-}
-
-// Add a new interface for article creation that doesn't require id and created_at
-export type NewsArticleCreate = {
-  title: string;
-  description: string;
-  author: string;
-};
-
 export function useAdminPanel() {
   
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
@@ -34,16 +17,6 @@ export function useAdminPanel() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [searchResults, setSearchResults] = useState<Player[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
-  
-  // News state
-  const [newsFormData, setNewsFormData] = useState<NewsArticleCreate>({
-    title: '',
-    description: '',
-    author: ''
-  });
-
-  // News editing state
-  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   
   const queryClient = useQueryClient();
 
@@ -167,6 +140,18 @@ export function useAdminPanel() {
         return false;
       }
 
+      if (!javaUsername) {
+        toast.error('Java username is required');
+        return false;
+      }
+
+      if (!region) {
+        toast.error('Player region is required');
+        return false;
+      }
+
+      console.log("Creating/updating player:", { ign, javaUsername, device, region, gamemode, tier });
+
       // First, check if the player exists
       let player = await playerService.getPlayerByIGN(ign);
       
@@ -183,8 +168,11 @@ export function useAdminPanel() {
           toast.error(`Could not create player: ${ign}`);
           return false;
         }
+        
+        console.log("Player created:", player);
       } else {
         // Update the player's info if needed
+        console.log("Player exists, updating if needed:", player);
         if (
           (javaUsername && player.java_username !== javaUsername) ||
           (device && player.device !== device) ||
@@ -214,11 +202,19 @@ export function useAdminPanel() {
     },
     onSuccess: (success, variables) => {
       if (success) {
+        toast.success(`Player ${variables.ign} ranked successfully in ${variables.gamemode}`);
+        
         if (variables.tier !== "NA") {
           queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
         }
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      } else {
+        toast.error('Failed to submit player ranking');
       }
+    },
+    onError: (error) => {
+      console.error('Error in player submission:', error);
+      toast.error('Error submitting player ranking');
     }
   });
   
@@ -309,162 +305,6 @@ export function useAdminPanel() {
     }
   });
   
-  // News mutations - updated to use NewsArticleCreate instead of NewsArticle
-  const submitNewsMutation = useMutation({
-    mutationFn: async (newsData: NewsArticleCreate) => {
-      // Validate required fields
-      if (!newsData.title.trim()) {
-        toast.error('News title is required');
-        return false;
-      }
-      
-      if (!newsData.description.trim()) {
-        toast.error('News description is required');
-        return false;
-      }
-      
-      if (!newsData.author.trim()) {
-        toast.error('Author name is required');
-        return false;
-      }
-      
-      // Use raw query to work with tables not defined in types
-      const { error } = await supabase
-        .from('news')
-        .insert({
-          title: newsData.title,
-          description: newsData.description,
-          author: newsData.author
-        } as any);
-        
-      if (error) {
-        console.error('Error submitting news:', error);
-        throw new Error('Failed to submit news article');
-      }
-      
-      return true;
-    },
-    onSuccess: () => {
-      toast.success('News article published successfully');
-      setNewsFormData({
-        title: '',
-        description: '',
-        author: ''
-      });
-      queryClient.invalidateQueries({ queryKey: ['news'] });
-    }
-  });
-  
-  // Update news mutation
-  const updateNewsMutation = useMutation({
-    mutationFn: async ({ id, newsData }: { id: string, newsData: NewsArticleCreate }) => {
-      // Validate required fields
-      if (!newsData.title.trim()) {
-        toast.error('News title is required');
-        return false;
-      }
-      
-      if (!newsData.description.trim()) {
-        toast.error('News description is required');
-        return false;
-      }
-      
-      if (!newsData.author.trim()) {
-        toast.error('Author name is required');
-        return false;
-      }
-      
-      // Use raw query to update the news article
-      const { error } = await supabase
-        .from('news')
-        .update({
-          title: newsData.title,
-          description: newsData.description,
-          author: newsData.author,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-        
-      if (error) {
-        console.error('Error updating news:', error);
-        throw new Error('Failed to update news article');
-      }
-      
-      return true;
-    },
-    onSuccess: () => {
-      toast.success('News article updated successfully');
-      setNewsFormData({
-        title: '',
-        description: '',
-        author: ''
-      });
-      setEditingNewsId(null);
-      queryClient.invalidateQueries({ queryKey: ['news'] });
-    }
-  });
-  
-  // Delete news mutation
-  const deleteNewsMutation = useMutation({
-    mutationFn: async (newsId: string) => {
-      const { error } = await supabase
-        .from('news')
-        .delete()
-        .eq('id', newsId);
-        
-      if (error) {
-        console.error('Error deleting news:', error);
-        throw new Error('Failed to delete news article');
-      }
-      
-      return true;
-    },
-    onSuccess: () => {
-      toast.success('News article deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['news'] });
-    }
-  });
-  
-  // Fetch news articles
-  const { data: newsArticles = [], isLoading: loadingNews } = useQuery({
-    queryKey: ['news'],
-    queryFn: async () => {
-      // Use raw query to work with tables not defined in types
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('created_at', { ascending: false }) as any;
-        
-      if (error) {
-        console.error('Error fetching news:', error);
-        throw new Error('Failed to fetch news articles');
-      }
-      
-      return (data as NewsArticle[]) || [];
-    },
-    staleTime: 60000, // 1 minute
-  });
-  
-  // Start editing a news article
-  const startEditingNews = (article: NewsArticle) => {
-    setNewsFormData({
-      title: article.title,
-      description: article.description,
-      author: article.author
-    });
-    setEditingNewsId(article.id);
-  };
-  
-  // Cancel editing a news article
-  const cancelEditingNews = () => {
-    setNewsFormData({
-      title: '',
-      description: '',
-      author: ''
-    });
-    setEditingNewsId(null);
-  };
-  
   const submitPlayerResult = (
     ign: string,
     javaUsername: string | undefined,
@@ -544,51 +384,6 @@ export function useAdminPanel() {
     return banPlayerMutation.mutateAsync(player);
   };
   
-  const submitNews = () => {
-    // Server-side validation
-    if (!newsFormData.title.trim()) {
-      toast.error('News title is required');
-      return Promise.resolve(false);
-    }
-    
-    if (!newsFormData.description.trim()) {
-      toast.error('News description is required');
-      return Promise.resolve(false);
-    }
-    
-    if (!newsFormData.author.trim()) {
-      toast.error('Author name is required');
-      return Promise.resolve(false);
-    }
-    
-    return submitNewsMutation.mutateAsync(newsFormData);
-  };
-  
-  const updateNews = () => {
-    if (!editingNewsId) {
-      toast.error('No news article selected for editing');
-      return Promise.resolve(false);
-    }
-    
-    return updateNewsMutation.mutateAsync({
-      id: editingNewsId,
-      newsData: newsFormData
-    });
-  };
-  
-  const deleteNews = (newsId: string) => {
-    return deleteNewsMutation.mutateAsync(newsId);
-  };
-  
-  // Handle news form input changes
-  const handleNewsInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewsFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
   // Handle search input changes with debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -620,17 +415,6 @@ export function useAdminPanel() {
     updatePlayer,
     updatePlayerTier,
     deletePlayer,
-    banPlayer,
-    // News
-    newsFormData,
-    handleNewsInputChange,
-    submitNews,
-    updateNews,
-    deleteNews,
-    startEditingNews,
-    cancelEditingNews,
-    editingNewsId,
-    newsArticles,
-    loadingNews
+    banPlayer
   };
 }
