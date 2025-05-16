@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
@@ -139,15 +140,17 @@ export function useAdminPanel() {
         return false;
       }
 
-      if (!region) {
-        toast.error('Player region is required');
-        return false;
-      }
-      
       if (!javaUsername) {
         toast.error('Java username is required');
         return false;
       }
+
+      if (!region) {
+        toast.error('Player region is required');
+        return false;
+      }
+
+      console.log("Creating/updating player:", { ign, javaUsername, device, region, gamemode, tier });
 
       // First, check if the player exists
       let player = await playerService.getPlayerByIGN(ign);
@@ -165,8 +168,11 @@ export function useAdminPanel() {
           toast.error(`Could not create player: ${ign}`);
           return false;
         }
+        
+        console.log("Player created:", player);
       } else {
         // Update the player's info if needed
+        console.log("Player exists, updating if needed:", player);
         if (
           (javaUsername && player.java_username !== javaUsername) ||
           (device && player.device !== device) ||
@@ -196,12 +202,19 @@ export function useAdminPanel() {
     },
     onSuccess: (success, variables) => {
       if (success) {
-        toast.success('Player ranking submitted successfully');
+        toast.success(`Player ${variables.ign} ranked successfully in ${variables.gamemode}`);
+        
         if (variables.tier !== "NA") {
           queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
         }
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      } else {
+        toast.error('Failed to submit player ranking');
       }
+    },
+    onError: (error) => {
+      console.error('Error in player submission:', error);
+      toast.error('Error submitting player ranking');
     }
   });
   
@@ -292,6 +305,85 @@ export function useAdminPanel() {
     }
   });
   
+  const submitPlayerResult = (
+    ign: string,
+    javaUsername: string | undefined,
+    device: DeviceType | undefined,
+    region: PlayerRegion | undefined,
+    gamemode: GameMode,
+    tier: TierLevel | "NA"
+  ) => {
+    // Validate mandatory fields
+    if (!ign) {
+      toast.error('Player IGN is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!region) {
+      toast.error('Player region is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!javaUsername) {
+      toast.error('Java username is required');
+      return Promise.resolve(false);
+    }
+    
+    return submitPlayerResultMutation.mutateAsync({
+      ign,
+      javaUsername,
+      device,
+      region,
+      gamemode,
+      tier
+    });
+  };
+  
+  const updatePlayer = (
+    playerId: string,
+    javaUsername?: string,
+    region?: PlayerRegion,
+    device?: DeviceType
+  ) => {
+    // Validate mandatory fields for updates
+    if (!javaUsername) {
+      toast.error('Java username is required');
+      return Promise.resolve(false);
+    }
+    
+    if (!region) {
+      toast.error('Player region is required');
+      return Promise.resolve(false);
+    }
+    
+    return updatePlayerMutation.mutateAsync({
+      playerId,
+      javaUsername,
+      region,
+      device
+    });
+  };
+  
+  const updatePlayerTier = (
+    playerId: string,
+    gamemode: GameMode,
+    tier: TierLevel
+  ) => {
+    return updatePlayerTierMutation.mutateAsync({
+      playerId,
+      gamemode,
+      tier
+    });
+  };
+  
+  const deletePlayer = (playerId: string) => {
+    return deletePlayerMutation.mutateAsync(playerId);
+  };
+  
+  const banPlayer = (player: Player) => {
+    return banPlayerMutation.mutateAsync(player);
+  };
+  
   // Handle search input changes with debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -310,23 +402,7 @@ export function useAdminPanel() {
     isSubmitting,
     handlePinSubmit,
     handleLogout,
-    submitPlayerResult: (
-      ign: string,
-      javaUsername: string | undefined,
-      device: DeviceType | undefined,
-      region: PlayerRegion | undefined,
-      gamemode: GameMode,
-      tier: TierLevel | "NA"
-    ) => {
-      return submitPlayerResultMutation.mutateAsync({
-        ign,
-        javaUsername,
-        device,
-        region,
-        gamemode,
-        tier
-      });
-    },
+    submitPlayerResult,
     // Player search and edit
     searchQuery,
     setSearchQuery,
@@ -336,35 +412,9 @@ export function useAdminPanel() {
     setSelectedPlayer,
     loadPlayerDetails,
     clearSelectedPlayer,
-    updatePlayer: (
-      playerId: string,
-      javaUsername?: string,
-      region?: PlayerRegion,
-      device?: DeviceType
-    ) => {
-      return updatePlayerMutation.mutateAsync({
-        playerId,
-        javaUsername,
-        region,
-        device
-      });
-    },
-    updatePlayerTier: (
-      playerId: string,
-      gamemode: GameMode,
-      tier: TierLevel
-    ) => {
-      return updatePlayerTierMutation.mutateAsync({
-        playerId,
-        gamemode,
-        tier
-      });
-    },
-    deletePlayer: (playerId: string) => {
-      return deletePlayerMutation.mutateAsync(playerId);
-    },
-    banPlayer: (player: Player) => {
-      return banPlayerMutation.mutateAsync(player);
-    },
+    updatePlayer,
+    updatePlayerTier,
+    deletePlayer,
+    banPlayer
   };
 }

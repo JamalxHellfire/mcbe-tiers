@@ -12,16 +12,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-
-// Local interface definition to avoid dependency on removed hooks
-interface NewsArticle {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  created_at: string;
-  updated_at?: string | null;
-}
+import { NewsArticle } from '@/hooks/useAdminPanel';
 
 interface NewsArticleCardProps {
   article: NewsArticle;

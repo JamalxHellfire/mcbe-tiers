@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from "@/components/ui/button";
 
@@ -18,18 +17,10 @@ export const Navbar: React.FC<NavbarProps> = ({ selectedMode, onSelectMode, navi
           <Link to="/" className="font-bold text-2xl">
             MCBE Tiers
           </Link>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate("/")}
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
             Rankings
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate("/admin")}
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
             Admin
           </Button>
         </div>
