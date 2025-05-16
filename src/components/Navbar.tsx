@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { GameModeSelector } from './GameModeSelector';
-import { Trophy, Home, Menu, X, Search } from 'lucide-react';
+import { Trophy, Home, Info, Newspaper, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { ModeToggle } from './mode-toggle';
 
 interface NavbarProps {
   selectedMode: string;
@@ -77,6 +76,32 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                   <span>Rankings</span>
                 </Link>
               </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/about" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    activePage === "about" && "text-white font-medium"
+                  )}
+                >
+                  <Info size={18} className="mr-2" />
+                  <span>About Us</span>
+                </Link>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/news" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    activePage === "news" && "text-white font-medium"
+                  )}
+                >
+                  <Newspaper size={18} className="mr-2" />
+                  <span>News</span>
+                </Link>
+              </motion.div>
             </div>
 
             {/* Right - Search & External Links */}
@@ -98,7 +123,27 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 <Search size={15} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
               </motion.form>
               
-              <ModeToggle />
+              <motion.a 
+                href="https://youtube.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Youtube size={20} />
+              </motion.a>
+              
+              <motion.a 
+                href="https://discord.gg" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <MessageCircle size={20} />
+              </motion.a>
             </div>
             
             {/* Mobile menu button */}
@@ -156,10 +201,43 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                   <Home size={18} className="mr-3" />
                   <span>Rankings</span>
                 </Link>
+                <Link 
+                  to="/about" 
+                  className={cn(
+                    "flex items-center p-2 rounded-md hover:bg-white/10 text-white/80 hover:text-white",
+                    activePage === "about" && "text-white bg-white/5"
+                  )}
+                >
+                  <Info size={18} className="mr-3" />
+                  <span>About Us</span>
+                </Link>
+                <Link 
+                  to="/news" 
+                  className={cn(
+                    "flex items-center p-2 rounded-md hover:bg-white/10 text-white/80 hover:text-white",
+                    activePage === "news" && "text-white bg-white/5"
+                  )}
+                >
+                  <Newspaper size={18} className="mr-3" />
+                  <span>News</span>
+                </Link>
                 <div className="flex space-x-4 p-2 mt-2">
-                  <div className="ml-auto">
-                    <ModeToggle />
-                  </div>
+                  <a 
+                    href="https://youtube.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                  >
+                    <Youtube size={22} />
+                  </a>
+                  <a 
+                    href="https://discord.gg" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                  >
+                    <MessageCircle size={22} />
+                  </a>
                 </div>
               </div>
             </motion.div>
