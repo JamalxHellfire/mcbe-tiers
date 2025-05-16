@@ -24,19 +24,22 @@ const Index = () => {
     setIsPlayerModalOpen(true);
   };
   
-  const gamemodes: GameMode[] = [
-    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
+  const gamemodes: Array<GameMode | 'overall'> = [
+    'overall', 'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
   ];
   
-  const isValidGamemode = selectedMode === 'overall' || gamemodes.includes(selectedMode as GameMode);
+  const isValidGamemode = gamemodes.includes(selectedMode as (GameMode | 'overall'));
+  
+  // Create navigation props object for the Navbar component
+  const navbarProps = {
+    selectedMode,
+    onSelectMode: handleModeChange,
+    navigate
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
-      <Navbar 
-        selectedMode={selectedMode} 
-        onSelectMode={handleModeChange} 
-        navigate={navigate} 
-      />
+      <Navbar {...navbarProps} />
       
       <main className="flex-grow">
         <div className="content-container py-6 md:py-8">
@@ -62,7 +65,7 @@ const Index = () => {
                 {selectedMode === 'overall' ? (
                   <LeaderboardTable onPlayerClick={handlePlayerClick} />
                 ) : (
-                  <TierGrid selectedMode={selectedMode} onPlayerClick={handlePlayerClick} />
+                  <TierGrid selectedMode={selectedMode as GameMode} onPlayerClick={handlePlayerClick} />
                 )}
               </motion.div>
             </AnimatePresence>
