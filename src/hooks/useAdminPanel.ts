@@ -145,41 +145,6 @@ export function useAdminPanel() {
   };
   
   // Player management mutations
-  const massRegisterPlayersMutation = useMutation({
-    mutationFn: async (playersList: string) => {
-      if (!playersList.trim()) {
-        toast.error('Please enter player data');
-        return 0;
-      }
-      
-      const lines = playersList
-        .trim()
-        .split('\n')
-        .filter(line => line.trim() !== '');
-      
-      if (lines.length === 0) {
-        toast.error('No valid player data found');
-        return 0;
-      }
-      
-      const playerDataList = lines.map(line => {
-        const [ign, javaUsername] = line.split(',').map(part => part.trim());
-        return {
-          ign,
-          java_username: javaUsername || undefined
-        };
-      });
-      
-      return await playerService.massCreatePlayers(playerDataList);
-    },
-    onSuccess: (count) => {
-      if (count > 0) {
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-        toast.success(`Successfully registered ${count} players`);
-      }
-    }
-  });
-  
   const submitPlayerResultMutation = useMutation({
     mutationFn: async ({
       ign,
@@ -344,27 +309,6 @@ export function useAdminPanel() {
     }
   });
   
-  // Keep only the realistic players generation feature
-  const generateRealisticPlayersMutation = useMutation({
-    mutationFn: (count: number) => playerService.generateRealisticPlayers(count),
-    onSuccess: (count) => {
-      if (count > 0) {
-        queryClient.invalidateQueries();
-        toast.success(`Successfully generated ${count} realistic players`);
-      }
-    }
-  });
-  
-  const wipeAllDataMutation = useMutation({
-    mutationFn: () => playerService.wipeAllData(),
-    onSuccess: (success) => {
-      if (success) {
-        queryClient.invalidateQueries();
-        toast.success('All player data has been wiped');
-      }
-    }
-  });
-  
   // News mutations - updated to use NewsArticleCreate instead of NewsArticle
   const submitNewsMutation = useMutation({
     mutationFn: async (newsData: NewsArticleCreate) => {
@@ -521,11 +465,6 @@ export function useAdminPanel() {
     setEditingNewsId(null);
   };
   
-  // Wrapper functions for mutations
-  const massRegisterPlayers = (playersList: string) => {
-    return massRegisterPlayersMutation.mutateAsync(playersList);
-  };
-  
   const submitPlayerResult = (
     ign: string,
     javaUsername: string | undefined,
@@ -605,14 +544,6 @@ export function useAdminPanel() {
     return banPlayerMutation.mutateAsync(player);
   };
   
-  const generateRealisticPlayers = (count: number) => {
-    return generateRealisticPlayersMutation.mutateAsync(count);
-  };
-  
-  const wipeAllData = () => {
-    return wipeAllDataMutation.mutateAsync();
-  };
-  
   const submitNews = () => {
     // Server-side validation
     if (!newsFormData.title.trim()) {
@@ -676,10 +607,7 @@ export function useAdminPanel() {
     isSubmitting,
     handlePinSubmit,
     handleLogout,
-    massRegisterPlayers,
     submitPlayerResult,
-    generateRealisticPlayers,
-    wipeAllData,
     // Player search and edit
     searchQuery,
     setSearchQuery,

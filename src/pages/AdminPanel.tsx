@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button';
 import { useAdminPanel, NewsArticle } from '@/hooks/useAdminPanel';
 import { PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, User, X, Edit, UserX, Trash2, Save, RefreshCw, Pencil, Check, XCircle } from 'lucide-react';
+import { Search, User, X, Edit, UserX, Trash2, Save, Pencil, Check, XCircle } from 'lucide-react';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
@@ -29,9 +30,6 @@ const AdminPanel = () => {
     handlePinSubmit,
     handleLogout,
     submitPlayerResult,
-    massRegisterPlayers,
-    generateRealisticPlayers,
-    wipeAllData,
     // Player search and edit
     searchQuery,
     setSearchQuery,
@@ -82,9 +80,6 @@ const AdminPanel = () => {
     'Mace': "NA"
   });
   
-  const [massPlayersText, setMassPlayersText] = useState('');
-  const [fakePlayerCount, setFakePlayerCount] = useState<number>(250);
-  
   // Player edit state
   const [editPlayerForm, setEditPlayerForm] = useState({
     ign: '',
@@ -92,6 +87,11 @@ const AdminPanel = () => {
     region: undefined as PlayerRegion | undefined,
     device: undefined as DeviceType | undefined
   });
+
+  // Define tier options
+  const tierOptions: (TierLevel | "NA")[] = [
+    "NA", "LT5", "HT5", "LT4", "HT4", "LT3", "HT3", "LT2", "HT2", "LT1", "HT1", "Retired"
+  ];
   
   // Update edit form when a player is selected
   useEffect(() => {
@@ -132,33 +132,28 @@ const AdminPanel = () => {
     return !Object.values(errors).some(isError => isError);
   };
   
-  // Handle player submission for a specific gamemode
-  const handleSubmitPlayerForGamemode = async (gamemode: GameMode) => {
-    const selectedTier = tierSelections[gamemode];
-    
-    // Validate form
-    if (!validateForm()) {
-      return;
-    }
-    
-    try {
-      const success = await submitPlayerResult(
-        ign,
-        javaUsername || undefined,
-        device,
-        region,
-        gamemode,
-        selectedTier
-      );
-      
-      if (success) {
-        toast.success(`Successfully set ${ign}'s ${gamemode} tier to ${selectedTier}`);
-      } else {
-        toast.error(`Failed to submit ${gamemode} result`);
-      }
-    } catch (err) {
-      console.error(`Error submitting ${gamemode} player:`, err);
-      toast.error(`An error occurred while submitting player ${gamemode} data`);
+  // Helper to get tier color class
+  const getTierColorClass = (tier: TierLevel | "NA") => {
+    switch (tier) {
+      case "HT1":
+      case "LT1":
+        return "text-tier-1";
+      case "HT2":
+      case "LT2":
+        return "text-tier-2";
+      case "HT3":
+      case "LT3":
+        return "text-tier-3";
+      case "HT4":
+      case "LT4":
+        return "text-tier-4";
+      case "HT5":
+      case "LT5":
+        return "text-tier-5";
+      case "Retired":
+        return "text-gray-400";
+      default:
+        return "text-gray-400";
     }
   };
   
@@ -174,25 +169,23 @@ const AdminPanel = () => {
     
     for (const gamemode of Object.keys(tierSelections) as GameMode[]) {
       const tier = tierSelections[gamemode];
-      // Only submit if a specific tier is selected (not "NA")
-      if (tier !== "NA") {
-        hasAttempts = true;
-        try {
-          const success = await submitPlayerResult(
-            ign,
-            javaUsername || undefined,
-            device,
-            region,
-            gamemode,
-            tier
-          );
-          
-          if (success) {
-            successCount++;
-          }
-        } catch (err) {
-          console.error(`Error submitting ${gamemode} player:`, err);
+      // Submit for all gamemodes, using "NA" as default
+      hasAttempts = true;
+      try {
+        const success = await submitPlayerResult(
+          ign,
+          javaUsername || undefined,
+          device,
+          region,
+          gamemode,
+          tier
+        );
+        
+        if (success) {
+          successCount++;
         }
+      } catch (err) {
+        console.error(`Error submitting ${gamemode} player:`, err);
       }
     }
     
@@ -301,47 +294,6 @@ const AdminPanel = () => {
     }
   };
   
-  // Handle mass player registration
-  const handleMassRegister = async () => {
-    if (!massPlayersText.trim()) {
-      toast.error('Please enter player data');
-      return;
-    }
-    
-    try {
-      await massRegisterPlayers(massPlayersText);
-      setMassPlayersText('');
-    } catch (err) {
-      console.error('Error registering players:', err);
-      toast.error('An error occurred during player registration');
-    }
-  };
-  
-  // Generate realistic players for testing
-  const handleGenerateRealisticPlayers = async () => {
-    if (fakePlayerCount < 200 || fakePlayerCount > 300) {
-      toast.error('Please enter a valid number between 200 and 300');
-      return;
-    }
-    
-    try {
-      await generateRealisticPlayers(fakePlayerCount);
-    } catch (err) {
-      console.error('Error generating players:', err);
-      toast.error('An error occurred while generating players');
-    }
-  };
-  
-  // Handle data wipe
-  const handleWipeAllData = async () => {
-    try {
-      await wipeAllData();
-    } catch (err) {
-      console.error('Error wiping data:', err);
-      toast.error('An error occurred while wiping data');
-    }
-  };
-  
   // Handle news submission
   const handleSubmitNews = async () => {
     // Validate form
@@ -444,14 +396,13 @@ const AdminPanel = () => {
         </div>
         
         <Tabs defaultValue="player-results" className="space-y-6">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-2 md:grid-cols-3 w-full">
             <TabsTrigger value="player-results">Submit Results</TabsTrigger>
             <TabsTrigger value="player-search">Search/Edit Players</TabsTrigger>
             <TabsTrigger value="news">News Management</TabsTrigger>
-            <TabsTrigger value="mass-register">Mass Register</TabsTrigger>
           </TabsList>
           
-          {/* Player Results Submission - Completely redesigned for multiple gamemode selection */}
+          {/* Player Results Submission - Completely redesigned for horizontal radio buttons */}
           <TabsContent value="player-results">
             <Card className="w-full">
               <CardHeader>
@@ -459,9 +410,9 @@ const AdminPanel = () => {
                 <CardDescription>Assign tiers to players for multiple gamemodes at once</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-6">
                   {/* Player Info with validation */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="ign" className={formErrors.ign ? "text-destructive" : ""}>
                         IGN (In-Game Name) *
@@ -528,7 +479,7 @@ const AdminPanel = () => {
                       )}
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-3">
                       <Label htmlFor="device">Device</Label>
                       <Select 
                         value={device} 
@@ -546,68 +497,40 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   
-                  {/* Game Mode Tier Selection */}
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-4">Game Mode Tier Selection</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {/* Loop through game modes */}
-                      {(['Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'] as GameMode[]).map((gamemode) => (
-                        <Card key={gamemode} className="overflow-hidden">
-                          <CardHeader className="bg-muted/30 py-3 px-4">
-                            <CardTitle className="text-md">{gamemode}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4">
-                            <div className="flex flex-col gap-2">
-                              {/* Add Not Ranked option */}
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="radio"
-                                  id={`${gamemode}-NA`}
-                                  name={`tier-${gamemode}`}
-                                  checked={tierSelections[gamemode] === "NA"}
-                                  onChange={() => handleTierChange(gamemode, "NA")}
-                                  className="h-4 w-4 rounded border border-gray-300 focus:ring-2 focus:ring-primary accent-gray-500"
+                  {/* Game Mode Tier Selection - Horizontal Radio Buttons */}
+                  <div className="mt-6 space-y-6">
+                    <h3 className="text-lg font-medium">Game Mode Tier Selection</h3>
+                    
+                    {/* Loop through game modes */}
+                    {(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'Bedwars', 'NethPot', 'UHC'] as GameMode[]).map((gamemode) => (
+                      <div key={gamemode} className="pt-2 pb-4 border-b border-gray-700/50">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="w-24 font-medium">{gamemode}:</h4>
+                          
+                          <RadioGroup 
+                            className="flex flex-wrap items-center gap-x-4 gap-y-3"
+                            value={tierSelections[gamemode]}
+                            onValueChange={(value) => handleTierChange(gamemode, value as TierLevel | "NA")}
+                          >
+                            {tierOptions.map((tier) => (
+                              <div key={`${gamemode}-${tier}`} className="flex items-center space-x-2">
+                                <RadioGroupItem 
+                                  value={tier} 
+                                  id={`${gamemode}-${tier}`}
+                                  className={tier !== "NA" ? getTierColorClass(tier as TierLevel) : ""}
                                 />
-                                <label htmlFor={`${gamemode}-NA`} className="text-sm text-gray-400">
-                                  Not Ranked
-                                </label>
+                                <Label 
+                                  htmlFor={`${gamemode}-${tier}`} 
+                                  className={`text-sm ${tier !== "NA" ? getTierColorClass(tier as TierLevel) : ""}`}
+                                >
+                                  {tier === "NA" ? "Not Ranked" : tier}
+                                </Label>
                               </div>
-                              
-                              {/* Tier options as radio buttons */}
-                              {(['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5', 'Retired'] as TierLevel[]).map((tier) => (
-                                <div key={`${gamemode}-${tier}`} className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id={`${gamemode}-${tier}`}
-                                    name={`tier-${gamemode}`}
-                                    checked={tierSelections[gamemode] === tier}
-                                    onChange={() => handleTierChange(gamemode, tier)}
-                                    className={`h-4 w-4 rounded border border-gray-300 focus:ring-2 focus:ring-primary ${
-                                      tier.includes('T1') ? 'accent-yellow-500' :
-                                      tier.includes('T2') ? 'accent-orange-500' :
-                                      tier.includes('T3') ? 'accent-red-500' :
-                                      tier.includes('T4') ? 'accent-blue-500' :
-                                      tier.includes('T5') ? 'accent-indigo-500' :
-                                      'accent-gray-400'
-                                    }`}
-                                  />
-                                  <label htmlFor={`${gamemode}-${tier}`} className={`text-sm ${
-                                    tier.includes('T1') ? 'text-tier-1' :
-                                    tier.includes('T2') ? 'text-tier-2' :
-                                    tier.includes('T3') ? 'text-tier-3' :
-                                    tier.includes('T4') ? 'text-tier-4' :
-                                    tier.includes('T5') ? 'text-tier-5' :
-                                    'text-gray-400'
-                                  }`}>
-                                    {tier}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+                      </div>
+                    ))}
                     
                     {/* Submit button for all selected tiers */}
                     <div className="mt-6 flex justify-end">
@@ -812,9 +735,9 @@ const AdminPanel = () => {
                         <div className="space-y-4">
                           <h3 className="font-semibold">Manage Tiers</h3>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4">
                             {/* Loop through game modes */}
-                            {(['Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'] as GameMode[]).map((gamemode) => {
+                            {(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'Bedwars', 'NethPot', 'UHC'] as GameMode[]).map((gamemode) => {
                               const tiers = selectedPlayer.tiers || {};
                               const currentTier = tiers[gamemode]?.tier || 'Not Ranked';
                               
@@ -1080,68 +1003,6 @@ const AdminPanel = () => {
                 )}
               </div>
             </div>
-          </TabsContent>
-          
-          {/* Mass Register Tab */}
-          <TabsContent value="mass-register">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mass Register Players</CardTitle>
-                <CardDescription>
-                  Add multiple players at once. Format: IGN,JavaUsername (one per line)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={massPlayersText}
-                  onChange={(e) => setMassPlayersText(e.target.value)}
-                  placeholder="Player1,JavaPlayer1&#10;Player2,JavaPlayer2&#10;Player3,JavaPlayer3"
-                  className="min-h-[200px]"
-                />
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button 
-                  onClick={handleMassRegister} 
-                  disabled={!massPlayersText.trim() || isSubmitting}
-                >
-                  {isSubmitting ? 'Processing...' : 'Register Players'}
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            {/* Testing Data Generation - Modified to only include realistic players */}
-            <Card className="mt-6 border-amber-600/30">
-              <CardHeader className="bg-amber-950/10">
-                <CardTitle>Generate Test Data</CardTitle>
-                <CardDescription>
-                  Create realistic test data for the platform
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="flex items-end gap-4">
-                  <div className="flex-1">
-                    <Label htmlFor="fakePlayerCount">Number of Test Players (200-300)</Label>
-                    <Input
-                      id="fakePlayerCount"
-                      type="number"
-                      min={200}
-                      max={300}
-                      value={fakePlayerCount}
-                      onChange={(e) => setFakePlayerCount(parseInt(e.target.value) || 250)}
-                      className="mt-1"
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleGenerateRealisticPlayers} 
-                    disabled={isSubmitting}
-                    className="bg-amber-600 hover:bg-amber-700 text-white"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {isSubmitting ? 'Generating...' : 'Generate Test Data'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
