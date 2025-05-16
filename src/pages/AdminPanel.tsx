@@ -1,48 +1,41 @@
-
-import React, { useState } from 'react';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
+import React, { useState, useEffect } from 'react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
-import { toast } from "sonner";
-import { motion } from 'framer-motion';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel } from '@/services/playerService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { 
-  PlayerRegion, 
-  DeviceType, 
-  GameMode, 
-  TierLevel, 
-  Player 
-} from '@/services/playerService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
 } from "@/components/ui/dialog";
-import { AlertCircle, CheckCircle, Search, X } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@/components/ui/table"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge";
+import { MoreVertical, Edit, Trash2, Ban } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Switch } from "@/components/ui/switch"
+import { NewsArticleCard } from '@/components/NewsArticleCard';
 
 const AdminPanel = () => {
   const {
@@ -58,6 +51,7 @@ const AdminPanel = () => {
     searchResults,
     isSearching,
     selectedPlayer,
+    setSelectedPlayer,
     loadPlayerDetails,
     clearSelectedPlayer,
     updatePlayer,
@@ -65,697 +59,551 @@ const AdminPanel = () => {
     deletePlayer,
     banPlayer
   } = useAdminPanel();
-
-  // State for player form
-  const [playerForm, setPlayerForm] = useState({
-    ign: '',
-    javaUsername: '',
-    region: 'NA' as PlayerRegion,
-    device: 'PC' as DeviceType,
-  });
-
-  // State for tier selection
-  const [tierSelections, setTierSelections] = useState<{[key in GameMode]?: TierLevel | "NA"}>({
-    'Crystal': 'NA',
-    'Sword': 'NA',
-    'SMP': 'NA',
-    'UHC': 'NA',
-    'Axe': 'NA',
-    'NethPot': 'NA',
-    'Bedwars': 'NA',
-    'Mace': 'NA'
-  });
-
-  // State for player edit form
-  const [playerEditForm, setPlayerEditForm] = useState({
-    javaUsername: '',
-    region: '' as PlayerRegion,
-    device: '' as DeviceType,
-  });
-
-  // State for tier edit
-  const [editingGamemode, setEditingGamemode] = useState<GameMode | ''>('');
-  const [editingTier, setEditingTier] = useState<TierLevel | ''>('');
-
-  // Available regions
-  const regions: PlayerRegion[] = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'];
   
-  // Available device types
-  const devices: DeviceType[] = ['Mobile', 'PC', 'Console'];
+  // Local state for player submission form
+  const [ign, setIgn] = useState('');
+  const [javaUsername, setJavaUsername] = useState('');
+  const [device, setDevice] = useState<DeviceType | undefined>(undefined);
+  const [region, setRegion] = useState<PlayerRegion | undefined>(undefined);
+  const [gamemode, setGamemode] = useState<GameMode>('Bedwars');
+  const [tier, setTier] = useState<TierLevel | "NA">('NA');
   
-  // Available gamemodes
-  const gamemodes: GameMode[] = [
-    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
-  ];
+  // Local state for player update form
+  const [updateJavaUsername, setUpdateJavaUsername] = useState('');
+  const [updateRegion, setUpdateRegion] = useState<PlayerRegion | undefined>(undefined);
+  const [updateDevice, setUpdateDevice] = useState<DeviceType | undefined>(undefined);
+  const [updateGamemodeTier, setUpdateGamemodeTier] = useState<TierLevel>('Tier1');
+  const [updateGamemode, setUpdateGamemode] = useState<GameMode>('Bedwars');
   
-  // Available tiers
-  const tiers: (TierLevel | "NA")[] = [
-    'NA', 'LT5', 'HT5', 'LT4', 'HT4', 'LT3', 'HT3', 'LT2', 'HT2', 'LT1', 'HT1', 'Retired'
-  ];
-
-  // Map tier values to display names
-  const tierNames: Record<string, string> = {
-    'NA': 'Not Ranked',
-    'LT5': 'Low Tier 5',
-    'HT5': 'High Tier 5',
-    'LT4': 'Low Tier 4',
-    'HT4': 'High Tier 4',
-    'LT3': 'Low Tier 3',
-    'HT3': 'High Tier 3',
-    'LT2': 'Low Tier 2',
-    'HT2': 'High Tier 2',
-    'LT1': 'Low Tier 1',
-    'HT1': 'High Tier 1',
-    'Retired': 'Retired'
-  };
-
-  // Get tier color based on tier level
-  const getTierColor = (tier: TierLevel | 'NA'): string => {
-    switch(tier) {
-      case 'HT1': return 'text-red-500';
-      case 'LT1': return 'text-red-400';
-      case 'HT2': return 'text-orange-500';
-      case 'LT2': return 'text-orange-400';
-      case 'HT3': return 'text-yellow-500';
-      case 'LT3': return 'text-yellow-400';
-      case 'HT4': return 'text-green-500';
-      case 'LT4': return 'text-green-400';
-      case 'HT5': return 'text-blue-500';
-      case 'LT5': return 'text-blue-400';
-      case 'Retired': return 'text-purple-500';
-      case 'NA': return 'text-gray-400';
-      default: return 'text-gray-400';
-    }
-  };
-
-  // Handle form input changes for player creation
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlayerForm({
-      ...playerForm,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  // Handle tier selection for a gamemode
-  const handleTierChange = (gamemode: GameMode, tier: TierLevel | "NA") => {
-    setTierSelections({
-      ...tierSelections,
-      [gamemode]: tier
-    });
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Local state for news article dialog
+  const [openNewsArticleDialog, setOpenNewsArticleDialog] = useState(false);
+  const [newsArticleTitle, setNewsArticleTitle] = useState('');
+  const [newsArticleContent, setNewsArticleContent] = useState('');
+  const [newsArticleAuthor, setNewsArticleAuthor] = useState('');
+  const [newsArticleTags, setNewsArticleTags] = useState('');
+  
+  // Local state for news articles
+  const [newsArticles, setNewsArticles] = useState<any[]>([]);
+  
+  // Local state for edit mode
+  const [editMode, setEditMode] = useState(false);
+  
+  // Reset selected player on unmount
+  useEffect(() => {
+    return () => {
+      clearSelectedPlayer();
+    };
+  }, [clearSelectedPlayer]);
+  
+  // Handle player submission
+  const handlePlayerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!playerForm.ign) {
-      toast.error('Player IGN is required');
-      return;
-    }
-    
-    if (!playerForm.javaUsername) {
-      toast.error('Java username is required');
-      return;
-    }
-    
-    if (!playerForm.region) {
-      toast.error('Player region is required');
-      return;
-    }
-    
-    // Submit results for each selected gamemode
-    let successCount = 0;
-    const totalSelected = Object.entries(tierSelections).filter(([, tier]) => tier !== undefined).length;
-    
-    for (const [gamemode, tier] of Object.entries(tierSelections)) {
-      if (tier) {
-        const success = await submitPlayerResult(
-          playerForm.ign,
-          playerForm.javaUsername,
-          playerForm.device,
-          playerForm.region,
-          gamemode as GameMode,
-          tier
-        );
-        
-        if (success) {
-          successCount++;
-        }
-      }
-    }
-    
-    if (successCount > 0) {
-      if (successCount === totalSelected) {
-        toast.success(`Successfully submitted all results for ${playerForm.ign}`);
-        // Reset form after successful submission
-        setPlayerForm({
-          ign: '',
-          javaUsername: '',
-          region: 'NA' as PlayerRegion,
-          device: 'PC' as DeviceType,
-        });
-        
-        // Reset tier selections
-        setTierSelections({
-          'Crystal': 'NA',
-          'Sword': 'NA',
-          'SMP': 'NA',
-          'UHC': 'NA',
-          'Axe': 'NA',
-          'NethPot': 'NA',
-          'Bedwars': 'NA',
-          'Mace': 'NA'
-        });
-      } else {
-        toast.info(`Submitted ${successCount}/${totalSelected} results for ${playerForm.ign}`);
-      }
-    } else {
-      toast.error('Failed to submit any results');
-    }
-  };
-
-  // Handle player edit form submission
-  const handlePlayerEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedPlayer) return;
-    
-    const success = await updatePlayer(
-      selectedPlayer.id,
-      playerEditForm.javaUsername || selectedPlayer.java_username || '',
-      playerEditForm.region as PlayerRegion || selectedPlayer.region as PlayerRegion || 'NA',
-      playerEditForm.device as DeviceType || selectedPlayer.device as DeviceType || 'PC'
-    );
-    
-    if (success) {
-      setPlayerEditForm({
-        javaUsername: '',
-        region: '' as PlayerRegion,
-        device: '' as DeviceType,
-      });
-    }
-  };
-
-  // Handle tier update
-  const handleTierUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedPlayer || !editingGamemode || !editingTier) {
-      toast.error('Please select both gamemode and tier');
-      return;
-    }
-    
-    await updatePlayerTier(
-      selectedPlayer.id,
-      editingGamemode as GameMode,
-      editingTier as TierLevel
-    );
-    
-    // Reset form after submission
-    setEditingGamemode('');
-    setEditingTier('');
-  };
-
-  // Handle player deletion with confirmation
-  const handlePlayerDelete = async () => {
-    if (!selectedPlayer) return;
-    
-    if (window.confirm(`Are you sure you want to delete ${selectedPlayer.ign}? This action cannot be undone.`)) {
-      await deletePlayer(selectedPlayer.id);
-    }
-  };
-
-  // Handle player ban with confirmation
-  const handlePlayerBan = async () => {
-    if (!selectedPlayer) return;
-    
-    if (window.confirm(`Are you sure you want to ban ${selectedPlayer.ign}? This will remove them from all rankings.`)) {
-      await banPlayer(selectedPlayer);
-    }
-  };
-
-  // Prepare player edit form when a player is selected
-  React.useEffect(() => {
-    if (selectedPlayer) {
-      setPlayerEditForm({
-        javaUsername: selectedPlayer.java_username || '',
-        region: selectedPlayer.region as PlayerRegion || 'NA',
-        device: selectedPlayer.device as DeviceType || 'PC',
-      });
-    }
-  }, [selectedPlayer]);
-
-  // Create empty props for Navbar to satisfy TypeScript
-  const navbarProps = {
-    selectedMode: '',
-    onSelectMode: () => {},
-    navigate: () => {}
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-dark">
-      <Navbar {...navbarProps} />
+    try {
+      await submitPlayerResult(
+        ign,
+        javaUsername,
+        device,
+        region,
+        gamemode,
+        tier
+      );
       
-      <div className="container mx-auto py-8 px-4">
-        <motion.h1 
-          className="text-3xl font-bold mb-6 text-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Admin Panel
-        </motion.h1>
-        
-        {!isAdminMode ? (
-          <Card className="max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle>Admin Login</CardTitle>
-              <CardDescription>Enter your admin PIN to access the panel</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handlePinSubmit();
-              }}>
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="pin">Admin PIN</Label>
-                    <Input 
-                      id="pin"
-                      type="password"
-                      value={pinInputValue}
-                      onChange={(e) => setPinInputValue(e.target.value)}
-                      placeholder="Enter admin PIN"
-                      required
+      // Clear the form
+      setIgn('');
+      setJavaUsername('');
+      setDevice(undefined);
+      setRegion(undefined);
+      setGamemode('Bedwars');
+      setTier('NA');
+    } catch (error) {
+      console.error('Failed to submit player:', error);
+      toast.error('Failed to submit player');
+    }
+  };
+  
+  // Handle player update
+  const handlePlayerUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedPlayer) {
+      toast.error('No player selected');
+      return;
+    }
+    
+    try {
+      await updatePlayer(
+        selectedPlayer.id,
+        updateJavaUsername,
+        updateRegion,
+        updateDevice
+      );
+    } catch (error) {
+      console.error('Failed to update player:', error);
+      toast.error('Failed to update player');
+    }
+  };
+  
+  // Handle player tier update
+  const handlePlayerTierUpdate = async () => {
+    if (!selectedPlayer) {
+      toast.error('No player selected');
+      return;
+    }
+    
+    try {
+      await updatePlayerTier(
+        selectedPlayer.id,
+        updateGamemode,
+        updateGamemodeTier
+      );
+    } catch (error) {
+      console.error('Failed to update player tier:', error);
+      toast.error('Failed to update player tier');
+    }
+  };
+  
+  // Handle player deletion
+  const handlePlayerDelete = async () => {
+    if (!selectedPlayer) {
+      toast.error('No player selected');
+      return;
+    }
+    
+    try {
+      await deletePlayer(selectedPlayer.id);
+    } catch (error) {
+      console.error('Failed to delete player:', error);
+      toast.error('Failed to delete player');
+    }
+  };
+  
+  // Handle player ban
+  const handlePlayerBan = async () => {
+    if (!selectedPlayer) {
+      toast.error('No player selected');
+      return;
+    }
+    
+    try {
+      await banPlayer(selectedPlayer);
+    } catch (error) {
+      console.error('Failed to ban player:', error);
+      toast.error('Failed to ban player');
+    }
+  };
+  
+  // Handle news article submission
+  const handleNewsArticleSubmit = async () => {
+    // Implement news article submission logic here
+    console.log('Submitting news article:', {
+      title: newsArticleTitle,
+      content: newsArticleContent,
+      author: newsArticleAuthor,
+      tags: newsArticleTags,
+    });
+    
+    // Clear the form
+    setNewsArticleTitle('');
+    setNewsArticleContent('');
+    setNewsArticleAuthor('');
+    setNewsArticleTags('');
+    setOpenNewsArticleDialog(false);
+  };
+  
+  return (
+    <div className="container py-8">
+      {!isAdminMode ? (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Admin Login</h2>
+          <p className="text-muted-foreground">
+            Enter the admin PIN to access admin functions.
+          </p>
+          <div className="flex items-center space-x-2">
+            <Input
+              type="password"
+              placeholder="Admin PIN"
+              value={pinInputValue}
+              onChange={(e) => setPinInputValue(e.target.value)}
+              className="w-48"
+            />
+            <Button onClick={handlePinSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Login'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Admin Panel</h2>
+            <Button variant="destructive" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
+          
+          {/* Player Submission Form */}
+          <section className="space-y-4">
+            <h3 className="text-xl font-semibold">Submit Player Result</h3>
+            <form onSubmit={handlePlayerSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="ign">Player IGN</Label>
+                <Input
+                  type="text"
+                  id="ign"
+                  value={ign}
+                  onChange={(e) => setIgn(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="javaUsername">Java Username</Label>
+                <Input
+                  type="text"
+                  id="javaUsername"
+                  value={javaUsername}
+                  onChange={(e) => setJavaUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="device">Device</Label>
+                <Select onValueChange={(value) => setDevice(value as DeviceType)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select device" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mobile">Mobile</SelectItem>
+                    <SelectItem value="PC">PC</SelectItem>
+                    <SelectItem value="Console">Console</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="region">Region</Label>
+                <Select onValueChange={(value) => setRegion(value as PlayerRegion)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NA">North America</SelectItem>
+                    <SelectItem value="EU">Europe</SelectItem>
+                    <SelectItem value="AS">Asia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="gamemode">Gamemode</Label>
+                <Select onValueChange={(value) => setGamemode(value as GameMode)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select gamemode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Bedwars">Bedwars</SelectItem>
+                    <SelectItem value="Duels">Duels</SelectItem>
+                    <SelectItem value="TheBridge">TheBridge</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="tier">Tier</Label>
+                <Select onValueChange={(value) => setTier(value as TierLevel | "NA")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NA">Unranked</SelectItem>
+                    <SelectItem value="Tier1">Tier 1</SelectItem>
+                    <SelectItem value="Tier2">Tier 2</SelectItem>
+                    <SelectItem value="Tier3">Tier 3</SelectItem>
+                    <SelectItem value="Tier4">Tier 4</SelectItem>
+                    <SelectItem value="Tier5">Tier 5</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <Button type="submit" className="w-full">
+                  Submit Player
+                </Button>
+              </div>
+            </form>
+          </section>
+          
+          {/* Player Search and Edit Section */}
+          <section className="space-y-4">
+            <h3 className="text-xl font-semibold">Player Search and Edit</h3>
+            <Input
+              type="text"
+              placeholder="Search by player IGN..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            
+            {isSearching && (
+              <div className="text-muted-foreground">Searching...</div>
+            )}
+            
+            {searchResults.length > 0 && (
+              <div className="rounded-md border">
+                <ScrollArea>
+                  <Table>
+                    <TableCaption>A list of players that match your search query.</TableCaption>
+                    <TableHead>
+                      <TableRow>
+                        <TableHead>IGN</TableHead>
+                        <TableHead>Java Username</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {searchResults.map((player) => (
+                        <TableRow key={player.id}>
+                          <TableCell>{player.ign}</TableCell>
+                          <TableCell>{player.java_username}</TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => loadPlayerDetails(player.id)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setSelectedPlayer(player);
+                                  handlePlayerDelete();
+                                }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => {
+                                  setSelectedPlayer(player);
+                                  handlePlayerBan();
+                                }}>
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  Ban
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </div>
+            )}
+            
+            {selectedPlayer && (
+              <div className="space-y-4 rounded-md border p-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-lg font-semibold">
+                    Editing Player: {selectedPlayer.ign}
+                    <Badge className="ml-2">{selectedPlayer.region}</Badge>
+                  </h4>
+                  <Button variant="ghost" size="sm" onClick={clearSelectedPlayer}>
+                    Clear Selection
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch id="edit-mode" checked={editMode} onCheckedChange={setEditMode} />
+                  <Label htmlFor="edit-mode">Edit Mode</Label>
+                </div>
+                
+                <form onSubmit={handlePlayerUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="updateJavaUsername">Java Username</Label>
+                    <Input
+                      type="text"
+                      id="updateJavaUsername"
+                      value={updateJavaUsername}
+                      onChange={(e) => setUpdateJavaUsername(e.target.value)}
+                      disabled={!editMode}
+                      defaultValue={selectedPlayer.java_username || ''}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="updateRegion">Region</Label>
+                    <Select onValueChange={(value) => setUpdateRegion(value as PlayerRegion)} disabled={!editMode} defaultValue={selectedPlayer.region || ''}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NA">North America</SelectItem>
+                        <SelectItem value="EU">Europe</SelectItem>
+                        <SelectItem value="AS">Asia</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="updateDevice">Device</Label>
+                    <Select onValueChange={(value) => setUpdateDevice(value as DeviceType)} disabled={!editMode} defaultValue={selectedPlayer.device || ''}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select device" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mobile">Mobile</SelectItem>
+                        <SelectItem value="PC">PC</SelectItem>
+                        <SelectItem value="Console">Console</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Button type="submit" className="w-full" disabled={!editMode}>
+                      Update Player
+                    </Button>
+                  </div>
+                </form>
+                
+                {/* Player Tier Update */}
+                <div className="space-y-2">
+                  <h5 className="text-md font-semibold">Update Player Tier</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="updateGamemode">Gamemode</Label>
+                      <Select onValueChange={(value) => setUpdateGamemode(value as GameMode)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select gamemode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Bedwars">Bedwars</SelectItem>
+                          <SelectItem value="Duels">Duels</SelectItem>
+                          <SelectItem value="TheBridge">TheBridge</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="updateGamemodeTier">Tier</Label>
+                      <Select onValueChange={(value) => setUpdateGamemodeTier(value as TierLevel)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select tier" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Tier1">Tier 1</SelectItem>
+                          <SelectItem value="Tier2">Tier 2</SelectItem>
+                          <SelectItem value="Tier3">Tier 3</SelectItem>
+                          <SelectItem value="Tier4">Tier 4</SelectItem>
+                          <SelectItem value="Tier5">Tier 5</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Button onClick={handlePlayerTierUpdate} className="w-full">
+                        Update Tier
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </form>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={handlePinSubmit} 
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                {isSubmitting ? 'Verifying...' : 'Login'}
-              </Button>
-            </CardFooter>
-          </Card>
-        ) : (
-          <Tabs defaultValue="submit" className="max-w-5xl mx-auto">
-            <TabsList className="grid grid-cols-2 mb-6">
-              <TabsTrigger value="submit">Submit Results</TabsTrigger>
-              <TabsTrigger value="manage">Manage Players</TabsTrigger>
-            </TabsList>
+              </div>
+            )}
+          </section>
+          
+          {/* News Article Management Section */}
+          <section className="space-y-4">
+            <h3 className="text-xl font-semibold">News Article Management</h3>
+            <Button onClick={() => setOpenNewsArticleDialog(true)}>
+              Create News Article
+            </Button>
             
-            <TabsContent value="submit">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Submit Player Results</CardTitle>
-                  <CardDescription>Add new player rankings or update existing ones</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit}>
-                    <div className="grid gap-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="ign" className="text-sm font-medium">
-                            Player IGN <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="ign"
-                            name="ign"
-                            value={playerForm.ign}
-                            onChange={handleInputChange}
-                            placeholder="Enter player IGN"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="javaUsername" className="text-sm font-medium">
-                            Java Username <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="javaUsername"
-                            name="javaUsername"
-                            value={playerForm.javaUsername}
-                            onChange={handleInputChange}
-                            placeholder="Enter Java username"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="region" className="text-sm font-medium">
-                            Region <span className="text-red-500">*</span>
-                          </Label>
-                          <Select
-                            value={playerForm.region}
-                            onValueChange={(value) => setPlayerForm({...playerForm, region: value as PlayerRegion})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select region" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {regions.map((region) => (
-                                <SelectItem key={region} value={region}>
-                                  {region}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="device" className="text-sm font-medium">
-                            Device
-                          </Label>
-                          <Select
-                            value={playerForm.device}
-                            onValueChange={(value) => setPlayerForm({...playerForm, device: value as DeviceType})}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select device" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {devices.map((device) => (
-                                <SelectItem key={device} value={device}>
-                                  {device}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <Label className="text-lg font-medium">Tier Rankings</Label>
-                        
-                        <div className="space-y-6">
-                          {gamemodes.map((gamemode) => (
-                            <div key={gamemode} className="space-y-2">
-                              <Label className="text-sm font-medium">{gamemode}</Label>
-                              <RadioGroup
-                                value={tierSelections[gamemode] || 'NA'}
-                                onValueChange={(value) => handleTierChange(gamemode, value as TierLevel | "NA")}
-                                className="flex flex-wrap items-center gap-2"
-                              >
-                                {tiers.map((tier) => (
-                                  <div key={`${gamemode}-${tier}`} className="flex items-center space-x-1">
-                                    <RadioGroupItem 
-                                      value={tier} 
-                                      id={`${gamemode}-${tier}`}
-                                      className={`${tier !== 'NA' ? `border-${tier.toLowerCase()}` : ''}`}
-                                    />
-                                    <Label 
-                                      htmlFor={`${gamemode}-${tier}`}
-                                      className={`text-xs ${getTierColor(tier as TierLevel | 'NA')}`}
-                                    >
-                                      {tier}
-                                    </Label>
-                                  </div>
-                                ))}
-                              </RadioGroup>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-6">
-                      <Button type="submit">Submit Results</Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="manage">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Manage Players</CardTitle>
-                  <CardDescription>Search for players and manage their information</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-6 relative">
-                    <Input
-                      placeholder="Search players by IGN..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pr-10"
-                    />
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      {isSearching ? (
-                        <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
-                      ) : (
-                        <Search className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </div>
-                  </div>
-                  
-                  {searchResults.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="text-lg font-medium mb-2">Search Results</h3>
-                      <ScrollArea className="h-40 rounded border">
-                        <div className="p-4 grid gap-2">
-                          {searchResults.map((player) => (
-                            <Button
-                              key={player.id}
-                              variant="outline"
-                              className="justify-start"
-                              onClick={() => loadPlayerDetails(player.id)}
-                            >
-                              {player.ign} {player.banned && <span className="ml-2 text-red-500">(Banned)</span>}
-                            </Button>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                  
-                  {selectedPlayer && (
-                    <Dialog>
-                      <div className="bg-muted/40 rounded-lg p-4 mb-4">
-                        <div className="flex justify-between items-center">
-                          <h3 className="text-xl font-bold">{selectedPlayer.ign}</h3>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={clearSelectedPlayer}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Java Username</p>
-                            <p>{selectedPlayer.java_username || 'Not set'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Region</p>
-                            <p>{selectedPlayer.region || 'Not set'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Device</p>
-                            <p>{selectedPlayer.device || 'Not set'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Global Points</p>
-                            <p>{selectedPlayer.global_points || 0}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-4">
-                          <h4 className="text-lg font-medium mb-2">Tier Rankings</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {gamemodes.map((gamemode) => {
-                              const tierInfo = selectedPlayer.tiers?.[gamemode];
-                              return (
-                                <div key={gamemode} className="flex items-center justify-between bg-background/70 p-2 rounded">
-                                  <span>{gamemode}</span>
-                                  <span className={tierInfo ? getTierColor(tierInfo.tier) : 'text-gray-400'}>
-                                    {tierInfo ? tierInfo.tier : 'NA'}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 mt-4">
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">Edit Player</Button>
-                          </DialogTrigger>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={handlePlayerDelete}
-                          >
-                            Delete Player
-                          </Button>
-                          {!selectedPlayer.banned && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={handlePlayerBan}
-                            >
-                              Ban Player
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit Player</DialogTitle>
-                          <DialogDescription>
-                            Update player information or tier rankings
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <Tabs defaultValue="info">
-                          <TabsList className="grid grid-cols-2">
-                            <TabsTrigger value="info">Player Info</TabsTrigger>
-                            <TabsTrigger value="tiers">Tier Rankings</TabsTrigger>
-                          </TabsList>
-                          
-                          <TabsContent value="info" className="mt-4">
-                            <form onSubmit={handlePlayerEditSubmit}>
-                              <div className="grid gap-4">
-                                <div>
-                                  <Label htmlFor="edit-javaUsername">Java Username</Label>
-                                  <Input
-                                    id="edit-javaUsername"
-                                    value={playerEditForm.javaUsername}
-                                    onChange={(e) => setPlayerEditForm({...playerEditForm, javaUsername: e.target.value})}
-                                    placeholder={selectedPlayer.java_username || 'Enter Java Username'}
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-region">Region</Label>
-                                  <Select
-                                    value={playerEditForm.region}
-                                    onValueChange={(value) => setPlayerEditForm({...playerEditForm, region: value as PlayerRegion})}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder={selectedPlayer.region || 'Select Region'} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {regions.map((region) => (
-                                        <SelectItem key={region} value={region}>
-                                          {region}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-device">Device</Label>
-                                  <Select
-                                    value={playerEditForm.device}
-                                    onValueChange={(value) => setPlayerEditForm({...playerEditForm, device: value as DeviceType})}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder={selectedPlayer.device || 'Select Device'} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {devices.map((device) => (
-                                        <SelectItem key={device} value={device}>
-                                          {device}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              
-                              <div className="flex justify-end mt-6">
-                                <Button type="submit">Update Player</Button>
-                              </div>
-                            </form>
-                          </TabsContent>
-                          
-                          <TabsContent value="tiers" className="mt-4">
-                            <form onSubmit={handleTierUpdateSubmit}>
-                              <div className="grid gap-4">
-                                <div>
-                                  <Label htmlFor="edit-gamemode">Gamemode</Label>
-                                  <Select
-                                    value={editingGamemode}
-                                    onValueChange={(value) => setEditingGamemode(value as GameMode)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select Gamemode" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {gamemodes.map((gamemode) => (
-                                        <SelectItem key={gamemode} value={gamemode}>
-                                          {gamemode}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                
-                                <div>
-                                  <Label htmlFor="edit-tier">Tier</Label>
-                                  <Select
-                                    value={editingTier}
-                                    onValueChange={(value) => setEditingTier(value as TierLevel)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select Tier" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {tiers.filter(tier => tier !== 'NA').map((tier) => (
-                                        <SelectItem 
-                                          key={tier} 
-                                          value={tier}
-                                          className={getTierColor(tier as TierLevel)}
-                                        >
-                                          {tier} - {tierNames[tier]}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              
-                              <div className="flex justify-end mt-6">
-                                <Button 
-                                  type="submit" 
-                                  disabled={!editingGamemode || !editingTier}
-                                >
-                                  Update Tier
-                                </Button>
-                              </div>
-                            </form>
-                          </TabsContent>
-                        </Tabs>
-                        
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button variant="outline">Close</Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <span className="text-muted-foreground text-sm">
-                    {searchResults.length} players found
-                  </span>
-                  <Button variant="outline" onClick={handleLogout}>Logout</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-      
-      <Footer />
+            {/* News Article List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {newsArticles.map((article) => (
+                <NewsArticleCard
+                  key={article.id}
+                  article={article}
+                  isAdmin={true}
+                  onEditClick={() => {
+                    // Implement edit logic here
+                    console.log('Edit article:', article.id);
+                  }}
+                  onDeleteClick={() => {
+                    // Implement delete logic here
+                    console.log('Delete article:', article.id);
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+          
+          {/* News Article Creation Dialog */}
+          <Dialog open={openNewsArticleDialog} onOpenChange={setOpenNewsArticleDialog}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create News Article</DialogTitle>
+                <DialogDescription>
+                  Make changes to your profile here. Click save when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title
+                  </Label>
+                  <Input
+                    type="text"
+                    id="title"
+                    value={newsArticleTitle}
+                    onChange={(e) => setNewsArticleTitle(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="content" className="text-right">
+                    Content
+                  </Label>
+                  <Input
+                    type="text"
+                    id="content"
+                    value={newsArticleContent}
+                    onChange={(e) => setNewsArticleContent(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="author" className="text-right">
+                    Author
+                  </Label>
+                  <Input
+                    type="text"
+                    id="author"
+                    value={newsArticleAuthor}
+                    onChange={(e) => setNewsArticleAuthor(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="tags" className="text-right">
+                    Tags
+                  </Label>
+                  <Input
+                    type="text"
+                    id="tags"
+                    value={newsArticleTags}
+                    onChange={(e) => setNewsArticleTags(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" onClick={handleNewsArticleSubmit}>
+                  Create Article
+                </Button>
+                <DialogClose>
+                  <Button type="button" variant="secondary">
+                    Cancel
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </div>
   );
 };

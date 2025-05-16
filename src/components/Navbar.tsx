@@ -1,15 +1,12 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from "@/components/ui/button";
 
-interface NavbarProps {
-  selectedMode: string;
-  onSelectMode: (mode: string) => void;
-  navigate: (path: string) => void;
-}
-
-export const Navbar: React.FC<NavbarProps> = ({ selectedMode, onSelectMode, navigate }) => {
+export const Navbar = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="bg-background sticky top-0 z-50 border-b">
       <div className="container flex items-center justify-between py-2">
