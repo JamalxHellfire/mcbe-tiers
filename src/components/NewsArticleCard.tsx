@@ -12,7 +12,15 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { NewsArticle } from '@/hooks/useAdminPanel';
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  created_at: string;
+  updated_at?: string | null;
+}
 
 interface NewsArticleCardProps {
   article: NewsArticle;

@@ -24,19 +24,21 @@ const Index = () => {
     setIsPlayerModalOpen(true);
   };
   
-  const gamemodes: GameMode[] = [
-    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
+  const gamemodes: Array<string> = [
+    'overall', 'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
   ];
   
-  const isValidGamemode = selectedMode === 'overall' || gamemodes.includes(selectedMode as GameMode);
+  const isValidGamemode = gamemodes.includes(selectedMode);
+  
+  const navigationProps = {
+    selectedMode,
+    onSelectMode: handleModeChange,
+    navigate: (path: string) => navigate(path)
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
-      <Navbar 
-        selectedMode={selectedMode} 
-        onSelectMode={handleModeChange} 
-        navigate={navigate} 
-      />
+      <Navbar {...navigationProps} />
       
       <main className="flex-grow">
         <div className="content-container py-6 md:py-8">
