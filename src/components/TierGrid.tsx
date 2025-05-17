@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Trophy, Shield, ChevronDown } from 'lucide-react';
 import { PlayerRow } from './PlayerRow';
