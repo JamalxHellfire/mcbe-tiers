@@ -1,6 +1,5 @@
 // This file contains services for player data management
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 import { adminService } from './adminService';
 
 // Type definitions
@@ -129,7 +128,7 @@ export const playerService = {
     return data as Player | null;
   },
   
-  // Create a new player
+  // Create a new player - Fixed to ensure proper creation
   createPlayer: async (playerData: PlayerCreateData): Promise<Player | null> => {
     // Generate avatar URL if Java username is provided
     let avatarUrl = null;
@@ -137,65 +136,36 @@ export const playerService = {
       avatarUrl = await getPlayerAvatar(playerData.java_username);
     }
     
-    // Insert the new player
+    // Validate required fields
+    if (!playerData.ign) {
+      console.error('Player IGN is required');
+      return null;
+    }
+    
+    // Insert the new player with validated data
     const { data, error } = await supabase
       .from('players')
       .insert({
         ign: playerData.ign,
-        java_username: playerData.java_username,
-        region: playerData.region,
-        device: playerData.device,
+        java_username: playerData.java_username || null,
+        region: playerData.region || null,
+        device: playerData.device || null,
         avatar_url: avatarUrl,
-        gamemode: 'Crystal' as GameMode, // Default gamemode
-        tier_number: 'LT5' as TierLevel, // Default tier
+        global_points: 0, // Set initial points
       })
-      .select()
-      .single();
+      .select();
       
     if (error) {
       console.error('Error creating player:', error);
       return null;
     }
     
-    return data as Player;
-  },
-  
-  // Mass create players from a list
-  massCreatePlayers: async (playersData: PlayerCreateData[]): Promise<number> => {
-    if (!playersData || playersData.length === 0) return 0;
-    
-    // Process players to prepare for insertion
-    const preparedPlayers = await Promise.all(
-      playersData.map(async (player) => {
-        let avatarUrl = null;
-        if (player.java_username) {
-          avatarUrl = await getPlayerAvatar(player.java_username);
-        }
-        
-        return {
-          ign: player.ign,
-          java_username: player.java_username,
-          region: player.region,
-          device: player.device,
-          avatar_url: avatarUrl,
-          gamemode: 'Crystal' as GameMode, // Default gamemode
-          tier_number: 'LT5' as TierLevel, // Default tier
-        };
-      })
-    );
-    
-    // Insert all players
-    const { data, error } = await supabase
-      .from('players')
-      .insert(preparedPlayers)
-      .select();
-      
-    if (error) {
-      console.error('Error mass creating players:', error);
-      return 0;
+    if (!data || data.length === 0) {
+      console.error('No data returned when creating player');
+      return null;
     }
     
-    return data?.length || 0;
+    return data[0] as Player;
   },
   
   // Update player information
@@ -284,7 +254,7 @@ export const playerService = {
     return true;
   },
   
-  // Assign a tier to a player for a specific gamemode
+  // Assign a tier to a player for a specific gamemode - Fixed to ensure proper tier assignment
   assignTier: async ({ playerId, gamemode, tier }: TierAssignment): Promise<boolean> => {
     // First, check if the player exists
     const player = await playerService.getPlayerById(playerId);
@@ -343,6 +313,15 @@ export const playerService = {
         return false;
       }
     }
+    
+    // Force update the global_points for this player to ensure leaderboard updates
+    await supabase
+      .from('players')
+      .update({
+        global_points: supabase.rpc('calculate_player_points', { p_id: playerId }),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', playerId);
     
     return true;
   },

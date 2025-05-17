@@ -1,26 +1,27 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { TierGrid } from '../components/TierGrid';
-import { LeaderboardTable } from '../components/LeaderboardTable';
 import { Footer } from '../components/Footer';
 import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
 import { MobileNavMenu } from '../components/MobileNavMenu';
 
-const Index = () => {
-  const [selectedMode, setSelectedMode] = useState<string>('overall');
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+interface SubcategoryPageProps {
+  gameMode: GameMode;
+}
+
+const SubcategoryPage = ({ gameMode }: SubcategoryPageProps) => {
+  const [selectedPlayer, setSelectedPlayer] = React.useState(null);
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = React.useState(false);
   const navigate = useNavigate();
   
   const handleModeChange = (mode: string) => {
     if (mode === 'overall') {
-      setSelectedMode('overall');
+      navigate('/');
     } else {
-      // Navigate to the specific gamemode page
       navigate(`/${mode.toLowerCase()}`);
     }
   };
@@ -30,14 +31,10 @@ const Index = () => {
     setIsPlayerModalOpen(true);
   };
   
-  const gamemodes: GameMode[] = [
-    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
-  ];
-  
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
-        selectedMode={selectedMode} 
+        selectedMode={gameMode.toLowerCase()} 
         onSelectMode={handleModeChange} 
         navigate={navigate} 
       />
@@ -50,23 +47,19 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Overall Rankings
+            {gameMode} Rankings
           </motion.h1>
           
           {/* Mobile navigation menu */}
-          <MobileNavMenu currentMode={selectedMode} />
+          <MobileNavMenu currentMode={gameMode} />
           
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedMode}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <LeaderboardTable onPlayerClick={handlePlayerClick} />
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TierGrid selectedMode={gameMode} onPlayerClick={handlePlayerClick} />
+          </motion.div>
         </div>
       </main>
       
@@ -84,4 +77,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default SubcategoryPage;
