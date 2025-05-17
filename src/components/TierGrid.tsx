@@ -227,7 +227,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               player={{
                                 ...player,
                                 tier: "R",
-                                // Fix: Ensure points is always a number (0 for retired players)
+                                // Fix: Ensure points is always a number for retired players
                                 points: 0,
                                 badge: "Retired Player",
                                 displayName: player.ign,

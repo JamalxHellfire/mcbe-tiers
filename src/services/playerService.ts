@@ -1,3 +1,4 @@
+
 // This file contains all the functionality related to players
 import { adminService } from './adminService';
 import { supabase } from '@/integrations/supabase/client';
@@ -156,7 +157,7 @@ export const createPlayer = async (params: CreatePlayerParams): Promise<Player |
         gamemode: '',  // Required field, but will be removed from players table
         tier_number: ''  // Required field, but will be removed from players table
       })
-      .select('*')
+      .select()
       .single();
     
     if (error) {
@@ -234,7 +235,7 @@ export const assignTier = async (tierData: TierData): Promise<boolean> => {
     // First check if there's already a gamemode_score for this player
     const { data: existingData, error: existingError } = await supabase
       .from('gamemode_scores')
-      .select('*')
+      .select()
       .eq('player_id', tierData.playerId)
       .eq('gamemode', tierData.gamemode)
       .maybeSingle();
@@ -348,12 +349,21 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
     // Get all tiers for the player
     const { data, error } = await supabase
       .from('gamemode_scores')
-      .select('*')
+      .select()
       .eq('player_id', playerId);
       
     if (error) {
       console.error('Error fetching player tiers:', error);
-      return {} as Record<GameMode, any>;
+      return {
+        Crystal: null,
+        Sword: null,
+        SMP: null,
+        UHC: null,
+        Axe: null,
+        NethPot: null,
+        Bedwars: null,
+        Mace: null
+      } as Record<GameMode, any>;
     }
     
     // Initialize with default empty structure for all game modes
@@ -369,15 +379,17 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
     };
     
     // Fill in data for modes that have scores
-    data.forEach(item => {
-      tierRecord[item.gamemode as GameMode] = {
-        tier: item.internal_tier,
-        score: item.score,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        id: item.id
-      };
-    });
+    if (data) {
+      data.forEach(item => {
+        tierRecord[item.gamemode as GameMode] = {
+          tier: item.internal_tier,
+          score: item.score,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          id: item.id
+        };
+      });
+    }
     
     return tierRecord;
   } catch (error) {
@@ -427,7 +439,7 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
     const playerIds = gamemodeScores.map(score => score.player_id);
     const { data: players, error: playersError } = await supabase
       .from('players')
-      .select('*')
+      .select()
       .in('id', playerIds);
     
     if (playersError) {
@@ -436,15 +448,17 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
     }
     
     // Group players by their tier for this gamemode
-    players.forEach(player => {
-      const score = gamemodeScores.find(score => score.player_id === player.id);
-      if (score && score.internal_tier) {
-        const tier = score.internal_tier as TierLevel;
-        if (tierData[tier]) {
-          tierData[tier].push(player as Player);
+    if (players && gamemodeScores) {
+      players.forEach(player => {
+        const score = gamemodeScores.find(score => score.player_id === player.id);
+        if (score && score.internal_tier) {
+          const tier = score.internal_tier as TierLevel;
+          if (tierData[tier]) {
+            tierData[tier].push(player as Player);
+          }
         }
-      }
-    });
+      });
+    }
     
     return tierData;
   } catch (error) {
@@ -465,7 +479,7 @@ export const getRankedPlayers = async (): Promise<Player[]> => {
   try {
     const { data, error } = await supabase
       .from('players')
-      .select('*')
+      .select()
       .order('global_points', { ascending: false })
       .limit(100);
     
@@ -474,7 +488,7 @@ export const getRankedPlayers = async (): Promise<Player[]> => {
       return [];
     }
     
-    return data as Player[];
+    return data as Player[] || [];
   } catch (error) {
     console.error('Failed to fetch ranked players:', error);
     return [];

@@ -1,51 +1,38 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import AdminPanel from "./pages/AdminPanel";
-import SubcategoryPage from "./pages/SubcategoryPage";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
+import AdminPanel from './pages/AdminPanel';
+import Crystal from './pages/Crystal';
+import Sword from './pages/Sword';
+import Axe from './pages/Axe';
+import Smp from './pages/Smp';
+import Bedwars from './pages/Bedwars';
+import Mace from './pages/Mace';
+import Uhc from './pages/Uhc';
+import NethPot from './pages/NethPot';
+import { Toaster } from "sonner";
 
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 30000,
-    },
-  },
-});
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/crystal" element={<Crystal />} />
+        <Route path="/sword" element={<Sword />} />
+        <Route path="/axe" element={<Axe />} />
+        <Route path="/smp" element={<Smp />} />
+        <Route path="/bedwars" element={<Bedwars />} />
+        <Route path="/mace" element={<Mace />} />
+        <Route path="/uhc" element={<Uhc />} />
+        <Route path="/nethpot" element={<NethPot />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          
-          {/* Game mode specific pages */}
-          <Route path="/crystal" element={<SubcategoryPage gameMode="Crystal" />} />
-          <Route path="/sword" element={<SubcategoryPage gameMode="Sword" />} />
-          <Route path="/smp" element={<SubcategoryPage gameMode="SMP" />} />
-          <Route path="/uhc" element={<SubcategoryPage gameMode="UHC" />} />
-          <Route path="/axe" element={<SubcategoryPage gameMode="Axe" />} />
-          <Route path="/nethpot" element={<SubcategoryPage gameMode="NethPot" />} />
-          <Route path="/bedwars" element={<SubcategoryPage gameMode="Bedwars" />} />
-          <Route path="/mace" element={<SubcategoryPage gameMode="Mace" />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </Router>
+  );
+}
 
 export default App;
