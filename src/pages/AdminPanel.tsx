@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAdminPanel, NewsArticle } from '@/hooks/useAdminPanel';
+import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -43,16 +43,6 @@ const AdminPanel = () => {
     updatePlayerTier,
     deletePlayer,
     banPlayer,
-    // News
-    newsFormData,
-    handleNewsInputChange,
-    submitNews,
-    updateNews,
-    deleteNews,
-    startEditingNews,
-    cancelEditingNews,
-    editingNewsId,
-    newsArticles
   } = useAdminPanel();
   
   // Form state for player submission
@@ -294,46 +284,6 @@ const AdminPanel = () => {
     }
   };
   
-  // Handle news submission
-  const handleSubmitNews = async () => {
-    // Validate form
-    if (!newsFormData.title.trim()) {
-      toast.error('News title is required');
-      return;
-    }
-    
-    if (!newsFormData.description.trim()) {
-      toast.error('News description is required');
-      return;
-    }
-    
-    if (!newsFormData.author.trim()) {
-      toast.error('Author name is required');
-      return;
-    }
-    
-    try {
-      if (editingNewsId) {
-        await updateNews();
-      } else {
-        await submitNews();
-      }
-    } catch (err) {
-      console.error('Error submitting news:', err);
-      toast.error('An error occurred while publishing news');
-    }
-  };
-  
-  // Handle news delete
-  const handleDeleteNews = async (newsId: string) => {
-    try {
-      await deleteNews(newsId);
-    } catch (err) {
-      console.error('Error deleting news:', err);
-      toast.error('An error occurred while deleting news');
-    }
-  };
-  
   // Admin Login Form
   if (!isAdminMode) {
     return (
@@ -396,10 +346,9 @@ const AdminPanel = () => {
         </div>
         
         <Tabs defaultValue="player-results" className="space-y-6">
-          <TabsList className="grid grid-cols-2 md:grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="player-results">Submit Results</TabsTrigger>
             <TabsTrigger value="player-search">Search/Edit Players</TabsTrigger>
-            <TabsTrigger value="news">News Management</TabsTrigger>
           </TabsList>
           
           {/* Player Results Submission - Completely redesigned for horizontal radio buttons */}
@@ -845,164 +794,6 @@ const AdminPanel = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </TabsContent>
-          
-          {/* News Management Tab */}
-          <TabsContent value="news">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {editingNewsId ? 'Edit News Article' : 'Create News Article'}
-                </CardTitle>
-                <CardDescription>
-                  {editingNewsId ? 'Update existing news article' : 'Create and publish news articles for the site'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="news-title" className={!newsFormData.title ? "text-destructive" : ""}>
-                      Title *
-                    </Label>
-                    <Input
-                      id="news-title"
-                      name="title"
-                      value={newsFormData.title}
-                      onChange={handleNewsInputChange}
-                      placeholder="News title"
-                      className={!newsFormData.title ? "border-destructive" : ""}
-                    />
-                    {!newsFormData.title && (
-                      <p className="text-xs text-destructive">Title is required</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="news-description" className={!newsFormData.description ? "text-destructive" : ""}>
-                      Description *
-                    </Label>
-                    <Textarea
-                      id="news-description"
-                      name="description"
-                      value={newsFormData.description}
-                      onChange={handleNewsInputChange}
-                      placeholder="News content"
-                      className={`min-h-[200px] ${!newsFormData.description ? "border-destructive" : ""}`}
-                    />
-                    {!newsFormData.description && (
-                      <p className="text-xs text-destructive">Description is required</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="news-author" className={!newsFormData.author ? "text-destructive" : ""}>
-                      Author *
-                    </Label>
-                    <Input
-                      id="news-author"
-                      name="author"
-                      value={newsFormData.author}
-                      onChange={handleNewsInputChange}
-                      placeholder="Author name"
-                      className={!newsFormData.author ? "border-destructive" : ""}
-                    />
-                    {!newsFormData.author && (
-                      <p className="text-xs text-destructive">Author is required</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                {editingNewsId && (
-                  <Button 
-                    variant="outline" 
-                    onClick={cancelEditingNews}
-                  >
-                    Cancel Editing
-                  </Button>
-                )}
-                <Button 
-                  onClick={handleSubmitNews} 
-                  disabled={!newsFormData.title || !newsFormData.description || !newsFormData.author || isSubmitting}
-                >
-                  {isSubmitting 
-                    ? (editingNewsId ? 'Updating...' : 'Publishing...')
-                    : (editingNewsId ? 'Update News' : 'Publish News')
-                  }
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            {/* Published News */}
-            <div className="mt-6">
-              <h3 className="font-semibold text-lg mb-4">Published News</h3>
-              
-              <div className="grid grid-cols-1 gap-4">
-                {newsArticles.length > 0 ? (
-                  newsArticles.map((article: NewsArticle) => (
-                    <motion.div
-                      key={article.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="border rounded-md p-4"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">{article.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {article.description}
-                          </p>
-                          <div className="text-xs text-muted-foreground mt-2 flex justify-between">
-                            <span>By: {article.author}</span>
-                            <span>
-                              {new Date(article.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2 ml-4">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => startEditingNews(article)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete News Article</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this news article? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteNews(article.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No news articles published yet
-                  </div>
-                )}
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </div>
