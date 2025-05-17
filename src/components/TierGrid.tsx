@@ -141,7 +141,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                 player={{
                                   ...player,
                                   tier: tier,
-                                  // Fix Type Error: Convert global_points to number before passing it
+                                  // Fix: Ensure points is always a number
                                   points: typeof player.global_points === 'string' 
                                     ? parseInt(player.global_points, 10) || 0 
                                     : player.global_points || 0,
