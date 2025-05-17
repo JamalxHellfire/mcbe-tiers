@@ -74,7 +74,7 @@ export function useAdminPanel() {
     try {
       const { data, error } = await supabase
         .from('players')
-        .select()
+        .select('*')
         .ilike('ign', `%${query}%`)
         .limit(10);
         

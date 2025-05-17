@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Trophy, Shield, ChevronDown } from 'lucide-react';
 import { PlayerRow } from './PlayerRow';
@@ -141,7 +142,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                 player={{
                                   ...player,
                                   tier: tier,
-                                  // Fix: Ensure points is always a number
+                                  // Fix Type Error: Convert global_points to number before passing it
                                   points: typeof player.global_points === 'string' 
                                     ? parseInt(player.global_points, 10) || 0 
                                     : player.global_points || 0,
@@ -226,7 +227,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               player={{
                                 ...player,
                                 tier: "R",
-                                // Fix: Ensure points is always a number for retired players
+                                // Fix: Ensure points is always a number (0 for retired players)
                                 points: 0,
                                 badge: "Retired Player",
                                 displayName: player.ign,
