@@ -1,4 +1,3 @@
-
 // This file contains all the functionality related to players
 import { adminService } from './adminService';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,7 +63,7 @@ export interface GameModeData {
   LT4: Player[];
   HT5: Player[];
   LT5: Player[];
-  Retired: Player[];
+  Retired?: Player[];
 }
 
 // Define the getPlayerByIGN function
@@ -88,7 +87,6 @@ export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
     return null;
   }
 };
-
 
 // Define the getPlayerById function
 export const getPlayerById = async (id: string): Promise<Player | null> => {
@@ -292,8 +290,9 @@ export const assignTier = async (tierData: TierData): Promise<boolean> => {
 
 // Helper function to calculate points based on tier
 export const calculateTierPoints = (tier: TierLevel): number => {
-  const { data } = supabase.rpc('calculate_tier_points', { tier_value: tier });
-  return data as number;
+  // Fix error: Type error on .rpc return
+  const { data: points } = supabase.rpc('calculate_tier_points', { tier_value: tier });
+  return points || 0; // Return 0 if data is undefined
 };
 
 // Helper function to update player's global points
@@ -342,12 +341,22 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
       
     if (error) {
       console.error('Error fetching player tiers:', error);
-      return {};
+      return {} as Record<GameMode, any>;
     }
     
-    // Convert to record
-    const tierRecord: Record<GameMode, any> = {} as Record<GameMode, any>;
+    // Initialize with default empty structure for all game modes
+    const tierRecord: Record<GameMode, any> = {
+      Crystal: null,
+      Sword: null,
+      SMP: null,
+      UHC: null,
+      Axe: null,
+      NethPot: null,
+      Bedwars: null,
+      Mace: null
+    };
     
+    // Fill in data for modes that have scores
     data.forEach(item => {
       tierRecord[item.gamemode as GameMode] = {
         tier: item.internal_tier,
@@ -361,7 +370,102 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
     return tierRecord;
   } catch (error) {
     console.error('Failed to fetch player tiers:', error);
-    return {};
+    return {
+      Crystal: null,
+      Sword: null,
+      SMP: null,
+      UHC: null,
+      Axe: null,
+      NethPot: null,
+      Bedwars: null,
+      Mace: null
+    } as Record<GameMode, any>;
+  }
+};
+
+// Define function to get players by tier and gamemode
+export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<GameModeData> => {
+  try {
+    // Initialize empty structure
+    const tierData: GameModeData = {
+      HT1: [], LT1: [],
+      HT2: [], LT2: [],
+      HT3: [], LT3: [],
+      HT4: [], LT4: [],
+      HT5: [], LT5: [],
+      Retired: []
+    };
+    
+    // Get all players with the given gamemode scores
+    const { data: gamemodeScores, error: scoresError } = await supabase
+      .from('gamemode_scores')
+      .select('player_id, internal_tier')
+      .eq('gamemode', gamemode);
+    
+    if (scoresError) {
+      console.error(`Error fetching ${gamemode} tier data:`, scoresError);
+      return tierData;
+    }
+    
+    if (!gamemodeScores || gamemodeScores.length === 0) {
+      return tierData;
+    }
+    
+    // Get all player details for the IDs we found
+    const playerIds = gamemodeScores.map(score => score.player_id);
+    const { data: players, error: playersError } = await supabase
+      .from('players')
+      .select('*')
+      .in('id', playerIds);
+    
+    if (playersError) {
+      console.error(`Error fetching players for ${gamemode}:`, playersError);
+      return tierData;
+    }
+    
+    // Group players by their tier for this gamemode
+    players.forEach(player => {
+      const score = gamemodeScores.find(score => score.player_id === player.id);
+      if (score && score.internal_tier) {
+        const tier = score.internal_tier as TierLevel;
+        if (tierData[tier]) {
+          tierData[tier].push(player as Player);
+        }
+      }
+    });
+    
+    return tierData;
+  } catch (error) {
+    console.error(`Failed to fetch ${gamemode} tier data:`, error);
+    return {
+      HT1: [], LT1: [],
+      HT2: [], LT2: [],
+      HT3: [], LT3: [],
+      HT4: [], LT4: [],
+      HT5: [], LT5: [],
+      Retired: []
+    };
+  }
+};
+
+// Define function to get ranked players for leaderboard
+export const getRankedPlayers = async (): Promise<Player[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .order('global_points', { ascending: false })
+      .limit(100);
+    
+    if (error) {
+      console.error('Error fetching ranked players:', error);
+      return [];
+    }
+    
+    return data as Player[];
+  } catch (error) {
+    console.error('Failed to fetch ranked players:', error);
+    return [];
   }
 };
 
@@ -494,7 +598,9 @@ export const playerService = {
   banPlayer,
   verifyAdminPIN,
   updatePlayerGlobalPoints,
-  calculateTierPoints
+  calculateTierPoints,
+  getPlayersByTierAndGamemode,
+  getRankedPlayers
 };
 
 // Export the service

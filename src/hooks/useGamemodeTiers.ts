@@ -10,7 +10,8 @@ export function useGamemodeTiers(gamemode: GameMode) {
       'HT2': [], 'LT2': [],
       'HT3': [], 'LT3': [],
       'HT4': [], 'LT4': [],
-      'HT5': [], 'LT5': []
+      'HT5': [], 'LT5': [],
+      'Retired': []
     }, 
     isLoading: loading, 
     error 
