@@ -142,7 +142,10 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                 player={{
                                   ...player,
                                   tier: tier,
-                                  points: player.global_points || 0,
+                                  // Fix Type Error: Convert global_points to number before passing it
+                                  points: typeof player.global_points === 'string' 
+                                    ? parseInt(player.global_points, 10) || 0 
+                                    : player.global_points || 0,
                                   badge: player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`,
                                   displayName: player.ign,
                                   avatar: player.avatar_url || `/default-avatar.png`
@@ -224,6 +227,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               player={{
                                 ...player,
                                 tier: "R",
+                                // Fix: Ensure points is always a number (0 for retired players)
                                 points: 0,
                                 badge: "Retired Player",
                                 displayName: player.ign,

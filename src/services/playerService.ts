@@ -63,7 +63,7 @@ export interface GameModeData {
   LT4: Player[];
   HT5: Player[];
   LT5: Player[];
-  Retired?: Player[];
+  Retired: Player[];
 }
 
 // Define the getPlayerByIGN function
@@ -290,9 +290,21 @@ export const assignTier = async (tierData: TierData): Promise<boolean> => {
 
 // Helper function to calculate points based on tier
 export const calculateTierPoints = (tier: TierLevel): number => {
-  // Fix error: Type error on .rpc return
-  const { data: points } = supabase.rpc('calculate_tier_points', { tier_value: tier });
-  return points || 0; // Return 0 if data is undefined
+  // Fix: Use a switch statement instead of the RPC call that was causing the error
+  switch (tier) {
+    case "HT1": return 50;
+    case "LT1": return 45;
+    case "HT2": return 40;
+    case "LT2": return 35;
+    case "HT3": return 30;
+    case "LT3": return 25;
+    case "HT4": return 20;
+    case "LT4": return 15;
+    case "HT5": return 10;
+    case "LT5": return 5;
+    case "Retired": return 0;
+    default: return 0;
+  }
 };
 
 // Helper function to update player's global points
