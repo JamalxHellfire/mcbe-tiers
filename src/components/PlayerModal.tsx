@@ -112,9 +112,9 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
             </div>
             
             <div className="mt-1 flex items-center">
-              <Award size={16} className={cn("mr-1", player.badge.includes('Master') ? 'text-yellow-400' : player.badge.includes('Ace') ? 'text-orange-400' : 'text-purple-400')} />
-              <span className={cn("text-sm font-medium", player.badge.includes('Master') ? 'text-yellow-400' : player.badge.includes('Ace') ? 'text-orange-400' : 'text-purple-400')}>
-                {player.badge}
+              <Award size={16} className={cn("mr-1", player.badge?.includes('Master') ? 'text-yellow-400' : player.badge?.includes('Ace') ? 'text-orange-400' : 'text-purple-400')} />
+              <span className={cn("text-sm font-medium", player.badge?.includes('Master') ? 'text-yellow-400' : player.badge?.includes('Ace') ? 'text-orange-400' : 'text-purple-400')}>
+                {player.badge || 'Player'}
               </span>
             </div>
           </div>
