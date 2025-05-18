@@ -101,7 +101,16 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                   ...player,
                   subtier: highTierPlayers.some(p => p.id === player.id) ? 'High' : 'Low',
                 }))
-                .sort((a, b) => (b.global_points || 0) - (a.global_points || 0));
+                .sort((a, b) => {
+                  // Ensure we're comparing numbers by converting if needed
+                  const pointsA = typeof a.global_points === 'string' 
+                    ? parseFloat(a.global_points) 
+                    : (a.global_points || 0);
+                  const pointsB = typeof b.global_points === 'string' 
+                    ? parseFloat(b.global_points) 
+                    : (b.global_points || 0);
+                  return pointsB - pointsA;
+                });
                 
               const visibleCount = tierVisibility[tier].count;
               const visiblePlayers = sortedPlayers.slice(0, visibleCount);
@@ -144,7 +153,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                   tier: tier,
                                   // Fix Type Error: Convert global_points to number before passing it
                                   points: typeof player.global_points === 'string' 
-                                    ? parseInt(player.global_points, 10) || 0 
+                                    ? parseFloat(player.global_points) || 0 
                                     : player.global_points || 0,
                                   badge: player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`,
                                   displayName: player.ign,
