@@ -9,7 +9,7 @@ import { useNews } from '@/hooks/useNews';
 
 const News = () => {
   const navigate = useNavigate();
-  const { articles, loading, error } = useNews();
+  const { newsArticles, loading, error } = useNews();
   
   // Page is created but disabled - redirect to home
   React.useEffect(() => {
@@ -43,9 +43,9 @@ const News = () => {
             <div className="text-center py-12 text-red-400">
               Error loading news: {error}
             </div>
-          ) : articles && articles.length > 0 ? (
+          ) : newsArticles && newsArticles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles.map((article, index) => (
+              {newsArticles.map((article, index) => (
                 <motion.div
                   key={article.id}
                   initial={{ opacity: 0, y: 20 }}
