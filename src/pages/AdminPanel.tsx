@@ -43,6 +43,10 @@ const AdminPanel = () => {
     updatePlayerTier,
     deletePlayer,
     banPlayer,
+    // Test data generation
+    generateTestData,
+    isGeneratingData,
+    playerCount
   } = useAdminPanel();
   
   // Form state for player submission
@@ -284,6 +288,28 @@ const AdminPanel = () => {
     }
   };
   
+  // Handle test data generation
+  const handleGenerateTestData = async () => {
+    if (isGeneratingData) return;
+    
+    try {
+      // Check how many players to generate to reach target of 200
+      const playersToGenerate = Math.max(0, 200 - playerCount);
+      
+      if (playersToGenerate <= 0) {
+        toast.info('Already have 200 or more players in the database');
+        return;
+      }
+      
+      // Generate test data
+      await generateTestData(playersToGenerate);
+      toast.success(`Generating ${playersToGenerate} test players`);
+    } catch (err) {
+      console.error('Error generating test data:', err);
+      toast.error('An error occurred while generating test data');
+    }
+  };
+  
   // Admin Login Form
   if (!isAdminMode) {
     return (
@@ -344,6 +370,29 @@ const AdminPanel = () => {
             <Button variant="outline" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
+        
+        {/* Database Stats */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Database Stats</CardTitle>
+            <CardDescription>Current database status and test data generation</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Current Player Count:</p>
+                <p className="text-2xl font-bold">{playerCount}</p>
+              </div>
+              <Button 
+                onClick={handleGenerateTestData} 
+                disabled={isGeneratingData || playerCount >= 200}
+                className="flex items-center gap-2"
+              >
+                {isGeneratingData ? 'Generating...' : `Generate Test Data (${Math.max(0, 200 - playerCount)} players)`}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
         <Tabs defaultValue="player-results" className="space-y-6">
           <TabsList className="grid grid-cols-2 w-full">

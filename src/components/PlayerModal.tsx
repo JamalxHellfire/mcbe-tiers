@@ -11,6 +11,7 @@ import { Trophy, Monitor, Smartphone, Gamepad, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { playerService, GameMode, TierLevel } from '@/services/playerService';
+import { getPlayerRank, formatPointsRange } from '@/utils/rankUtils';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -20,6 +21,10 @@ interface PlayerModalProps {
 
 export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
   const [playerTiers, setPlayerTiers] = useState<Record<GameMode, { tier: TierLevel, score: number }>>({} as any);
+  
+  // Calculate player rank based on points
+  const playerPoints = Number(player?.global_points || player?.points || 0);
+  const rankInfo = getPlayerRank(playerPoints);
   
   // Function to get device icon
   const getDeviceIcon = (device: string) => {
@@ -95,7 +100,14 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
               
               <span className="text-white/60 text-sm flex items-center">
                 <Trophy size={14} className="mr-1 text-yellow-400" />
-                {player.global_points || player.points || 0} points
+                {playerPoints} points
+              </span>
+            </div>
+            
+            {/* Player Rank Badge */}
+            <div className="mt-3 px-3 py-1 rounded-full bg-gradient-to-r from-black/40 to-black/20 border border-white/10">
+              <span className={`text-sm font-medium ${rankInfo.color}`}>
+                {rankInfo.title} • {formatPointsRange(rankInfo.minPoints, rankInfo.maxPoints)}
               </span>
             </div>
             

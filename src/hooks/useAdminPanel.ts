@@ -5,12 +5,15 @@ import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { injectTestPlayers, getPlayerCount } from '@/utils/testDataGenerator';
 
 export function useAdminPanel() {
   
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
   const [pinInputValue, setPinInputValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isGeneratingData, setIsGeneratingData] = useState<boolean>(false);
+  const [playerCount, setPlayerCount] = useState<number>(0);
   
   // Player search state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -25,6 +28,11 @@ export function useAdminPanel() {
     const isStillAdmin = adminService.checkExpiration();
     if (isAdminMode !== isStillAdmin) {
       setIsAdminMode(isStillAdmin);
+    }
+    
+    // Get current player count on mount
+    if (isStillAdmin) {
+      getPlayerCount().then(count => setPlayerCount(count));
     }
   }, []);
 
@@ -44,6 +52,10 @@ export function useAdminPanel() {
         adminService.setAdmin(true);
         setIsAdminMode(true);
         toast.success('Admin access granted');
+        
+        // Get current player count
+        const count = await getPlayerCount();
+        setPlayerCount(count);
       } else {
         toast.error('Invalid PIN. Access denied.');
       }
@@ -60,6 +72,42 @@ export function useAdminPanel() {
     adminService.logoutAdmin();
     setIsAdminMode(false);
     toast.info('Admin session ended');
+  };
+  
+  // Generate test data function
+  const generateTestData = async (count: number) => {
+    if (!isAdminMode) {
+      toast.error('Admin access required to generate test data');
+      return false;
+    }
+    
+    setIsGeneratingData(true);
+    
+    try {
+      const success = await injectTestPlayers(count);
+      
+      if (success) {
+        toast.success(`Successfully generated test data`);
+        // Invalidate queries to update UI
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        queryClient.invalidateQueries({ queryKey: ['tierData'] });
+        
+        // Update player count
+        const newCount = await getPlayerCount();
+        setPlayerCount(newCount);
+        
+        return true;
+      } else {
+        toast.error('Failed to generate test data');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error generating test data:', error);
+      toast.error('An error occurred while generating test data');
+      return false;
+    } finally {
+      setIsGeneratingData(false);
+    }
   };
 
   // Search for players by IGN
@@ -372,6 +420,10 @@ export function useAdminPanel() {
     updatePlayer,
     updatePlayerTier,
     deletePlayer,
-    banPlayer
+    banPlayer,
+    // Test data generation
+    generateTestData,
+    isGeneratingData,
+    playerCount
   };
 }
