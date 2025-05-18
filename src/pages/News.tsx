@@ -1,65 +1,71 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { NewsArticleCard } from '../components/NewsArticleCard';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { NewsArticleCard } from '../components/NewsArticleCard';
 import { useNews } from '@/hooks/useNews';
 
 const News = () => {
   const navigate = useNavigate();
-  const { newsArticles, loading, error } = useNews();
+  const { newsArticles, loading, error, selectedArticle, openArticle, closeArticle } = useNews();
   
-  // Page is created but disabled - redirect to home
-  React.useEffect(() => {
-    navigate('/');
-  }, [navigate]);
+  const handleModeChange = (mode: string) => {
+    if (mode === 'overall') {
+      navigate('/');
+    } else {
+      navigate(`/${mode.toLowerCase()}`);
+    }
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
-        selectedMode="overall"
-        onSelectMode={() => {}}
+        selectedMode="overall" 
+        onSelectMode={handleModeChange} 
         navigate={navigate}
+        activePage="news"
       />
       
       <main className="flex-grow">
-        <div className="content-container py-8 md:py-12">
+        <div className="content-container py-6 md:py-8">
           <motion.h1 
-            className="section-heading mb-8"
+            className="section-heading mb-6 md:mb-8"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Latest News
+            News & Announcements
           </motion.h1>
           
           {loading ? (
-            <div className="text-center py-12">
+            <div className="flex justify-center py-12">
               <div className="animate-pulse">Loading news articles...</div>
             </div>
           ) : error ? (
-            <div className="text-center py-12 text-red-400">
+            <div className="text-center text-red-400 py-8">
               Error loading news: {error}
             </div>
-          ) : newsArticles && newsArticles.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {newsArticles.map((article, index) => (
-                <motion.div
-                  key={article.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <NewsArticleCard article={article} />
-                </motion.div>
-              ))}
+          ) : newsArticles.length === 0 ? (
+            <div className="text-center text-white/60 py-12">
+              No news articles available at this time.
             </div>
           ) : (
-            <div className="text-center py-12 text-white/60">
-              No news articles available at the moment.
-            </div>
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {newsArticles.map((article) => (
+                <NewsArticleCard 
+                  key={article.id} 
+                  article={article} 
+                  onClick={() => openArticle(article)}
+                />
+              ))}
+            </motion.div>
           )}
         </div>
       </main>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -12,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { playerService, GameMode, TierLevel } from '@/services/playerService';
 import { getPlayerRank, formatPointsRange } from '@/utils/rankUtils';
+import { GameModeIcon } from './GameModeIcon';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -163,7 +163,10 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <span className="text-sm">{mode}</span>
+                    <span className="text-sm flex items-center">
+                      <GameModeIcon mode={mode} className="h-4 w-4 mr-2" />
+                      {mode}
+                    </span>
                     <div className="flex flex-col items-end">
                       {tier === 'Not Ranked' ? (
                         <span className="text-sm font-bold text-gray-400">

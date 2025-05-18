@@ -153,7 +153,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                   tier: tier,
                                   // Fix Type Error: Convert global_points to number before passing it
                                   points: typeof player.global_points === 'string' 
-                                    ? parseFloat(player.global_points) || 0 
+                                    ? Number(player.global_points) || 0 
                                     : player.global_points || 0,
                                   badge: player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`,
                                   displayName: player.ign,

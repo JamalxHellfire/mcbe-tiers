@@ -1,29 +1,13 @@
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, RefetchOptions } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-// Export the NewsArticle type properly
-export interface NewsArticle {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  created_at: string;
-  updated_at?: string | null;
-}
-
-// Add a new interface for article creation that doesn't require id and created_at
-export interface NewsArticleCreate {
-  title: string;
-  description: string;
-  author: string;
-}
+import { NewsArticle } from '@/integrations/supabase/client';
 
 export function useNews() {
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   
-  const {
+  const { 
     data: newsArticles = [],
     isLoading: loading,
     error,
@@ -35,16 +19,19 @@ export function useNews() {
         const { data, error } = await supabase
           .from('news')
           .select('*')
-          .order('created_at', { ascending: false }) as any;
+          .order('created_at', { ascending: false });
           
-        if (error) throw error;
-        return data as NewsArticle[] || [];
-      } catch (err: any) {
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        return data as NewsArticle[];
+      } catch (err) {
         console.error('Error fetching news:', err);
-        throw new Error(err.message || 'Failed to load news');
+        throw err;
       }
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 60000 // 1 minute
   });
   
   const openArticle = (article: NewsArticle) => {

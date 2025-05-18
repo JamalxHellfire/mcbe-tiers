@@ -1,149 +1,98 @@
 
 import React from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Trophy, Award } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Trophy } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { GameModeIcon } from './GameModeIcon';
 
 interface PlayerRowProps {
   player: {
-    id: string;
-    name?: string;
-    ign?: string;
-    displayName?: string;
-    region?: string;
+    id?: string;
+    position?: number;
+    displayName: string;
     avatar?: string;
-    avatar_url?: string;
-    tier: number;
-    subtier?: string;
-    points: number;
-    badge: string;
+    gameMode?: string;
+    tier?: number | string;
+    badge?: string;
+    points?: number;
+    country?: string;
+    device?: string;
   };
-  onClick: () => void;
-  delay?: number;
   compact?: boolean;
+  onClick?: () => void;
+  delay?: number;
 }
 
-export function PlayerRow({ player, onClick, delay = 0, compact = false }: PlayerRowProps) {
-  const getRegionColor = (region?: string) => {
-    switch(region) {
-      case 'NA': return 'border-red-400/30';
-      case 'EU': return 'border-green-400/30';
-      case 'ASIA': return 'border-blue-400/30';
-      case 'OCE': return 'border-purple-400/30';
-      case 'SA': return 'border-yellow-400/30';
-      case 'AF': return 'border-orange-400/30';
-      default: return 'border-white/20';
-    }
-  };
-
-  const getBadgeColor = (badge: string) => {
-    if (badge.includes('Master')) return 'text-yellow-400';
-    if (badge.includes('Ace')) return 'text-orange-400';
-    if (badge.includes('Cadet')) return 'text-purple-400';
-    return 'text-blue-400';
-  };
-  
-  const displayName = player.displayName || player.ign || player.name || '';
-  const avatarUrl = player.avatar_url || player.avatar;
-  
+export function PlayerRow({ player, compact = false, onClick, delay = 0 }: PlayerRowProps) {
   return (
-    <motion.div 
+    <motion.div
       className={cn(
-        "flex items-center justify-between py-3 hover:bg-white/5 transition-colors cursor-pointer",
-        compact ? "px-2" : "px-4"
+        "flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors",
+        compact ? "" : "px-5 py-4"
       )}
       onClick={onClick}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay }}
+      whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
     >
-      <div className="flex items-center">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Avatar className={cn(
-                "border-2", 
-                getRegionColor(player.region),
-                compact ? "h-8 w-8 mr-2" : "h-10 w-10 mr-3"
-              )}>
-                <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback>{displayName.slice(0, 2)}</AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Region: {player.region || 'Unknown'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      <div className="flex items-center gap-3">
+        {player.position && (
+          <span className="text-white/40 text-sm font-mono min-w-[20px]">
+            {player.position}
+          </span>
+        )}
         
-        <div>
-          <div className={cn("font-medium", compact ? "text-sm" : "text-base")}>
-            {displayName}
+        <Avatar className={cn("border-2 border-white/10", compact ? "h-8 w-8" : "h-10 w-10")}>
+          <AvatarImage src={player.avatar} alt={player.displayName} />
+          <AvatarFallback>
+            {player.displayName ? player.displayName.charAt(0) : "?"}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className={cn("font-medium", compact ? "text-sm" : "text-base")}>
+              {player.displayName}
+            </span>
+            
+            {player.gameMode && (
+              <span className="text-xs text-white/60 bg-white/10 px-1.5 py-0.5 rounded flex items-center">
+                <GameModeIcon mode={player.gameMode} className="h-3 w-3 mr-1" />
+                {player.gameMode}
+              </span>
+            )}
           </div>
-          {!compact && (
-            <div className="flex items-center mt-1">
-              {player.region && (
-                <span className={cn(
-                  "text-xs px-2 py-0.5 rounded mr-2",
-                  player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
-                  player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
-                  player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
-                  player.region === 'OCE' ? 'bg-purple-900/30 text-purple-400' :
-                  player.region === 'SA' ? 'bg-yellow-900/30 text-yellow-400' :
-                  player.region === 'AF' ? 'bg-orange-900/30 text-orange-400' :
-                  'bg-gray-800/30 text-gray-400'
-                )}>
-                  {player.region}
-                </span>
-              )}
-              <span className="text-xs text-white/50 flex items-center">
-                <Trophy size={12} className="text-yellow-500 mr-1" />
-                {player.points} pts
+          
+          {player.badge && (
+            <div className="flex items-center text-xs">
+              <span className={cn(
+                player.tier === 1 || player.badge.includes('T1') ? "text-tier-1" :
+                player.tier === 2 || player.badge.includes('T2') ? "text-tier-2" :
+                player.tier === 3 || player.badge.includes('T3') ? "text-tier-3" :
+                player.tier === 4 || player.badge.includes('T4') ? "text-tier-4" :
+                player.tier === 5 || player.badge.includes('T5') ? "text-tier-5" :
+                "text-white/50"
+              )}>
+                {player.badge}
               </span>
             </div>
-          )}
-          {!compact && (
-            <span className={cn(
-              "text-xs flex items-center mt-1",
-              getBadgeColor(player.badge)
-            )}>
-              <Award size={12} className="mr-1" />
-              {player.badge}
-            </span>
-          )}
-          {compact && player.region && (
-            <span className={cn(
-              "text-xs px-1.5 py-0.5 rounded inline-block mt-1",
-              player.region === 'NA' ? 'bg-red-900/30 text-red-400' : 
-              player.region === 'EU' ? 'bg-green-900/30 text-green-400' :
-              player.region === 'ASIA' ? 'bg-blue-900/30 text-blue-400' : 
-              player.region === 'OCE' ? 'bg-purple-900/30 text-purple-400' :
-              player.region === 'SA' ? 'bg-yellow-900/30 text-yellow-400' :
-              player.region === 'AF' ? 'bg-orange-900/30 text-orange-400' :
-              'bg-gray-800/30 text-gray-400'
-            )}>
-              {player.region}
-            </span>
           )}
         </div>
       </div>
       
-      {compact ? (
-        <span className="text-xs text-white/50">
-          {player.points}
-        </span>
-      ) : (
-        <div className="flex items-center">
-          <span className={cn(
-            "text-xs font-medium",
-            `text-tier-${player.tier}`
+      <div className="flex items-center">
+        {player.points !== undefined && (
+          <div className={cn(
+            "flex items-center",
+            compact ? "text-xs" : "text-sm"
           )}>
-            {player.subtier || ''} T{player.tier}
-          </span>
-        </div>
-      )}
+            <Trophy size={compact ? 12 : 14} className="mr-1 text-yellow-400" />
+            <span>{player.points}</span>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

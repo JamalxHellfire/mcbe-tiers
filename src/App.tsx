@@ -1,51 +1,46 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import About from "./pages/About";
+import News from "./pages/News";
 import NotFound from "./pages/NotFound";
-import AdminPanel from "./pages/AdminPanel";
 import SubcategoryPage from "./pages/SubcategoryPage";
+import AdminPanel from "./pages/AdminPanel";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { GameMode } from "./services/playerService";
 
 // Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 30000,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/news" element={<News />} />
           <Route path="/admin" element={<AdminPanel />} />
           
-          {/* Game mode specific pages */}
+          {/* Game mode routes */}
           <Route path="/crystal" element={<SubcategoryPage gameMode="Crystal" />} />
           <Route path="/sword" element={<SubcategoryPage gameMode="Sword" />} />
-          <Route path="/smp" element={<SubcategoryPage gameMode="SMP" />} />
-          <Route path="/uhc" element={<SubcategoryPage gameMode="UHC" />} />
           <Route path="/axe" element={<SubcategoryPage gameMode="Axe" />} />
+          <Route path="/mace" element={<SubcategoryPage gameMode="Mace" />} />
+          <Route path="/smp" element={<SubcategoryPage gameMode="SMP" />} />
           <Route path="/nethpot" element={<SubcategoryPage gameMode="NethPot" />} />
           <Route path="/bedwars" element={<SubcategoryPage gameMode="Bedwars" />} />
-          <Route path="/mace" element={<SubcategoryPage gameMode="Mace" />} />
+          <Route path="/uhc" element={<SubcategoryPage gameMode="UHC" />} />
           
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      <Toaster />
+    </QueryClientProvider>
+  );
+}
 
 export default App;
