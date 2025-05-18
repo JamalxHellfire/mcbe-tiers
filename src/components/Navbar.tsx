@@ -55,7 +55,11 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="flex items-center">
-                <Trophy size={22} className="mr-2 text-yellow-400" />
+                <img 
+                  src="/lovable-uploads/3bad17d6-7347-46e0-8f33-35534094962f.png" 
+                  alt="MCBE TIERS" 
+                  className="h-8 w-auto mr-2" 
+                />
                 <h1 className="logo-text">
                   MCBE TIERS
                 </h1>
