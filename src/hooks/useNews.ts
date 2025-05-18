@@ -4,8 +4,12 @@ import { useQuery, RefetchOptions } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { NewsArticle } from '@/integrations/supabase/client';
 
+export interface NewsArticleWithRequiredId extends NewsArticle {
+  id: string; // Making id required
+}
+
 export function useNews() {
-  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticleWithRequiredId | null>(null);
   
   const { 
     data: newsArticles = [],
@@ -25,7 +29,11 @@ export function useNews() {
           throw new Error(error.message);
         }
         
-        return data as NewsArticle[];
+        // Ensure all articles have an id
+        return data.map(article => ({
+          ...article,
+          id: article.id || `news-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+        })) as NewsArticleWithRequiredId[];
       } catch (err) {
         console.error('Error fetching news:', err);
         throw err;
@@ -34,7 +42,7 @@ export function useNews() {
     staleTime: 60000 // 1 minute
   });
   
-  const openArticle = (article: NewsArticle) => {
+  const openArticle = (article: NewsArticleWithRequiredId) => {
     setSelectedArticle(article);
   };
   

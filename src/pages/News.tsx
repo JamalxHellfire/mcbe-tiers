@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 import { NewsArticleCard } from '../components/NewsArticleCard';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useNews } from '@/hooks/useNews';
+import { useNews, NewsArticleWithRequiredId } from '@/hooks/useNews';
 
 const News = () => {
   const navigate = useNavigate();
@@ -61,8 +61,8 @@ const News = () => {
               {newsArticles.map((article) => (
                 <NewsArticleCard 
                   key={article.id} 
-                  article={article} 
-                  onClick={() => openArticle(article)}
+                  article={article as NewsArticleWithRequiredId} 
+                  onClick={() => openArticle(article as NewsArticleWithRequiredId)}
                 />
               ))}
             </motion.div>
