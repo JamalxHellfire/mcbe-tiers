@@ -237,7 +237,9 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                 ...player,
                                 tier: "R",
                                 // Fix: Ensure points is always a number (0 for retired players)
-                                points: 0,
+                                points: typeof player.global_points === 'string'
+                                  ? parseFloat(player.global_points) || 0
+                                  : (player.global_points || 0),
                                 badge: "Retired Player",
                                 displayName: player.ign,
                                 avatar: player.avatar_url || `/default-avatar.png`
