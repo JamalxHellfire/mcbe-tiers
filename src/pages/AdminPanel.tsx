@@ -19,7 +19,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, User, X, Edit, UserX, Trash2, Save, Pencil, Check, XCircle } from 'lucide-react';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { gameModeToDisplay } from '@/utils/gamemodeUtils';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -47,9 +46,7 @@ const AdminPanel = () => {
     // Test data generation
     generateTestData,
     isGeneratingData,
-    playerCount,
-    // Game mode helpers
-    gameModes
+    playerCount
   } = useAdminPanel();
   
   // Form state for player submission
@@ -65,17 +62,16 @@ const AdminPanel = () => {
     region: false
   });
   
-  // Track selected tiers for each gamemode using lowercase keys
+  // Track selected tiers for each gamemode
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    'crystal': "NA",
-    'sword': "NA",
-    'smp': "NA",
-    'uhc': "NA",
-    'axe': "NA",
-    'nethpot': "NA",
-    'bedwars': "NA",
-    'mace': "NA",
-    'overall': "NA"
+    'Crystal': "NA",
+    'Sword': "NA",
+    'SMP': "NA",
+    'UHC': "NA",
+    'Axe': "NA",
+    'NethPot': "NA",
+    'Bedwars': "NA",
+    'Mace': "NA"
   });
   
   // Player edit state
@@ -503,11 +499,11 @@ const AdminPanel = () => {
                   <div className="mt-6 space-y-6">
                     <h3 className="text-lg font-medium">Game Mode Tier Selection</h3>
                     
-                    {/* Loop through game modes - using lowercase for the internal keys but displaying capitalized */}
-                    {gameModes.map((gamemode) => (
+                    {/* Loop through game modes */}
+                    {(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'Bedwars', 'NethPot', 'UHC'] as GameMode[]).map((gamemode) => (
                       <div key={gamemode} className="pt-2 pb-4 border-b border-gray-700/50">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h4 className="w-24 font-medium">{gameModeToDisplay(gamemode)}:</h4>
+                          <h4 className="w-24 font-medium">{gamemode}:</h4>
                           
                           <RadioGroup 
                             className="flex flex-wrap items-center gap-x-4 gap-y-3"
