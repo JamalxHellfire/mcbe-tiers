@@ -1,5 +1,20 @@
 
-import { useIsMobile } from './use-mobile';
+import { useState, useEffect } from 'react';
 
-// Re-export the hook with a consistent naming convention
-export const useMobile = useIsMobile;
+export function useMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
+
+// Re-export with consistent naming
+export { useMobile as useIsMobile };

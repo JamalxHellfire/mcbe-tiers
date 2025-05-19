@@ -1,12 +1,41 @@
+
 // First let's define the correct type for GameMode
 export type GameMode = 'overall' | 'crystal' | 'sword' | 'axe' | 'mace' | 'smp' | 'bedwars' | 'nethpot' | 'uhc';
 
-// Define player types more precisely
+// Define Player types more precisely
 export interface Player {
   id: string;
   ign: string;
   avatar?: string;
   [key: string]: any; // Allow for dynamic properties
+}
+
+// Add additional types needed by the application
+export type TierLevel = 'LT5' | 'HT5' | 'LT4' | 'HT4' | 'LT3' | 'HT3' | 'LT2' | 'HT2' | 'LT1' | 'HT1' | 'Retired' | 'Unranked';
+export type PlayerRegion = 'NA' | 'EU' | 'ASIA' | 'OCE' | 'SA' | 'AF';
+export type DeviceType = 'Mobile' | 'PC' | 'Console';
+
+/**
+ * Calculate points based on tier level
+ * @param tier Tier level
+ * @returns Points value
+ */
+export function calculateTierPoints(tier: TierLevel): number {
+  switch (tier) {
+    case 'HT1': return 1000;
+    case 'LT1': return 900;
+    case 'HT2': return 800;
+    case 'LT2': return 700;
+    case 'HT3': return 600;
+    case 'LT3': return 500;
+    case 'HT4': return 400;
+    case 'LT4': return 300;
+    case 'HT5': return 200;
+    case 'LT5': return 100;
+    case 'Retired': return 50;
+    case 'Unranked':
+    default: return 0;
+  }
 }
 
 // Function to safely convert Player to GameModeRecord
@@ -34,6 +63,94 @@ export function gameModeRecordToPlayer(record: Record<GameMode, any>, basePlayer
   });
   
   return result;
+}
+
+/**
+ * Get players by tier and gamemode
+ * @param tier Tier level to filter by
+ * @param gamemode Gamemode to filter by
+ * @returns Array of players matching criteria
+ */
+export function getPlayersByTierAndGamemode(tier: TierLevel, gamemode: GameMode): Player[] {
+  const players = playerService.getPlayers();
+  return players.filter(player => {
+    const gameModeData = player[gamemode];
+    return gameModeData && gameModeData.tier === tier;
+  });
+}
+
+/**
+ * Get ranked players for leaderboard
+ * @param gamemode Gamemode to get players for
+ * @returns Array of ranked players
+ */
+export function getRankedPlayers(gamemode: GameMode): Player[] {
+  const players = playerService.getPlayers();
+  
+  // Filter out players without a rank in this gamemode
+  const rankedPlayers = players.filter(player => {
+    const gameModeData = player[gamemode];
+    return gameModeData && gameModeData.tier !== 'Unranked';
+  });
+  
+  // Sort by points in descending order
+  return rankedPlayers.sort((a, b) => {
+    const pointsA = a[gamemode]?.points || 0;
+    const pointsB = b[gamemode]?.points || 0;
+    return pointsB - pointsA;
+  });
+}
+
+/**
+ * Get player by IGN
+ * @param ign In-game name to search for
+ * @returns Player or undefined if not found
+ */
+export function getPlayerByIGN(ign: string): Player | undefined {
+  const players = playerService.getPlayers();
+  return players.find(player => player.ign.toLowerCase() === ign.toLowerCase());
+}
+
+/**
+ * Create a new player
+ * @param playerData Player data
+ * @returns Created player
+ */
+export function createPlayer(playerData: Omit<Player, 'id'>): Player {
+  return playerService.addPlayer(playerData);
+}
+
+/**
+ * Assign tier to a player
+ * @param playerId Player ID
+ * @param gamemode Game mode
+ * @param tier Tier level
+ * @returns Updated player
+ */
+export function assignTier(playerId: string, gamemode: GameMode, tier: TierLevel): Player | undefined {
+  const player = playerService.getPlayerById(playerId);
+  if (!player) return undefined;
+  
+  const points = calculateTierPoints(tier);
+  const updatedPlayer = {
+    ...player,
+    [gamemode]: { tier, points }
+  };
+  
+  return playerService.updatePlayer(playerId, updatedPlayer);
+}
+
+/**
+ * Ban or unban a player
+ * @param playerId Player ID
+ * @param banned Ban status
+ * @returns Updated player
+ */
+export function banPlayer(playerId: string, banned: boolean): Player | undefined {
+  const player = playerService.getPlayerById(playerId);
+  if (!player) return undefined;
+  
+  return playerService.updatePlayer(playerId, { ...player, banned });
 }
 
 // Simple service to manage player data (replace with actual API calls)
@@ -110,4 +227,14 @@ export const playerService = {
     const updatedPlayers = players.filter(player => player.id !== id);
     playerService.savePlayers(updatedPlayers);
   },
+};
+
+// Export helper functions as part of playerService for easy access
+export const playerServiceExports = {
+  getPlayersByTierAndGamemode,
+  getRankedPlayers,
+  getPlayerByIGN,
+  createPlayer,
+  assignTier,
+  banPlayer,
 };
