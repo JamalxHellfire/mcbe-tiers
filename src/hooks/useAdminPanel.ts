@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
@@ -20,6 +21,31 @@ export function useAdminPanel() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [searchResults, setSearchResults] = useState<Player[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  
+  // Form state for player submission
+  const [ign, setIgn] = useState('');
+  const [javaUsername, setJavaUsername] = useState('');
+  const [region, setRegion] = useState<PlayerRegion | undefined>(undefined);
+  const [device, setDevice] = useState<DeviceType | undefined>(undefined);
+  
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState({
+    ign: false,
+    javaUsername: false,
+    region: false
+  });
+  
+  // Track selected tiers for each gamemode
+  const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
+    'Crystal': "NA",
+    'Sword': "NA",
+    'SMP': "NA",
+    'UHC': "NA",
+    'Axe': "NA",
+    'NethPot': "NA",
+    'Bedwars': "NA",
+    'Mace': "NA"
+  });
   
   const queryClient = useQueryClient();
 
@@ -138,7 +164,7 @@ export function useAdminPanel() {
     if (points >= 25) return "HT3";
     if (points >= 20) return "LT3";
     if (points >= 15) return "HT4";
-    if (points >= 10) return "LT4";
+    if (points >= 10) return "HT4";
     if (points >= 5) return "HT5";
     if (points > 0) return "LT5";
     return "NA";
@@ -434,6 +460,27 @@ export function useAdminPanel() {
     return banPlayerMutation.mutateAsync(player);
   };
 
+  // Validate form before submission
+  const validateForm = () => {
+    const errors = {
+      ign: !ign.trim(),
+      javaUsername: !javaUsername.trim(),
+      region: !region
+    };
+    
+    setFormErrors(errors);
+    
+    return !Object.values(errors).some(isError => isError);
+  };
+  
+  // Handle tier selection change
+  const handleTierChange = (gamemode: GameMode, tier: TierLevel | "NA") => {
+    setTierSelections(prev => ({
+      ...prev,
+      [gamemode]: tier
+    }));
+  };
+
   // Handle multiple gamemode submissions at once
   const handleSubmitAllSelectedTiers = async () => {
     // Validate form
@@ -592,8 +639,6 @@ export function useAdminPanel() {
     generateTestData,
     isGeneratingData,
     playerCount,
-    // Process the form submission
-    handleSubmitAllSelectedTiers,
     // Form state
     ign, setIgn,
     javaUsername, setJavaUsername,
@@ -602,6 +647,8 @@ export function useAdminPanel() {
     formErrors, setFormErrors,
     tierSelections, setTierSelections,
     validateForm,
-    handleTierChange
+    handleTierChange,
+    // Process the form submission
+    handleSubmitAllSelectedTiers
   };
 }
