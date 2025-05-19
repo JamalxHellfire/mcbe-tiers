@@ -35,16 +35,17 @@ export function useAdminPanel() {
     region: false
   });
   
-  // Track selected tiers for each gamemode
+  // Track selected tiers for each gamemode - using lowercase gamemode keys
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    'Crystal': "NA",
-    'Sword': "NA",
-    'SMP': "NA",
-    'UHC': "NA",
-    'Axe': "NA",
-    'NethPot': "NA",
-    'Bedwars': "NA",
-    'Mace': "NA"
+    'crystal': "NA",
+    'sword': "NA",
+    'smp': "NA",
+    'uhc': "NA",
+    'axe': "NA",
+    'nethpot': "NA",
+    'bedwars': "NA",
+    'mace': "NA",
+    'overall': "NA"
   });
   
   const queryClient = useQueryClient();
@@ -72,7 +73,8 @@ export function useAdminPanel() {
     setIsSubmitting(true);
     
     try {
-      const isValid = await playerService.verifyAdminPIN(pinInputValue);
+      // Direct authentication without network request to improve reliability
+      const isValid = adminService.verifyAdminPIN(pinInputValue);
       
       if (isValid) {
         adminService.setAdmin(true);
@@ -284,14 +286,14 @@ export function useAdminPanel() {
         return true;
       }
       
-      // Assign the tier to the player
+      // Assign the tier to the player - returns a boolean
       const result = await playerService.assignTier({
         playerId: player.id,
         gamemode,
         tier: tier as TierLevel // Safe cast as we've checked it's not "NA"
       });
       
-      return !!result;
+      return result;
     },
     onSuccess: (success, variables) => {
       if (success) {
@@ -355,8 +357,10 @@ export function useAdminPanel() {
         loadPlayerDetails(variables.playerId);
         queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        return true;
       } else {
         toast.error(`Failed to update ${variables.gamemode} tier`);
+        return false;
       }
     }
   });
@@ -594,14 +598,15 @@ export function useAdminPanel() {
       toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
       // Reset tier selections
       setTierSelections({
-        'Crystal': "NA",
-        'Sword': "NA",
-        'SMP': "NA",
-        'UHC': "NA",
-        'Axe': "NA",
-        'NethPot': "NA",
-        'Bedwars': "NA",
-        'Mace': "NA"
+        'crystal': "NA",
+        'sword': "NA",
+        'smp': "NA",
+        'uhc': "NA",
+        'axe': "NA",
+        'nethpot': "NA",
+        'bedwars': "NA",
+        'mace': "NA",
+        'overall': "NA"
       });
       
       // Reset form

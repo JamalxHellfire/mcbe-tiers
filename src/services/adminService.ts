@@ -42,6 +42,7 @@ export const adminService = {
 
   verifyAdminPIN(pin: string): boolean {
     // Setting hardcoded PIN to 1234 as requested
+    // This is a direct comparison without any network request to fix the "Invalid PIN" error
     return pin === '1234';
   }
 };

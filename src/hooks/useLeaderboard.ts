@@ -15,7 +15,8 @@ export function useLeaderboard() {
         throw new Error(err.message || 'Failed to load leaderboard');
       }
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 300000, // Increased to 5 minutes for better caching
+    refetchOnWindowFocus: false, // Avoid unnecessary refetches
   });
   
   return { players, loading, error: error ? (error as Error).message : null };
