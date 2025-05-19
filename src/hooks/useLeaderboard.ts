@@ -1,14 +1,14 @@
 
 import { useState, useEffect } from 'react';
-import { playerService, Player } from '@/services/playerService';
+import { playerService, Player, GameMode } from '@/services/playerService';
 import { useQuery } from '@tanstack/react-query';
 
-export function useLeaderboard() {
+export function useLeaderboard(gamemode: GameMode = 'overall') {
   const { data: players = [], isLoading: loading, error } = useQuery({
-    queryKey: ['leaderboard'],
+    queryKey: ['leaderboard', gamemode],
     queryFn: async () => {
       try {
-        const data = await playerService.getRankedPlayers();
+        const data = await playerService.getRankedPlayers(gamemode);
         return data;
       } catch (err: any) {
         console.error('Error fetching leaderboard:', err);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
@@ -6,6 +7,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { injectTestPlayers, getPlayerCount } from '@/utils/testDataGenerator';
 import { usePopup, TierAssignment } from '@/contexts/PopupContext';
+import { getAllGameModes, gameModeToDisplay } from '@/utils/gamemodeUtils';
 
 export function useAdminPanel() {
   const { setPopupDataFromPlayer } = usePopup();
@@ -34,17 +36,24 @@ export function useAdminPanel() {
     region: false
   });
   
+  // Get all game modes in lowercase to match the GameMode type
+  const gameModes: GameMode[] = getAllGameModes();
+  
+  // Initial tier selections with lowercase gamemode keys
+  const initialTierSelections: Record<GameMode, TierLevel | "NA"> = {
+    'crystal': "NA",
+    'sword': "NA",
+    'smp': "NA",
+    'uhc': "NA",
+    'axe': "NA",
+    'nethpot': "NA",
+    'bedwars': "NA",
+    'mace': "NA",
+    'overall': "NA"
+  };
+  
   // Track selected tiers for each gamemode
-  const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    'Crystal': "NA",
-    'Sword': "NA",
-    'SMP': "NA",
-    'UHC': "NA",
-    'Axe': "NA",
-    'NethPot': "NA",
-    'Bedwars': "NA",
-    'Mace': "NA"
-  });
+  const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>(initialTierSelections);
   
   const queryClient = useQueryClient();
 
@@ -208,7 +217,7 @@ export function useAdminPanel() {
     try {
       const player = await playerService.getPlayerById(playerId);
       if (player) {
-        const tiers = await playerService.getPlayerTiers(playerId);
+        const tiers = playerService.getPlayerTiers(playerId);
         setSelectedPlayer({ ...player, tiers });
       } else {
         toast.error('Player not found');
@@ -249,11 +258,11 @@ export function useAdminPanel() {
       }
 
       // First, check if the player exists
-      let player = await playerService.getPlayerByIGN(ign);
+      let player = playerService.getPlayerByIGN(ign);
       
       if (!player) {
         // Create the player if they don't exist
-        player = await playerService.createPlayer({
+        player = playerService.createPlayer({
           ign,
           java_username: javaUsername,
           device,
@@ -271,7 +280,7 @@ export function useAdminPanel() {
           (device && player.device !== device) ||
           (region && player.region !== region)
         ) {
-          await playerService.updatePlayer(player.id, {
+          playerService.updatePlayer(player.id, {
             java_username: javaUsername || player.java_username,
             device: device || player.device,
             region: region || player.region
@@ -285,7 +294,7 @@ export function useAdminPanel() {
       }
       
       // Assign the tier to the player
-      const result = await playerService.assignTier({
+      const result = playerService.assignTier({
         playerId: player.id,
         gamemode,
         tier: tier as TierLevel // Safe cast as we've checked it's not "NA"
@@ -300,7 +309,9 @@ export function useAdminPanel() {
         }
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
         toast.success('Player result submitted successfully');
+        return true;
       }
+      return false;
     }
   });
   
@@ -316,7 +327,7 @@ export function useAdminPanel() {
       region?: PlayerRegion,
       device?: DeviceType
     }) => {
-      return await playerService.updatePlayer(playerId, {
+      return playerService.updatePlayer(playerId, {
         java_username: javaUsername,
         region,
         device
@@ -327,8 +338,10 @@ export function useAdminPanel() {
         toast.success('Player updated successfully');
         loadPlayerDetails(variables.playerId);
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        return true;
       } else {
         toast.error('Failed to update player');
+        return false;
       }
     }
   });
@@ -343,7 +356,7 @@ export function useAdminPanel() {
       gamemode: GameMode,
       tier: TierLevel
     }) => {
-      return await playerService.assignTier({
+      return playerService.assignTier({
         playerId,
         gamemode,
         tier
@@ -351,42 +364,48 @@ export function useAdminPanel() {
     },
     onSuccess: (success, variables) => {
       if (success) {
-        toast.success(`Updated ${variables.gamemode} tier to ${variables.tier}`);
+        toast.success(`Updated ${gameModeToDisplay(variables.gamemode)} tier to ${variables.tier}`);
         loadPlayerDetails(variables.playerId);
         queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        return true;
       } else {
-        toast.error(`Failed to update ${variables.gamemode} tier`);
+        toast.error(`Failed to update ${gameModeToDisplay(variables.gamemode)} tier`);
+        return false;
       }
     }
   });
   
   const deletePlayerMutation = useMutation({
     mutationFn: async (playerId: string) => {
-      return await playerService.deletePlayer(playerId);
+      return playerService.deletePlayer(playerId);
     },
     onSuccess: (success, playerId) => {
       if (success) {
         toast.success('Player deleted successfully');
         setSelectedPlayer(null);
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        return true;
       } else {
         toast.error('Failed to delete player');
+        return false;
       }
     }
   });
   
   const banPlayerMutation = useMutation({
     mutationFn: async (player: Player) => {
-      return await playerService.banPlayer(player);
+      return playerService.banPlayer(player);
     },
     onSuccess: (success, player) => {
       if (success) {
         toast.success(`${player.ign} has been banned`);
         setSelectedPlayer(null);
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        return true;
       } else {
         toast.error(`Failed to ban ${player.ign}`);
+        return false;
       }
     }
   });
@@ -493,11 +512,11 @@ export function useAdminPanel() {
     
     try {
       // First, get or create the player
-      let player = await playerService.getPlayerByIGN(ign);
+      let player = playerService.getPlayerByIGN(ign);
       
       if (!player) {
         // Create the player if they don't exist
-        player = await playerService.createPlayer({
+        player = playerService.createPlayer({
           ign,
           java_username: javaUsername,
           device,
@@ -515,7 +534,7 @@ export function useAdminPanel() {
           (device && player.device !== device) ||
           (region && player.region !== region)
         ) {
-          await playerService.updatePlayer(player.id, {
+          playerService.updatePlayer(player.id, {
             java_username: javaUsername || player.java_username,
             device: device || player.device,
             region: region || player.region
@@ -527,7 +546,7 @@ export function useAdminPanel() {
       const tierAssignments: TierAssignment[] = [];
 
       // Submit all selected tiers
-      for (const gamemode of Object.keys(tierSelections) as GameMode[]) {
+      for (const gamemode of gameModes) {
         const tier = tierSelections[gamemode];
         // Submit for all gamemodes, using "NA" as default
         hasAttempts = true;
@@ -562,7 +581,7 @@ export function useAdminPanel() {
       // Show the result popup if there's at least one successful submission
       if (successCount > 0 && player) {
         // Refresh player data to ensure we have the latest
-        const updatedPlayer = await playerService.getPlayerById(player.id);
+        const updatedPlayer = playerService.getPlayerById(player.id);
         if (updatedPlayer) {
           // Trigger the popup
           setPopupDataFromPlayer(updatedPlayer, tierAssignments);
@@ -594,14 +613,15 @@ export function useAdminPanel() {
       toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
       // Reset tier selections
       setTierSelections({
-        'Crystal': "NA",
-        'Sword': "NA",
-        'SMP': "NA",
-        'UHC': "NA",
-        'Axe': "NA",
-        'NethPot': "NA",
-        'Bedwars': "NA",
-        'Mace': "NA"
+        'crystal': "NA",
+        'sword': "NA",
+        'smp': "NA",
+        'uhc': "NA",
+        'axe': "NA",
+        'nethpot': "NA",
+        'bedwars': "NA",
+        'mace': "NA",
+        'overall': "NA"
       });
       
       // Reset form
@@ -649,6 +669,8 @@ export function useAdminPanel() {
     validateForm,
     handleTierChange,
     // Process the form submission
-    handleSubmitAllSelectedTiers
+    handleSubmitAllSelectedTiers,
+    // Game mode helpers
+    gameModes
   };
 }
