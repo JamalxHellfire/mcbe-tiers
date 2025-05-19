@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
@@ -72,7 +71,8 @@ export function useAdminPanel() {
     setIsSubmitting(true);
     
     try {
-      const isValid = await playerService.verifyAdminPIN(pinInputValue);
+      // Direct verification with adminService
+      const isValid = adminService.verifyAdminPIN(pinInputValue);
       
       if (isValid) {
         adminService.setAdmin(true);

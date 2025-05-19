@@ -66,8 +66,31 @@ export interface GameModeData {
   Retired: Player[];
 }
 
-// Define the getPlayerByIGN function
+// Cache management to improve performance
+const playerCache = new Map<string, Player>();
+const tierDataCache = new Map<GameMode, any>();
+let cacheTimeout: number | null = null;
+
+const clearCacheAfterDelay = () => {
+  if (cacheTimeout) {
+    clearTimeout(cacheTimeout);
+  }
+  
+  cacheTimeout = window.setTimeout(() => {
+    playerCache.clear();
+    tierDataCache.clear();
+    cacheTimeout = null;
+  }, 300000); // Clear cache after 5 minutes
+};
+
+// Enhanced getPlayerByIGN with caching
 export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
+  // Check cache first
+  const cacheKey = `ign:${ign}`;
+  if (playerCache.has(cacheKey)) {
+    return playerCache.get(cacheKey) || null;
+  }
+  
   try {
     // Check if player exists
     const { data, error } = await supabase
@@ -81,6 +104,12 @@ export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
       return null;
     }
     
+    if (data) {
+      // Store in cache
+      playerCache.set(cacheKey, data as Player);
+      clearCacheAfterDelay();
+    }
+    
     return data as Player;
   } catch (error) {
     console.error('Failed to fetch player by IGN:', error);
@@ -88,8 +117,14 @@ export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
   }
 };
 
-// Define the getPlayerById function
+// Enhanced getPlayerById with caching
 export const getPlayerById = async (id: string): Promise<Player | null> => {
+  // Check cache first
+  const cacheKey = `id:${id}`;
+  if (playerCache.has(cacheKey)) {
+    return playerCache.get(cacheKey) || null;
+  }
+  
   try {
     // Check if player exists
     const { data, error } = await supabase
@@ -101,6 +136,12 @@ export const getPlayerById = async (id: string): Promise<Player | null> => {
     if (error) {
       console.error('Error fetching player by ID:', error);
       return null;
+    }
+    
+    if (data) {
+      // Store in cache
+      playerCache.set(cacheKey, data as Player);
+      clearCacheAfterDelay();
     }
     
     return data as Player;
@@ -225,7 +266,7 @@ export const updatePlayer = async (
   }
 };
 
-// Define the assignTier function
+// Enhanced assignTier with better invalidation
 export const assignTier = async (tierData: TierData): Promise<boolean> => {
   try {
     // Calculate points based on tier
@@ -280,6 +321,10 @@ export const assignTier = async (tierData: TierData): Promise<boolean> => {
     
     // Update player's global points
     await updatePlayerGlobalPoints(tierData.playerId);
+    
+    // Invalidate caches for this player and gamemode
+    playerCache.delete(`id:${tierData.playerId}`);
+    tierDataCache.delete(tierData.gamemode);
     
     return true;
   } catch (error) {
@@ -342,8 +387,13 @@ export const updatePlayerGlobalPoints = async (playerId: string): Promise<boolea
   }
 };
 
-// Define the getPlayerTiers function
+// Enhanced getPlayerTiers with caching
 export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode, any>> => {
+  const cacheKey = `tiers:${playerId}`;
+  if (playerCache.has(cacheKey)) {
+    return playerCache.get(cacheKey) as Record<GameMode, any>;
+  }
+  
   try {
     // Get all tiers for the player
     const { data, error } = await supabase
@@ -379,6 +429,10 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
       };
     });
     
+    // Cache the result
+    playerCache.set(cacheKey, tierRecord);
+    clearCacheAfterDelay();
+    
     return tierRecord;
   } catch (error) {
     console.error('Failed to fetch player tiers:', error);
@@ -395,8 +449,13 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
   }
 };
 
-// Define function to get players by tier and gamemode
+// Enhanced getPlayersByTierAndGamemode with caching
 export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<GameModeData> => {
+  // Check cache first
+  if (tierDataCache.has(gamemode)) {
+    return tierDataCache.get(gamemode);
+  }
+  
   try {
     // Initialize empty structure
     const tierData: GameModeData = {
@@ -420,6 +479,9 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
     }
     
     if (!gamemodeScores || gamemodeScores.length === 0) {
+      // Cache empty results too
+      tierDataCache.set(gamemode, tierData);
+      clearCacheAfterDelay();
       return tierData;
     }
     
@@ -445,6 +507,10 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
         }
       }
     });
+    
+    // Cache the results
+    tierDataCache.set(gamemode, tierData);
+    clearCacheAfterDelay();
     
     return tierData;
   } catch (error) {

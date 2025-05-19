@@ -1,13 +1,22 @@
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Navbar } from '../components/Navbar';
-import { TierGrid } from '../components/TierGrid';
 import { Footer } from '../components/Footer';
 import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
 import { MobileNavMenu } from '../components/MobileNavMenu';
+
+// Lazy load TierGrid for performance
+const TierGrid = lazy(() => import('../components/TierGrid').then(module => ({ default: module.TierGrid })));
+
+// Loading component
+const LoadingFallback = () => (
+  <div className="flex justify-center items-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
 
 const SubcategoryPage = () => {
   // Get gameMode from URL parameters
@@ -42,8 +51,6 @@ const SubcategoryPage = () => {
       
       <main className="flex-grow">
         <div className="content-container py-4 md:py-6">
-          {/* Heading removed as requested */}
-          
           {/* Mobile navigation menu */}
           <MobileNavMenu currentMode={gameMode.toLowerCase()} />
           
@@ -55,7 +62,9 @@ const SubcategoryPage = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <TierGrid selectedMode={gameMode.toLowerCase()} onPlayerClick={handlePlayerClick} />
+              <Suspense fallback={<LoadingFallback />}>
+                <TierGrid selectedMode={gameMode.toLowerCase()} onPlayerClick={handlePlayerClick} />
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </div>
