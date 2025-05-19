@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { GameModeIcon } from './GameModeIcon';
 import { useMobile } from '@/hooks/useMobile';
@@ -12,7 +13,14 @@ import {
 import { Menu } from "lucide-react"
 import { Link } from 'react-router-dom';
 
-export const Navbar = ({ selectedMode, onSelectMode, navigate }) => {
+interface NavbarProps {
+  selectedMode: string;
+  onSelectMode: (mode: string) => void;
+  navigate: any;
+  activePage?: string; // Make activePage optional
+}
+
+export const Navbar = ({ selectedMode, onSelectMode, navigate, activePage }: NavbarProps) => {
   const isMobile = useMobile();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
