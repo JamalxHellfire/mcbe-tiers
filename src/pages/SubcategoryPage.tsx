@@ -1,21 +1,16 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { TierGrid } from '../components/TierGrid';
 import { Footer } from '../components/Footer';
 import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
 import { MobileNavMenu } from '../components/MobileNavMenu';
 
-interface SubcategoryPageProps {
-  gameMode: GameMode;
-}
-
-const SubcategoryPage = ({ gameMode }: SubcategoryPageProps) => {
-  const [selectedPlayer, setSelectedPlayer] = React.useState(null);
-  const [isPlayerModalOpen, setIsPlayerModalOpen] = React.useState(false);
+const SubcategoryPage = ({ gameMode }: { gameMode: GameMode }) => {
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const navigate = useNavigate();
   
   const handleModeChange = (mode: string) => {
@@ -36,13 +31,13 @@ const SubcategoryPage = ({ gameMode }: SubcategoryPageProps) => {
       <Navbar 
         selectedMode={gameMode.toLowerCase()} 
         onSelectMode={handleModeChange} 
-        navigate={navigate} 
+        navigate={navigate}
       />
       
       <main className="flex-grow">
-        <div className="content-container py-6 md:py-8">
+        <div className="content-container py-4 md:py-6">
           <motion.h1 
-            className="section-heading mb-6 md:mb-8"
+            className="section-heading mb-4 md:mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -51,15 +46,19 @@ const SubcategoryPage = ({ gameMode }: SubcategoryPageProps) => {
           </motion.h1>
           
           {/* Mobile navigation menu */}
-          <MobileNavMenu currentMode={gameMode} />
+          <MobileNavMenu currentMode={gameMode.toLowerCase()} />
           
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <TierGrid selectedMode={gameMode} onPlayerClick={handlePlayerClick} />
-          </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={gameMode.toLowerCase()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TierGrid selectedMode={gameMode.toLowerCase()} onPlayerClick={handlePlayerClick} />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
       

@@ -46,16 +46,16 @@ export function MobileNavMenu({ currentMode }: MobileNavMenuProps) {
     <div className="md:hidden w-full flex justify-center my-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-full max-w-xs flex items-center justify-between">
+          <Button variant="outline" className="w-full max-w-xs flex items-center justify-between text-lg py-6">
             {getCurrentModeLabel()}
-            <ChevronDown size={16} />
+            <ChevronDown size={20} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" className="w-full max-w-xs">
           {gameModes.map((mode) => (
             <DropdownMenuItem 
               key={mode.value}
-              className={currentMode.toLowerCase() === mode.value ? "bg-accent" : ""}
+              className={`${currentMode.toLowerCase() === mode.value ? "bg-accent" : ""} text-base py-3`}
               onClick={() => handleModeChange(mode.value)}
             >
               {mode.label}

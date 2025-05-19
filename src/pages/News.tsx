@@ -29,9 +29,9 @@ const News = () => {
       />
       
       <main className="flex-grow">
-        <div className="content-container py-6 md:py-8">
+        <div className="content-container py-4 md:py-6">
           <motion.h1 
-            className="section-heading mb-6 md:mb-8"
+            className="section-heading mb-4 md:mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -61,8 +61,8 @@ const News = () => {
               {newsArticles.map((article) => (
                 <NewsArticleCard 
                   key={article.id} 
-                  article={article as NewsArticleWithRequiredId} 
-                  onClick={() => openArticle(article as NewsArticleWithRequiredId)}
+                  article={article} 
+                  onClick={() => openArticle(article)}
                 />
               ))}
             </motion.div>

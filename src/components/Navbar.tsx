@@ -58,7 +58,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 <img 
                   src="/lovable-uploads/3bad17d6-7347-46e0-8f33-35534094962f.png" 
                   alt="MCBE TIERS" 
-                  className="h-8 w-auto mr-2" 
+                  className="h-10 w-auto mr-2" 
                 />
                 <h1 className="logo-text">
                   MCBE TIERS
@@ -67,16 +67,16 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
             </div>
 
             {/* Center - Main Navigation */}
-            <div className="hidden lg:flex items-center space-x-6">
+            <div className="hidden lg:flex items-center space-x-8">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link 
                   to="/" 
                   className={cn(
-                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
                     !activePage && "text-white font-medium"
                   )}
                 >
-                  <Home size={18} className="mr-2" />
+                  <Home size={20} className="mr-2" />
                   <span>Rankings</span>
                 </Link>
               </motion.div>
@@ -85,11 +85,11 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 <Link 
                   to="/about" 
                   className={cn(
-                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
                     activePage === "about" && "text-white font-medium"
                   )}
                 >
-                  <Info size={18} className="mr-2" />
+                  <Info size={20} className="mr-2" />
                   <span>About Us</span>
                 </Link>
               </motion.div>
@@ -98,18 +98,18 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 <Link 
                   to="/news" 
                   className={cn(
-                    "flex items-center text-white/80 hover:text-white transition-colors duration-200",
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
                     activePage === "news" && "text-white font-medium"
                   )}
                 >
-                  <Newspaper size={18} className="mr-2" />
+                  <Newspaper size={20} className="mr-2" />
                   <span>News</span>
                 </Link>
               </motion.div>
             </div>
 
             {/* Right - Search & External Links */}
-            <div className="hidden md:flex items-center space-x-5">
+            <div className="hidden md:flex items-center space-x-6">
               <motion.form 
                 onSubmit={handleSearch} 
                 className="relative"
@@ -122,9 +122,9 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                   placeholder="Search player..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-9"
+                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-10"
                 />
-                <Search size={15} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
               </motion.form>
               
               <motion.a 
@@ -135,7 +135,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 whileHover={{ scale: 1.15 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Youtube size={20} />
+                <Youtube size={24} />
               </motion.a>
               
               <motion.a 
@@ -146,7 +146,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 whileHover={{ scale: 1.15 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <MessageCircle size={20} />
+                <MessageCircle size={24} />
               </motion.a>
             </div>
             
@@ -158,9 +158,9 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 whileTap={{ scale: 0.9 }}
               >
                 {mobileMenuOpen ? (
-                  <X size={24} />
+                  <X size={28} />
                 ) : (
-                  <Menu size={24} />
+                  <Menu size={28} />
                 )}
               </motion.button>
             </div>
@@ -174,9 +174,9 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 placeholder="Search player..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-full h-9"
+                className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-full h-10"
               />
-              <Search size={15} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
             </form>
           </div>
 
@@ -198,41 +198,41 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 <Link 
                   to="/" 
                   className={cn(
-                    "flex items-center p-2 rounded-md hover:bg-white/10 text-white/80 hover:text-white",
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
                     !activePage && "text-white bg-white/5"
                   )}
                 >
-                  <Home size={18} className="mr-3" />
+                  <Home size={22} className="mr-3" />
                   <span>Rankings</span>
                 </Link>
                 <Link 
                   to="/about" 
                   className={cn(
-                    "flex items-center p-2 rounded-md hover:bg-white/10 text-white/80 hover:text-white",
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
                     activePage === "about" && "text-white bg-white/5"
                   )}
                 >
-                  <Info size={18} className="mr-3" />
+                  <Info size={22} className="mr-3" />
                   <span>About Us</span>
                 </Link>
                 <Link 
                   to="/news" 
                   className={cn(
-                    "flex items-center p-2 rounded-md hover:bg-white/10 text-white/80 hover:text-white",
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
                     activePage === "news" && "text-white bg-white/5"
                   )}
                 >
-                  <Newspaper size={18} className="mr-3" />
+                  <Newspaper size={22} className="mr-3" />
                   <span>News</span>
                 </Link>
-                <div className="flex space-x-4 p-2 mt-2">
+                <div className="flex space-x-4 p-3 mt-2">
                   <a 
                     href="https://youtube.com" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-white/70 hover:text-red-500 transition-colors duration-200"
                   >
-                    <Youtube size={22} />
+                    <Youtube size={26} />
                   </a>
                   <a 
                     href="https://discord.gg" 
@@ -240,7 +240,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                     rel="noopener noreferrer" 
                     className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
                   >
-                    <MessageCircle size={22} />
+                    <MessageCircle size={26} />
                   </a>
                 </div>
               </div>

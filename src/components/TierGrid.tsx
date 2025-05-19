@@ -58,9 +58,9 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
   };
   
   return (
-    <div className="space-y-8 md:space-y-12 pb-8">
+    <div className="space-y-4 md:space-y-6 pb-8">
       {/* Toggle for Retired Players */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-2">
         <Button
           variant="outline"
           size="sm"

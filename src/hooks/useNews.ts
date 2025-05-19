@@ -6,6 +6,7 @@ import { NewsArticle } from '@/integrations/supabase/client';
 
 export interface NewsArticleWithRequiredId extends NewsArticle {
   id: string; // Making id required
+  created_at: string; // Ensuring created_at is required
 }
 
 export function useNews() {
