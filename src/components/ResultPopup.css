@@ -1,0 +1,21 @@
+
+/* Glow effects for different combat ranks */
+.effect-gold-sparkle {
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+}
+
+.effect-silver-sparkle {
+  filter: drop-shadow(0 0 8px rgba(192, 192, 192, 0.6));
+}
+
+.effect-bronze-sparkle {
+  filter: drop-shadow(0 0 8px rgba(205, 127, 50, 0.6));
+}
+
+.effect-blue-glow {
+  filter: drop-shadow(0 0 8px rgba(66, 153, 225, 0.6));
+}
+
+.effect-grey-glow {
+  filter: drop-shadow(0 0 8px rgba(160, 174, 192, 0.6));
+}

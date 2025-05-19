@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
@@ -6,9 +5,10 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { injectTestPlayers, getPlayerCount } from '@/utils/testDataGenerator';
+import { usePopup, TierAssignment } from '@/contexts/PopupContext';
 
 export function useAdminPanel() {
-  
+  const { setPopupDataFromPlayer } = usePopup();
   const [isAdminMode, setIsAdminMode] = useState<boolean>(adminService.isAdmin());
   const [pinInputValue, setPinInputValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -108,6 +108,40 @@ export function useAdminPanel() {
     } finally {
       setIsGeneratingData(false);
     }
+  };
+
+  // Calculate points based on tier level
+  const calculatePointsFromTier = (tier: TierLevel | "NA"): number => {
+    switch(tier) {
+      case "HT1": return 50;
+      case "LT1": return 45;
+      case "HT2": return 40;
+      case "LT2": return 35;
+      case "HT3": return 30;
+      case "LT3": return 25;
+      case "HT4": return 20;
+      case "LT4": return 15;
+      case "HT5": return 10;
+      case "LT5": return 5;
+      case "Retired": return 0;
+      case "NA": return 0;
+      default: return 0;
+    }
+  };
+
+  // Calculate tier based on points (for the result popup calculation)
+  const calculateTierFromPoints = (points: number): TierLevel | "NA" => {
+    if (points >= 45) return "HT1";
+    if (points >= 40) return "LT1";
+    if (points >= 35) return "HT2";
+    if (points >= 30) return "LT2";
+    if (points >= 25) return "HT3";
+    if (points >= 20) return "LT3";
+    if (points >= 15) return "HT4";
+    if (points >= 10) return "LT4";
+    if (points >= 5) return "HT5";
+    if (points > 0) return "LT5";
+    return "NA";
   };
 
   // Search for players by IGN
@@ -400,6 +434,139 @@ export function useAdminPanel() {
     return banPlayerMutation.mutateAsync(player);
   };
 
+  // Handle multiple gamemode submissions at once
+  const handleSubmitAllSelectedTiers = async () => {
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
+    let successCount = 0;
+    let hasAttempts = false;
+    
+    try {
+      // First, get or create the player
+      let player = await playerService.getPlayerByIGN(ign);
+      
+      if (!player) {
+        // Create the player if they don't exist
+        player = await playerService.createPlayer({
+          ign,
+          java_username: javaUsername,
+          device,
+          region
+        });
+        
+        if (!player) {
+          toast.error(`Could not create player: ${ign}`);
+          return;
+        }
+      } else {
+        // Update the player's info if needed
+        if (
+          (javaUsername && player.java_username !== javaUsername) ||
+          (device && player.device !== device) ||
+          (region && player.region !== region)
+        ) {
+          await playerService.updatePlayer(player.id, {
+            java_username: javaUsername || player.java_username,
+            device: device || player.device,
+            region: region || player.region
+          });
+        }
+      }
+      
+      // Create the tier assignments for the popup
+      const tierAssignments: TierAssignment[] = [];
+
+      // Submit all selected tiers
+      for (const gamemode of Object.keys(tierSelections) as GameMode[]) {
+        const tier = tierSelections[gamemode];
+        // Submit for all gamemodes, using "NA" as default
+        hasAttempts = true;
+        try {
+          const success = await submitPlayerResultMutation.mutateAsync({
+            ign,
+            javaUsername,
+            device,
+            region,
+            gamemode,
+            tier
+          });
+          
+          if (success) {
+            successCount++;
+            
+            // Add to tier assignments for the popup
+            if (tier !== "NA") {
+              const points = calculatePointsFromTier(tier);
+              tierAssignments.push({
+                gamemode,
+                tier: tier as TierLevel,
+                points,
+              });
+            }
+          }
+        } catch (err) {
+          console.error(`Error submitting ${gamemode} player:`, err);
+        }
+      }
+      
+      // Show the result popup if there's at least one successful submission
+      if (successCount > 0 && player) {
+        // Refresh player data to ensure we have the latest
+        const updatedPlayer = await playerService.getPlayerById(player.id);
+        if (updatedPlayer) {
+          // Trigger the popup
+          setPopupDataFromPlayer(updatedPlayer, tierAssignments);
+          
+          // Also broadcast the result to anyone else viewing the site
+          try {
+            const channel = supabase.channel('result-submissions');
+            channel.send({
+              type: 'broadcast',
+              event: 'result-submitted',
+              payload: { player: updatedPlayer, tierAssignments }
+            });
+          } catch (err) {
+            console.error('Failed to broadcast result submission:', err);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error during result submission:', err);
+      toast.error('An error occurred during submission');
+    }
+    
+    if (!hasAttempts) {
+      toast.info('No tiers were selected for submission');
+      return;
+    }
+    
+    if (successCount > 0) {
+      toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
+      // Reset tier selections
+      setTierSelections({
+        'Crystal': "NA",
+        'Sword': "NA",
+        'SMP': "NA",
+        'UHC': "NA",
+        'Axe': "NA",
+        'NethPot': "NA",
+        'Bedwars': "NA",
+        'Mace': "NA"
+      });
+      
+      // Reset form
+      setIgn('');
+      setJavaUsername('');
+      setRegion(undefined);
+      setDevice(undefined);
+    } else {
+      toast.error('Failed to submit any tier rankings');
+    }
+  };
+
   return {
     isAdminMode,
     pinInputValue,
@@ -424,6 +591,17 @@ export function useAdminPanel() {
     // Test data generation
     generateTestData,
     isGeneratingData,
-    playerCount
+    playerCount,
+    // Process the form submission
+    handleSubmitAllSelectedTiers,
+    // Form state
+    ign, setIgn,
+    javaUsername, setJavaUsername,
+    region, setRegion,
+    device, setDevice,
+    formErrors, setFormErrors,
+    tierSelections, setTierSelections,
+    validateForm,
+    handleTierChange
   };
 }
