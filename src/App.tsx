@@ -14,8 +14,16 @@ import { PopupProvider } from "./contexts/PopupContext";
 import { ResultPopup } from "./components/ResultPopup";
 import "./components/ResultPopup.css";
 
-// Create a react-query client
-const queryClient = new QueryClient();
+// Create a react-query client with default options that avoids React 18 strict mode issues
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      staleTime: 60000,
+    },
+  },
+});
 
 function App() {
   return (
@@ -29,7 +37,10 @@ function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/:gameMode" element={<SubcategoryPage />} />
+                <Route 
+                  path="/:gameMode" 
+                  element={<SubcategoryPage />} 
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster position="top-center" />

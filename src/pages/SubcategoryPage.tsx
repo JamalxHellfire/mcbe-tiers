@@ -1,14 +1,20 @@
+
 import React, { useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { TierGrid } from '../components/TierGrid';
 import { Footer } from '../components/Footer';
 import { PlayerModal } from '../components/PlayerModal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
 import { MobileNavMenu } from '../components/MobileNavMenu';
 
-const SubcategoryPage = ({ gameMode }: { gameMode: GameMode }) => {
+const SubcategoryPage = () => {
+  // Get gameMode from URL parameters
+  const { gameMode: gameModeParam } = useParams<{ gameMode: string }>();
+  // Convert to proper GameMode type with fallback
+  const gameMode = (gameModeParam as GameMode) || 'Crystal';
+
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const navigate = useNavigate();
