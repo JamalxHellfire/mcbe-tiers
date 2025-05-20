@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, User, X, Edit, UserX, Trash2, Save, Pencil, Check, XCircle } from 'lucide-react';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { toDatabaseGameMode, asGameModeArray } from '@/utils/gamemodeCasing';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -64,14 +65,14 @@ const AdminPanel = () => {
   
   // Track selected tiers for each gamemode
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    'Crystal': "NA",
-    'Sword': "NA",
-    'SMP': "NA",
-    'UHC': "NA",
-    'Axe': "NA",
-    'NethPot': "NA",
-    'Bedwars': "NA",
-    'Mace': "NA"
+    'crystal': "NA",
+    'sword': "NA",
+    'smp': "NA",
+    'uhc': "NA",
+    'axe': "NA",
+    'nethpot': "NA",
+    'bedwars': "NA",
+    'mace': "NA"
   });
   
   // Player edit state
@@ -500,7 +501,7 @@ const AdminPanel = () => {
                     <h3 className="text-lg font-medium">Game Mode Tier Selection</h3>
                     
                     {/* Loop through game modes */}
-                    {(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'Bedwars', 'NethPot', 'UHC'] as GameMode[]).map((gamemode) => (
+                    {asGameModeArray(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'NethPot', 'Bedwars', 'UHC']).map((gamemode) => (
                       <div key={gamemode} className="pt-2 pb-4 border-b border-gray-700/50">
                         <div className="flex flex-wrap items-center gap-2">
                           <h4 className="w-24 font-medium">{gamemode}:</h4>
@@ -735,7 +736,7 @@ const AdminPanel = () => {
                           
                           <div className="grid grid-cols-1 gap-4">
                             {/* Loop through game modes */}
-                            {(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'Bedwars', 'NethPot', 'UHC'] as GameMode[]).map((gamemode) => {
+                            {asGameModeArray(['Crystal', 'Sword', 'Axe', 'Mace', 'SMP', 'NethPot', 'Bedwars', 'UHC']).map((gamemode) => {
                               const tiers = selectedPlayer.tiers || {};
                               const currentTier = tiers[gamemode]?.tier || 'Not Ranked';
                               

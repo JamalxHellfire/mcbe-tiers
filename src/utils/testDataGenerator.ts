@@ -1,234 +1,176 @@
 
-import { GameMode, TierLevel, PlayerRegion, DeviceType } from '@/services/playerService';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateTierPoints } from '@/services/playerService';
+import { Player, GameMode, TierLevel, PlayerRegion, DeviceType } from '@/services/playerService';
+import { toGameMode } from './gamemodeUtils';
 
-// Random name generators
-const firstNames = [
-  'Alex', 'Steve', 'Notch', 'Herobrine', 'Ender', 'Creeper', 'Zombie', 'Skeleton',
-  'Phantom', 'Blaze', 'Ghast', 'Wither', 'Dragon', 'Slime', 'Iron', 'Gold',
-  'Diamond', 'Emerald', 'Obsidian', 'Netherite', 'Brick', 'Stone', 'Wood', 'Glass',
-  'Piston', 'Redstone', 'Block', 'Cube', 'Pixel', 'Voxel', 'Pick', 'Axe',
-  'Sword', 'Bow', 'Arrow', 'Shield', 'Armor', 'Potion', 'Magic', 'Alchemy',
-  'Wizard', 'Knight', 'Archer', 'Warrior', 'Miner', 'Crafter', 'Builder', 'Explorer'
-];
+// Function to generate a random username with game-style naming
+function generateRandomUsername(): string {
+  const prefixes = ['Shadow', 'Epic', 'Pro', 'Dark', 'Ninja', 'Sniper', 'Thunder', 'Storm', 'Dragon', 'Pixel', 'Plasma', 'Gold', 'Silver', 'Diamond', 'Iron', 'Emerald'];
+  const suffixes = ['Gamer', 'Player', 'Master', 'Killer', 'Hunter', 'Warrior', 'King', 'Queen', 'Legend', 'God', 'Knight', 'Slayer', 'Assassin', 'Defender'];
+  const numbers = ['', '123', '69', '420', '007', '99', '777', '666', '101', '404', '808', '1337', '999', '2023'];
 
-const lastNames = [
-  'Miner', 'Digger', 'Builder', 'Crafter', 'Explorer', 'Fighter', 'Survivor', 'Hunter',
-  'Killer', 'Slayer', 'Player', 'Gamer', 'Pro', 'Expert', 'Master', 'Champion',
-  'Legend', 'Warrior', 'Knight', 'Archer', 'Wizard', 'Enchanter', 'Smith', 'Brewer',
-  'Farmer', 'Fisher', 'Trader', 'Merchant', 'King', 'Queen', 'Lord', 'Duke',
-  'Baron', 'Count', 'Sir', 'Lady', 'Prince', 'Princess', 'Emperor', 'Empress',
-  'Conqueror', 'Destroyer', 'Creator', 'Maker', 'Breaker', 'Fixer', 'Helper', 'Friend'
-];
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+  const number = Math.random() > 0.5 ? numbers[Math.floor(Math.random() * numbers.length)] : '';
+  
+  const username = `${prefix}${suffix}${number}`;
+  return username;
+}
 
-const numbers = ['69', '420', '666', '777', '123', '321', '555', '999', '000', '111', '222', '333', '444', 'XxX', '_', 'MC'];
-
-// Random helper functions
-const getRandomElement = <T>(array: T[]): T => {
-  return array[Math.floor(Math.random() * array.length)];
-};
-
-const getRandomInt = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const getRandomTier = (): TierLevel => {
-  const tiers: TierLevel[] = ['LT5', 'HT5', 'LT4', 'HT4', 'LT3', 'HT3', 'LT2', 'HT2', 'LT1', 'HT1'];
-  // 10% chance to be retired
-  if (Math.random() <= 0.1) {
-    return 'Retired';
+// Generate a random Java username (most will have the same as IGN)
+function generateJavaUsername(ign: string): string {
+  // 80% chance to have the same username, 20% chance to be different
+  if (Math.random() < 0.8) {
+    return ign;
   }
-  return getRandomElement(tiers);
-};
+  return generateRandomUsername();
+}
 
-const getRandomRegion = (): PlayerRegion => {
+// Generate a random region
+function generateRandomRegion(): PlayerRegion {
   const regions: PlayerRegion[] = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'];
-  return getRandomElement(regions);
-};
+  return regions[Math.floor(Math.random() * regions.length)];
+}
 
-const getRandomDevice = (): DeviceType => {
+// Generate a random device
+function generateRandomDevice(): DeviceType {
   const devices: DeviceType[] = ['Mobile', 'PC', 'Console'];
-  // More likely to be on PC (50%)
-  const roll = Math.random();
-  if (roll < 0.5) return 'PC';
-  if (roll < 0.8) return 'Mobile';
-  return 'Console';
-};
+  return devices[Math.floor(Math.random() * devices.length)];
+}
 
-const generateIGN = (): string => {
-  const firstName = getRandomElement(firstNames);
-  const lastName = getRandomElement(lastNames);
-  const number = Math.random() > 0.5 ? getRandomElement(numbers) : '';
-  // Various formats
-  const formats = [
-    `${firstName}${lastName}`,
-    `${firstName}_${lastName}`,
-    `${firstName}${number}`,
-    `${firstName}_${number}`,
-    `${number}${firstName}`,
-    `${firstName}${Math.floor(Math.random() * 1000)}`,
-    `${firstName.substring(0, 3)}${lastName}`,
-    `XxX_${firstName}_XxX`,
-    `${firstName}TheGamer`,
-    `${firstName}${getRandomElement(['Play', 'Game', 'Live', 'PvP', 'Pro'])}`
+// Generate random tier level
+function generateRandomTier(): TierLevel {
+  const tiers: TierLevel[] = [
+    'HT1', 'LT1',
+    'HT2', 'LT2',
+    'HT3', 'LT3',
+    'HT4', 'LT4',
+    'HT5', 'LT5',
+    'Retired'
   ];
-  return getRandomElement(formats);
-};
-
-export interface TestPlayer {
-  ign: string;
-  java_username: string;
-  region: PlayerRegion;
-  device: DeviceType;
-  tiers: Record<GameMode, TierLevel | null>;
+  
+  // Weight the distribution to have fewer top tier players
+  const rand = Math.random();
+  if (rand < 0.05) return 'HT1';
+  if (rand < 0.15) return 'LT1';
+  if (rand < 0.25) return 'HT2';
+  if (rand < 0.35) return 'LT2';
+  if (rand < 0.5) return 'HT3';
+  if (rand < 0.65) return 'LT3';
+  if (rand < 0.75) return 'HT4';
+  if (rand < 0.85) return 'LT4';
+  if (rand < 0.95) return 'HT5';
+  return 'LT5';
 }
 
-/**
- * Generate a specified number of test players
- * @param count Number of players to generate
- * @returns Array of test player data
- */
-export function generateTestPlayers(count: number): TestPlayer[] {
-  const players: TestPlayer[] = [];
-  const gameModes: GameMode[] = ['Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'];
-  
-  for (let i = 0; i < count; i++) {
-    // Generate player data
-    const ign = generateIGN();
-    const java_username = ign; // Use same name for Java username
-    
-    // Generate player tiers for each gamemode
-    const tiers: Record<GameMode, TierLevel | null> = {} as Record<GameMode, TierLevel | null>;
-    
-    // Each player has 30-80% chance of having a tier in each gamemode
-    gameModes.forEach(gamemode => {
-      tiers[gamemode] = Math.random() < (0.3 + Math.random() * 0.5) ? getRandomTier() : null;
-    });
-    
-    players.push({
-      ign,
-      java_username,
-      region: getRandomRegion(),
-      device: getRandomDevice(),
-      tiers
-    });
+// Calculate points for a tier
+function calculatePointsForTier(tier: TierLevel): number {
+  switch (tier) {
+    case 'HT1': return 50;
+    case 'LT1': return 45;
+    case 'HT2': return 40;
+    case 'LT2': return 35;
+    case 'HT3': return 30;
+    case 'LT3': return 25;
+    case 'HT4': return 20;
+    case 'LT4': return 15;
+    case 'HT5': return 10;
+    case 'LT5': return 5;
+    case 'Retired': return 0;
+    default: return 0;
   }
-  
-  return players;
 }
 
-/**
- * Inject test players into the database
- * @param count Number of test players to generate and inject
- * @returns Promise that resolves when all players are injected
- */
-export async function injectTestPlayers(count: number): Promise<boolean> {
+// Generate test players
+export async function injectTestPlayers(count: number = 100): Promise<boolean> {
   try {
-    const testPlayers = generateTestPlayers(count);
-    let successCount = 0;
+    const players: any[] = [];
+    const gamemodeScores: any[] = [];
     
-    // Process players one by one to avoid overwhelming the database
-    for (const player of testPlayers) {
-      try {
-        // First, check if player already exists
-        const { data: existingPlayer } = await supabase
-          .from('players')
-          .select('id')
-          .eq('ign', player.ign)
-          .maybeSingle();
-          
-        if (existingPlayer) {
-          console.log(`Player ${player.ign} already exists, skipping`);
+    // Define all game modes
+    const gameModes = ['Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'].map(mode => toGameMode(mode));
+    
+    // Generate players
+    for (let i = 0; i < count; i++) {
+      const ign = generateRandomUsername();
+      const java_username = generateJavaUsername(ign);
+      const region = generateRandomRegion();
+      const device = generateRandomDevice();
+      
+      // Choose a primary gamemode for the player
+      const primaryGamemode = gameModes[Math.floor(Math.random() * gameModes.length)];
+      const tier_level = generateRandomTier();
+      
+      // Insert player
+      const { data: playerData, error: playerError } = await supabase
+        .from('players')
+        .insert({
+          ign,
+          java_username,
+          region,
+          device,
+          gamemode: primaryGamemode,
+          tier_number: tier_level
+        })
+        .select('id');
+      
+      if (playerError) {
+        console.error('Error creating test player:', playerError);
+        continue;
+      }
+      
+      if (!playerData || playerData.length === 0) {
+        console.error('No player data returned after insert');
+        continue;
+      }
+      
+      const playerId = playerData[0].id;
+      
+      // Generate scores for each game mode (with varying probabilities)
+      for (const gamemode of gameModes) {
+        // 30% chance to have a ranking in each gamemode (except primary which is guaranteed)
+        if (gamemode !== primaryGamemode && Math.random() > 0.3) {
           continue;
         }
         
-        // Create the player
-        const { data: newPlayer, error: playerError } = await supabase
-          .from('players')
-          .insert({
-            ign: player.ign,
-            java_username: player.java_username,
-            region: player.region,
-            device: player.device,
-            global_points: 0,  // Will be calculated later
-            banned: false,
-            gamemode: '',  // Legacy field
-            tier_number: ''  // Legacy field
-          })
-          .select('id')
-          .single();
-          
-        if (playerError) {
-          console.error(`Error creating player ${player.ign}:`, playerError);
-          continue;
-        }
+        const tier = gamemode === primaryGamemode ? tier_level : generateRandomTier();
+        const score = calculatePointsForTier(tier);
         
-        const playerId = newPlayer.id;
-        
-        // Add tiers for each gamemode
-        const gameModes: GameMode[] = ['Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'];
-        let totalPoints = 0;
-        
-        for (const gamemode of gameModes) {
-          const tier = player.tiers[gamemode];
-          
-          if (tier) {
-            const tierPoints = calculateTierPoints(tier);
-            totalPoints += tierPoints;
-            
-            // Insert tier data
-            const { error: tierError } = await supabase
-              .from('gamemode_scores')
-              .insert({
-                player_id: playerId,
-                gamemode,
-                score: tierPoints,
-                internal_tier: tier,
-                display_tier: tier
-              });
-              
-            if (tierError) {
-              console.error(`Error adding ${gamemode} tier for ${player.ign}:`, tierError);
-            }
-          }
-        }
-        
-        // Update player's global points
-        const { error: pointsError } = await supabase
-          .from('players')
-          .update({ global_points: totalPoints })
-          .eq('id', playerId);
-          
-        if (pointsError) {
-          console.error(`Error updating points for ${player.ign}:`, pointsError);
-        } else {
-          successCount++;
-          console.log(`Successfully added player ${player.ign} with ${totalPoints} points`);
-        }
-      } catch (err) {
-        console.error(`Error processing player ${player.ign}:`, err);
+        gamemodeScores.push({
+          player_id: playerId,
+          gamemode,
+          internal_tier: tier,
+          display_tier: tier,
+          score
+        });
       }
     }
     
-    console.log(`Successfully injected ${successCount} out of ${count} test players`);
-    return successCount > 0;
+    // Batch insert scores
+    if (gamemodeScores.length > 0) {
+      const { error: scoresError } = await supabase
+        .from('gamemode_scores')
+        .insert(gamemodeScores);
+      
+      if (scoresError) {
+        console.error('Error creating test scores:', scoresError);
+      }
+    }
+    
+    return true;
   } catch (error) {
-    console.error('Error injecting test players:', error);
+    console.error('Error injecting test data:', error);
     return false;
   }
 }
 
-/**
- * Check how many players are currently in the database
- * @returns Promise that resolves to the count of players
- */
+// Get the current player count
 export async function getPlayerCount(): Promise<number> {
   try {
     const { count, error } = await supabase
       .from('players')
       .select('*', { count: 'exact', head: true });
-      
+    
     if (error) {
       console.error('Error getting player count:', error);
       return 0;
@@ -240,3 +182,6 @@ export async function getPlayerCount(): Promise<number> {
     return 0;
   }
 }
+
+// Note: For multiple distinct test data injections, we should consider implementing
+// a way to mark test data so it can be purged easily during development.

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
@@ -7,6 +6,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { injectTestPlayers, getPlayerCount } from '@/utils/testDataGenerator';
 import { usePopup, TierAssignment } from '@/contexts/PopupContext';
+import { toDatabaseGameMode, toDisplayGameMode, asGameModeArray } from '@/utils/gamemodeCasing';
 
 export function useAdminPanel() {
   const { setPopupDataFromPlayer } = usePopup();
@@ -37,14 +37,14 @@ export function useAdminPanel() {
   
   // Track selected tiers for each gamemode
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    'Crystal': "NA",
-    'Sword': "NA",
-    'SMP': "NA",
-    'UHC': "NA",
-    'Axe': "NA",
-    'NethPot': "NA",
-    'Bedwars': "NA",
-    'Mace': "NA"
+    'crystal': "NA",
+    'sword': "NA",
+    'smp': "NA",
+    'uhc': "NA",
+    'axe': "NA",
+    'nethpot': "NA",
+    'bedwars': "NA",
+    'mace': "NA"
   });
   
   const queryClient = useQueryClient();
@@ -72,7 +72,7 @@ export function useAdminPanel() {
     setIsSubmitting(true);
     
     try {
-      const isValid = await playerService.verifyAdminPIN(pinInputValue);
+      const isValid = await adminService.verifyAdminPIN(pinInputValue);
       
       if (isValid) {
         adminService.setAdmin(true);
@@ -594,14 +594,14 @@ export function useAdminPanel() {
       toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
       // Reset tier selections
       setTierSelections({
-        'Crystal': "NA",
-        'Sword': "NA",
-        'SMP': "NA",
-        'UHC': "NA",
-        'Axe': "NA",
-        'NethPot': "NA",
-        'Bedwars': "NA",
-        'Mace': "NA"
+        'crystal': "NA",
+        'sword': "NA",
+        'smp': "NA",
+        'uhc': "NA",
+        'axe': "NA",
+        'nethpot': "NA",
+        'bedwars': "NA",
+        'mace': "NA"
       });
       
       // Reset form

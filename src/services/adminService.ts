@@ -1,4 +1,6 @@
 
+import { supabase } from '@/integrations/supabase/client';
+
 // Simple service to manage admin authentication state using localStorage
 export const adminService = {
   isAdmin(): boolean {
