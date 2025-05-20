@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GameModeIcon } from './GameModeIcon';
+import { GameMode } from '@/services/playerService';
+import { displayToGameMode } from '@/utils/gamemodeUtils';
 
 interface PlayerRowProps {
   player: {
@@ -25,6 +27,9 @@ interface PlayerRowProps {
 }
 
 export function PlayerRow({ player, compact = false, onClick, delay = 0 }: PlayerRowProps) {
+  // Convert gameMode string to proper GameMode type
+  const gameMode = player.gameMode ? displayToGameMode(player.gameMode) : undefined;
+  
   return (
     <motion.div
       className={cn(
@@ -57,9 +62,9 @@ export function PlayerRow({ player, compact = false, onClick, delay = 0 }: Playe
               {player.displayName}
             </span>
             
-            {player.gameMode && (
+            {gameMode && (
               <span className="text-xs text-white/60 bg-white/10 px-1.5 py-0.5 rounded flex items-center">
-                <GameModeIcon mode={player.gameMode} className="h-3 w-3 mr-1" />
+                <GameModeIcon mode={gameMode} size="sm" className="h-3 w-3 mr-1" />
                 {player.gameMode}
               </span>
             )}

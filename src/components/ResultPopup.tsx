@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -7,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePopup, TierAssignment } from '@/contexts/PopupContext';
 import { GameMode, DeviceType } from '@/services/playerService';
+import { displayToGameMode } from '@/utils/gamemodeUtils';
 
 // Helper function to determine the tier color
 const getTierColor = (tier: string) => {
@@ -231,17 +231,18 @@ export function ResultPopup() {
               
               {/* Gamemode Tier Grid */}
               <div className="grid grid-cols-4 gap-4 w-full">
-                {(['Crystal', 'Axe', 'Sword', 'Mace', 'SMP', 'Bedwars', 'UHC', 'Nethpot'] as GameMode[]).map(mode => {
-                  const assignment = popupData.tierAssignments.find(a => a.gamemode === mode);
+                {(['crystal', 'axe', 'sword', 'mace', 'smp', 'bedwars', 'uhc', 'nethpot'] as GameMode[]).map(mode => {
+                  const assignment = popupData.tierAssignments.find(a => a.gamemode.toLowerCase() === mode);
                   const tier = assignment?.tier || 'Not Ranked';
                   const points = assignment?.points || 0;
+                  const displayMode = mode.charAt(0).toUpperCase() + mode.slice(1);
                   
                   return (
                     <TooltipProvider key={mode}>
                       <Tooltip delayDuration={300}>
                         <TooltipTrigger asChild>
                           <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                            <GameModeIcon mode={mode} className="h-8 w-8 mb-1" />
+                            <GameModeIcon mode={mode} size="md" />
                             <span className={`text-xs font-medium ${tier !== 'Not Ranked' ? getTierColor(tier) : 'text-gray-400'}`}>
                               {tier !== 'Not Ranked' ? tier : '—'}
                             </span>
@@ -249,7 +250,7 @@ export function ResultPopup() {
                         </TooltipTrigger>
                         <TooltipContent>
                           <div className="text-center">
-                            <p className="font-medium">{mode}</p>
+                            <p className="font-medium">{displayMode}</p>
                             <p className="text-sm">{tier !== 'Not Ranked' ? tier : 'Not Ranked'}</p>
                             {tier !== 'Not Ranked' && <p className="text-xs text-muted-foreground">{points} points</p>}
                           </div>

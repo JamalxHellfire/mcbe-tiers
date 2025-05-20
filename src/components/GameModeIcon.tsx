@@ -1,12 +1,14 @@
 
 import React from 'react';
-import { LucideIcon, Diamond, Sword, Axe, Skull, Users, Bed, Flask, Trophy } from "lucide-react";
+import { LucideIcon, Diamond, Sword, Axe, Skull, Users, Bed, Trophy } from "lucide-react";
+import { cn } from '@/lib/utils';
 
 type GameMode = "crystal" | "sword" | "smp" | "uhc" | "axe" | "nethpot" | "bedwars" | "mace" | "overall";
 
 interface GameModeIconProps {
   mode: GameMode;
   size?: "sm" | "md" | "lg";
+  className?: string; // Add support for className prop
 }
 
 interface IconSizeClasses {
@@ -21,8 +23,8 @@ const iconSizeClasses: IconSizeClasses = {
   lg: "h-6 w-6",
 };
 
-export const GameModeIcon = ({ mode, size = "md" }: GameModeIconProps) => {
-  const iconClass = iconSizeClasses[size];
+export const GameModeIcon = ({ mode, size = "md", className }: GameModeIconProps) => {
+  const iconClass = cn(iconSizeClasses[size], className);
   
   const renderIcon = () => {
     switch (mode.toLowerCase()) {
@@ -37,7 +39,8 @@ export const GameModeIcon = ({ mode, size = "md" }: GameModeIconProps) => {
       case "uhc":
         return <Skull className={iconClass} />;
       case "nethpot":
-        return <Flask className={iconClass} />; // Replaced Potion with Flask
+        // Instead of Potion (which doesn't exist), we'll use Skull with different styling
+        return <Skull className={iconClass} />; 
       case "bedwars":
         return <Bed className={iconClass} />;
       case "mace":
