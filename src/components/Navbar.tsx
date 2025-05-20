@@ -1,224 +1,253 @@
 
-import React, { useState } from 'react';
-import { GameModeIcon } from './GameModeIcon';
-import { useMobile } from '@/hooks/useMobile';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
+import React, { useState, useEffect } from 'react';
+import { GameModeSelector } from './GameModeSelector';
+import { Trophy, Home, Info, Newspaper, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { motion } from 'framer-motion';
 
 interface NavbarProps {
   selectedMode: string;
   onSelectMode: (mode: string) => void;
-  navigate: any;
-  activePage?: string; // Make activePage optional
+  navigate: (path: string) => void;
+  activePage?: string;
 }
 
-export const Navbar = ({ selectedMode, onSelectMode, navigate, activePage }: NavbarProps) => {
-  const isMobile = useMobile();
+export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: NavbarProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      setScrolled(offset > 50);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Searching for:', searchQuery);
+    // Future implementation will search for players
   };
   
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
   return (
-    <header className="sticky top-0 z-10 w-full bg-background/80 backdrop-blur-sm border-b">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-8">
-        {/* Logo */}
-        <div className="flex items-center">
-          <a href="/" className="flex items-center">
-            <img src="/logo.png" alt="Logo" className="h-10 w-10 mr-3" />
-            <span className="text-xl font-bold tracking-tighter">MinePvP Tier List</span>
-          </a>
+    <div className="pt-8 pb-2">
+      <motion.nav 
+        className={cn(
+          "navbar rounded-xl",
+          scrolled ? "shadow-xl" : "shadow-lg"
+        )}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/lovable-uploads/3bad17d6-7347-46e0-8f33-35534094962f.png" 
+                  alt="MCBE TIERS" 
+                  className="h-10 w-auto mr-2" 
+                />
+                <h1 className="logo-text">
+                  MCBE TIERS
+                </h1>
+              </Link>
+            </div>
+
+            {/* Center - Main Navigation */}
+            <div className="hidden lg:flex items-center space-x-8">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
+                    !activePage && "text-white font-medium"
+                  )}
+                >
+                  <Home size={20} className="mr-2" />
+                  <span>Rankings</span>
+                </Link>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/about" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
+                    activePage === "about" && "text-white font-medium"
+                  )}
+                >
+                  <Info size={20} className="mr-2" />
+                  <span>About Us</span>
+                </Link>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/news" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
+                    activePage === "news" && "text-white font-medium"
+                  )}
+                >
+                  <Newspaper size={20} className="mr-2" />
+                  <span>News</span>
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Right - Search & External Links */}
+            <div className="hidden md:flex items-center space-x-6">
+              <motion.form 
+                onSubmit={handleSearch} 
+                className="relative"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Input
+                  type="text"
+                  placeholder="Search player..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-10"
+                />
+                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+              </motion.form>
+              
+              <motion.a 
+                href="https://youtube.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Youtube size={24} />
+              </motion.a>
+              
+              <motion.a 
+                href="https://discord.gg" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <MessageCircle size={24} />
+              </motion.a>
+            </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <motion.button 
+                onClick={toggleMobileMenu} 
+                className="text-white/70 hover:text-white"
+                whileTap={{ scale: 0.9 }}
+              >
+                {mobileMenuOpen ? (
+                  <X size={28} />
+                ) : (
+                  <Menu size={28} />
+                )}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Search bar for mobile */}
+          <div className="md:hidden py-2 border-t border-white/10">
+            <form onSubmit={handleSearch} className="relative">
+              <Input
+                type="text"
+                placeholder="Search player..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-full h-10"
+              />
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+            </form>
+          </div>
+
+          {/* Game Mode Selector */}
+          <div className="py-2 border-t border-white/10 overflow-x-auto">
+            <GameModeSelector selectedMode={selectedMode} onSelectMode={onSelectMode} />
+          </div>
+          
+          {/* Mobile Navigation Menu */}
+          {mobileMenuOpen && (
+            <motion.div 
+              className="md:hidden py-3 px-2 border-t border-white/10"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex flex-col space-y-2">
+                <Link 
+                  to="/" 
+                  className={cn(
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
+                    !activePage && "text-white bg-white/5"
+                  )}
+                >
+                  <Home size={22} className="mr-3" />
+                  <span>Rankings</span>
+                </Link>
+                <Link 
+                  to="/about" 
+                  className={cn(
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
+                    activePage === "about" && "text-white bg-white/5"
+                  )}
+                >
+                  <Info size={22} className="mr-3" />
+                  <span>About Us</span>
+                </Link>
+                <Link 
+                  to="/news" 
+                  className={cn(
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
+                    activePage === "news" && "text-white bg-white/5"
+                  )}
+                >
+                  <Newspaper size={22} className="mr-3" />
+                  <span>News</span>
+                </Link>
+                <div className="flex space-x-4 p-3 mt-2">
+                  <a 
+                    href="https://youtube.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                  >
+                    <Youtube size={26} />
+                  </a>
+                  <a 
+                    href="https://discord.gg" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                  >
+                    <MessageCircle size={26} />
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
-        
-        {/* Navigation Links (Desktop) */}
-        {!isMobile && (
-          <nav className="mx-4 flex items-center space-x-4 lg:space-x-6">
-            <button 
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'overall' 
-                  ? 'bg-accent text-accent-foreground' 
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('overall')}
-            >
-              <GameModeIcon mode="overall" className="h-5 w-5 mr-2" />
-              Overall
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'crystal'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('crystal')}
-            >
-              <GameModeIcon mode="crystal" className="h-5 w-5 mr-2" />
-              Crystal
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'sword'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('sword')}
-            >
-              <GameModeIcon mode="sword" className="h-5 w-5 mr-2" />
-              Sword
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'axe'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('axe')}
-            >
-              <GameModeIcon mode="axe" className="h-5 w-5 mr-2" />
-              Axe
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'mace'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('mace')}
-            >
-              <GameModeIcon mode="mace" className="h-5 w-5 mr-2" />
-              Mace
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'smp'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('smp')}
-            >
-              <GameModeIcon mode="smp" className="h-5 w-5 mr-2" />
-              SMP
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'bedwars'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('bedwars')}
-            >
-              <GameModeIcon mode="bedwars" className="h-5 w-5 mr-2" />
-              Bedwars
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'nethpot'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('nethpot')}
-            >
-              <GameModeIcon mode="nethpot" className="h-5 w-5 mr-2" />
-              NethPot
-            </button>
-            
-            <button
-              className={`flex items-center text-sm font-medium rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                selectedMode === 'uhc'
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-foreground/70'
-              }`}
-              onClick={() => onSelectMode('uhc')}
-            >
-              <GameModeIcon mode="uhc" className="h-5 w-5 mr-2" />
-              UHC
-            </button>
-          </nav>
-        )}
-        
-        {/* Mobile Menu Toggle */}
-        {isMobile && (
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                <Menu className="h-6 w-6" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <SheetHeader>
-                <SheetTitle>Navigation</SheetTitle>
-                <SheetDescription>
-                  Select a category to view the tier list.
-                </SheetDescription>
-              </SheetHeader>
-              <nav className="mt-4 flex flex-col space-y-2">
-                <Link to="/" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  Overall
-                </Link>
-                <Link to="/crystal" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  Crystal
-                </Link>
-                <Link to="/sword" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  Sword
-                </Link>
-                <Link to="/axe" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  Axe
-                </Link>
-                <Link to="/mace" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  Mace
-                </Link>
-                <Link to="/smp" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  SMP
-                </Link>
-                <Link to="/bedwars" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  Bedwars
-                </Link>
-                <Link to="/nethpot" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  NethPot
-                </Link>
-                <Link to="/uhc" className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground">
-                  UHC
-                </Link>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        )}
-        
-        {/* Page Links (Desktop) */}
-        {!isMobile && (
-          <nav className="mx-4 flex items-center space-x-4 lg:space-x-6">
-            <a href="/rankings" className="text-sm font-medium text-foreground/70 hover:text-foreground">
-              Rankings
-            </a>
-            <a href="/gamemodes" className="text-sm font-medium text-foreground/70 hover:text-foreground">
-              Gamemodes
-            </a>
-            <a href="/news" className="text-sm font-medium text-foreground/70 hover:text-foreground">
-              News
-            </a>
-            <a href="/about" className="text-sm font-medium text-foreground/70 hover:text-foreground">
-              About
-            </a>
-          </nav>
-        )}
-      </div>
-    </header>
+      </motion.nav>
+    </div>
   );
-};
+}

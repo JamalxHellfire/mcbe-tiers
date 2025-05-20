@@ -41,7 +41,7 @@ export const adminService = {
   },
 
   verifyAdminPIN(pin: string): boolean {
-    // Directly compare with the hardcoded PIN
+    // Setting hardcoded PIN to 1234 as requested
     return pin === '1234';
   }
 };
