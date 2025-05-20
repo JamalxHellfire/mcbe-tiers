@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { LucideIcon, Diamond, Sword, Axe, Skull, Users, Bed, Potion, Trophy } from "lucide-react";
+import { LucideIcon, Diamond, Sword, Axe, Skull, Users, Bed, Flask, Trophy } from "lucide-react";
 
 type GameMode = "crystal" | "sword" | "smp" | "uhc" | "axe" | "nethpot" | "bedwars" | "mace" | "overall";
 
@@ -36,7 +37,7 @@ export const GameModeIcon = ({ mode, size = "md" }: GameModeIconProps) => {
       case "uhc":
         return <Skull className={iconClass} />;
       case "nethpot":
-        return <Potion className={iconClass} />;
+        return <Flask className={iconClass} />; // Replaced Potion with Flask
       case "bedwars":
         return <Bed className={iconClass} />;
       case "mace":

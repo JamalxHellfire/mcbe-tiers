@@ -3,6 +3,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { GameModeIcon } from './GameModeIcon';
+import { GameMode } from '@/services/playerService';
+import { displayToGameMode } from '@/utils/gamemodeUtils';
 
 interface GameModeSelectorProps {
   selectedMode: string;
@@ -40,9 +42,9 @@ export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelecto
           whileTap={{ scale: 0.95 }}
         >
           {mode.id !== 'overall' && (
-            <GameModeIcon mode={mode.id} className="h-5 w-5 mr-2" />
+            <GameModeIcon mode={mode.id as GameMode} size="sm" />
           )}
-          {mode.label}
+          <span className="ml-2">{mode.label}</span>
         </motion.button>
       ))}
     </div>

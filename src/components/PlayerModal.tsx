@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -12,6 +13,7 @@ import { motion } from 'framer-motion';
 import { playerService, GameMode, TierLevel } from '@/services/playerService';
 import { getPlayerRank, formatPointsRange } from '@/utils/rankUtils';
 import { GameModeIcon } from './GameModeIcon';
+import { displayToGameMode } from '@/utils/gamemodeUtils';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -49,9 +51,9 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
     }
   }, [isOpen, player]);
   
-  // List all possible gamemodes
+  // List all possible gamemodes - using lowercase to match GameMode type
   const allGamemodes: GameMode[] = [
-    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
+    'crystal', 'sword', 'smp', 'uhc', 'axe', 'nethpot', 'bedwars', 'mace'
   ];
   
   const modalVariants = {
@@ -112,9 +114,9 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
             </div>
             
             <div className="mt-1 flex items-center">
-              <Award size={16} className={cn("mr-1", player.badge.includes('Master') ? 'text-yellow-400' : player.badge.includes('Ace') ? 'text-orange-400' : 'text-purple-400')} />
-              <span className={cn("text-sm font-medium", player.badge.includes('Master') ? 'text-yellow-400' : player.badge.includes('Ace') ? 'text-orange-400' : 'text-purple-400')}>
-                {player.badge}
+              <Award size={16} className={cn("mr-1", player.badge?.includes('Master') ? 'text-yellow-400' : player.badge?.includes('Ace') ? 'text-orange-400' : 'text-purple-400')} />
+              <span className={cn("text-sm font-medium", player.badge?.includes('Master') ? 'text-yellow-400' : player.badge?.includes('Ace') ? 'text-orange-400' : 'text-purple-400')}>
+                {player.badge || 'Unranked'}
               </span>
             </div>
           </div>
@@ -164,8 +166,8 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
                     transition={{ delay: index * 0.05 }}
                   >
                     <span className="text-sm flex items-center">
-                      <GameModeIcon mode={mode} className="h-4 w-4 mr-2" />
-                      {mode}
+                      <GameModeIcon mode={mode} size="sm" />
+                      <span className="ml-2">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
                     </span>
                     <div className="flex flex-col items-end">
                       {tier === 'Not Ranked' ? (
