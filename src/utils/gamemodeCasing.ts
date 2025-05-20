@@ -18,7 +18,7 @@ export const displayToDatabaseGameMode: Record<string, GameMode> = {
 };
 
 // Map from database case to display case
-export const databaseToDisplayGameMode: Record<GameMode, string> = {
+export const databaseToDisplayGameMode = {
   'crystal': 'Crystal',
   'sword': 'Sword',
   'axe': 'Axe',
@@ -27,7 +27,7 @@ export const databaseToDisplayGameMode: Record<GameMode, string> = {
   'uhc': 'UHC',
   'nethpot': 'NethPot',
   'bedwars': 'Bedwars'
-};
+} as Record<GameMode, string>;
 
 /**
  * Convert display format GameMode to database format

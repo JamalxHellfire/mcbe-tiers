@@ -25,7 +25,7 @@ export function toGameMode(displayMode: string): GameMode {
  */
 export function toDisplayGameMode(gamemode: GameMode): string {
   // Map database game modes to visible display names
-  const displayMap: Record<GameMode, string> = {
+  const displayMap = {
     'crystal': 'Crystal',
     'sword': 'Sword',
     'axe': 'Axe',
@@ -34,7 +34,7 @@ export function toDisplayGameMode(gamemode: GameMode): string {
     'uhc': 'UHC',
     'nethpot': 'NethPot',
     'bedwars': 'Bedwars'
-  };
+  } as Record<GameMode, string>;
   
   return displayMap[gamemode] || gamemode;
 }

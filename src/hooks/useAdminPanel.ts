@@ -37,15 +37,15 @@ export function useAdminPanel() {
   
   // Track selected tiers for each gamemode
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    'crystal': "NA",
-    'sword': "NA",
-    'smp': "NA",
-    'uhc': "NA",
-    'axe': "NA",
-    'nethpot': "NA",
-    'bedwars': "NA",
-    'mace': "NA"
-  });
+    crystal: "NA",
+    sword: "NA",
+    smp: "NA",
+    uhc: "NA",
+    axe: "NA",
+    nethpot: "NA",
+    bedwars: "NA",
+    mace: "NA"
+  } as Record<GameMode, TierLevel | "NA">);
   
   const queryClient = useQueryClient();
 
@@ -594,15 +594,15 @@ export function useAdminPanel() {
       toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
       // Reset tier selections
       setTierSelections({
-        'crystal': "NA",
-        'sword': "NA",
-        'smp': "NA",
-        'uhc': "NA",
-        'axe': "NA",
-        'nethpot': "NA",
-        'bedwars': "NA",
-        'mace': "NA"
-      });
+        crystal: "NA",
+        sword: "NA",
+        smp: "NA",
+        uhc: "NA",
+        axe: "NA",
+        nethpot: "NA",
+        bedwars: "NA",
+        mace: "NA"
+      } as Record<GameMode, TierLevel | "NA">);
       
       // Reset form
       setIgn('');
