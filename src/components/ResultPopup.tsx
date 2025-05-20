@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -254,9 +255,10 @@ export function ResultPopup() {
                             {tier !== 'Not Ranked' && <p className="text-xs text-muted-foreground">{points} points</p>}
                           </div>
                         </TooltipContent>
-                      </TooltipProvider>
-                    );
-                  })}
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })}
               </div>
               
               {/* Combat Points */}
