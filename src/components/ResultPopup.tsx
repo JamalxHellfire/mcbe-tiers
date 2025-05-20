@@ -232,7 +232,7 @@ export function ResultPopup() {
               
               {/* Gamemode Tier Grid */}
               <div className="grid grid-cols-4 gap-4 w-full">
-                {(['crystal', 'axe', 'sword', 'mace', 'smp', 'bedwars', 'uhc', 'nethpot'] as GameMode[]).map(mode => {
+                {(['crystal', 'axe', 'sword', 'mace', 'smp', 'bedwars', 'uhc', 'nethpot'] as unknown as GameMode[]).map(mode => {
                   const assignment = popupData.tierAssignments.find(a => a.gamemode === mode);
                   const tier = assignment?.tier || 'Not Ranked';
                   const points = assignment?.points || 0;
@@ -250,7 +250,7 @@ export function ResultPopup() {
                         </TooltipTrigger>
                         <TooltipContent>
                           <div className="text-center">
-                            <p className="font-medium">{toDisplayGameMode(mode)}</p>
+                            <p className="font-medium">{toDisplayGameMode(mode as GameMode)}</p>
                             <p className="text-sm">{tier !== 'Not Ranked' ? tier : 'Not Ranked'}</p>
                             {tier !== 'Not Ranked' && <p className="text-xs text-muted-foreground">{points} points</p>}
                           </div>

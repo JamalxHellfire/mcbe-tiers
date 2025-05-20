@@ -7,17 +7,26 @@ import { GameMode } from '@/services/playerService';
 export function toGameMode(displayMode: string): GameMode {
   // Map visible game mode names to the correct casing
   const modeMap: Record<string, GameMode> = {
-    'Crystal': 'crystal' as GameMode,
-    'Sword': 'sword' as GameMode,
-    'Axe': 'axe' as GameMode,
-    'Mace': 'mace' as GameMode,
-    'SMP': 'smp' as GameMode,
-    'UHC': 'uhc' as GameMode,
-    'NethPot': 'nethpot' as GameMode,
-    'Bedwars': 'bedwars' as GameMode
+    'Crystal': 'Crystal' as GameMode,
+    'Sword': 'Sword' as GameMode,
+    'Axe': 'Axe' as GameMode,
+    'Mace': 'Mace' as GameMode,
+    'SMP': 'SMP' as GameMode,
+    'UHC': 'UHC' as GameMode,
+    'NethPot': 'NethPot' as GameMode,
+    'Bedwars': 'Bedwars' as GameMode,
+    // Lowercase variations
+    'crystal': 'Crystal' as GameMode,
+    'sword': 'Sword' as GameMode,
+    'axe': 'Axe' as GameMode,
+    'mace': 'Mace' as GameMode,
+    'smp': 'SMP' as GameMode,
+    'uhc': 'UHC' as GameMode,
+    'nethpot': 'NethPot' as GameMode,
+    'bedwars': 'Bedwars' as GameMode
   };
   
-  return modeMap[displayMode] || (displayMode.toLowerCase() as GameMode);
+  return modeMap[displayMode] || (displayMode as GameMode);
 }
 
 /**
@@ -25,16 +34,25 @@ export function toGameMode(displayMode: string): GameMode {
  */
 export function toDisplayGameMode(gamemode: GameMode): string {
   // Map database game modes to visible display names
-  const displayMap = {
-    'crystal': 'Crystal',
-    'sword': 'Sword',
-    'axe': 'Axe',
-    'mace': 'Mace',
-    'smp': 'SMP',
-    'uhc': 'UHC',
-    'nethpot': 'NethPot',
-    'bedwars': 'Bedwars'
-  } as Record<GameMode, string>;
+  const displayMap: Record<GameMode, string> = {
+    'Crystal': 'Crystal',
+    'Sword': 'Sword',
+    'Axe': 'Axe',
+    'Mace': 'Mace',
+    'SMP': 'SMP',
+    'UHC': 'UHC',
+    'NethPot': 'NethPot',
+    'Bedwars': 'Bedwars',
+    // Also support lowercase versions for backward compatibility
+    'crystal' as unknown as GameMode: 'Crystal',
+    'sword' as unknown as GameMode: 'Sword',
+    'axe' as unknown as GameMode: 'Axe',
+    'mace' as unknown as GameMode: 'Mace',
+    'smp' as unknown as GameMode: 'SMP',
+    'uhc' as unknown as GameMode: 'UHC',
+    'nethpot' as unknown as GameMode: 'NethPot',
+    'bedwars' as unknown as GameMode: 'Bedwars'
+  };
   
-  return displayMap[gamemode] || gamemode;
+  return displayMap[gamemode] || String(gamemode);
 }

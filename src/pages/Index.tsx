@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
 import { MobileNavMenu } from '../components/MobileNavMenu';
+import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 
 const Index = () => {
   const [selectedMode, setSelectedMode] = useState<string>('overall');
@@ -30,8 +31,9 @@ const Index = () => {
     setIsPlayerModalOpen(true);
   };
   
+  // Define gamemodes with proper casing
   const gamemodes: GameMode[] = [
-    'crystal', 'sword', 'smp', 'uhc', 'axe', 'nethpot', 'bedwars', 'mace'
+    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
   ];
   
   return (
