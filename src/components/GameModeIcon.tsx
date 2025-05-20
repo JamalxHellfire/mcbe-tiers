@@ -1,62 +1,51 @@
 
 import React from 'react';
-import { LucideIcon, Diamond, Sword, Axe, Skull, Users, Bed, Trophy } from "lucide-react";
-import { cn } from '@/lib/utils';
-
-type GameMode = "crystal" | "sword" | "smp" | "uhc" | "axe" | "nethpot" | "bedwars" | "mace" | "overall";
 
 interface GameModeIconProps {
-  mode: GameMode;
-  size?: "sm" | "md" | "lg";
-  className?: string; // Add support for className prop
+  mode: string;
+  className?: string;
 }
 
-interface IconSizeClasses {
-  sm: string;
-  md: string;
-  lg: string;
-}
-
-const iconSizeClasses: IconSizeClasses = {
-  sm: "h-4 w-4",
-  md: "h-5 w-5",
-  lg: "h-6 w-6",
-};
-
-export const GameModeIcon = ({ mode, size = "md", className }: GameModeIconProps) => {
-  const iconClass = cn(iconSizeClasses[size], className);
-  
-  const renderIcon = () => {
+export function GameModeIcon({ mode, className = "h-6 w-6" }: GameModeIconProps) {
+  const getIconPath = () => {
     switch (mode.toLowerCase()) {
-      case "crystal":
-        return <Diamond className={iconClass} />;
-      case "sword":
-        return <Sword className={iconClass} />;
-      case "axe":
-        return <Axe className={iconClass} />;
-      case "smp":
-        return <Users className={iconClass} />;
-      case "uhc":
-        return <Skull className={iconClass} />;
-      case "nethpot":
-        // Instead of Potion (which doesn't exist), we'll use Skull with different styling
-        return <Skull className={iconClass} />; 
-      case "bedwars":
-        return <Bed className={iconClass} />;
-      case "mace":
-        return <Skull className={iconClass} />;
-      case "overall":
-        return <Trophy className={iconClass} />;
+      case 'mace':
+        return '/lovable-uploads/5dde26cb-4eb5-4976-9ab5-92d461ff397d.png';
+      case 'crystal':
+        return '/lovable-uploads/80633d42-7f02-40c2-899e-9b4f53453c4e.png';
+      case 'sword':
+        return '/lovable-uploads/09743052-7a91-4b8b-a703-3fbaddbbfbe6.png';
+      case 'uhc':
+        return '/lovable-uploads/afc839db-dab2-4fd5-b5e6-f9e9e33c0cdc.png';
+      case 'nethpot':
+        return '/lovable-uploads/a92e08fa-4d88-4654-a0eb-db5fdd777176.png';
+      case 'bedwars':
+        return '/lovable-uploads/b099b583-75a2-44b4-bede-18b063e47d28.png';
+      case 'axe':
+        return '/lovable-uploads/25e85709-efba-496e-b54c-8fa9f45f88c4.png';
+      case 'smp':
+        // Using the previous Axe icon for SMP now
+        return '/lovable-uploads/cce7c84c-7797-415f-a07b-7ccb735c0a5f.png';
+      case 'overall':
+        // New Trophy icon for the Overall button
+        return '/lovable-uploads/ad9c57f9-c0cf-492d-9f2a-11a946b886ba.png';
       default:
-        return null;
+        return '';
     }
   };
-
+  
+  const iconPath = getIconPath();
+  
+  if (!iconPath) {
+    return null;
+  }
+  
   return (
-    <>
-      {renderIcon()}
-    </>
+    <img 
+      src={iconPath}
+      alt={`${mode} icon`}
+      className={className}
+      loading="lazy" // Add lazy loading for performance
+    />
   );
-};
-
-export default GameModeIcon;
+}

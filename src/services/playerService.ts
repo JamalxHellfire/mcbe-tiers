@@ -1,613 +1,308 @@
 
-// This file contains all the functionality related to players
-import { adminService } from './adminService';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
+// First let's define the correct type for GameMode
+export type GameMode = 'overall' | 'crystal' | 'sword' | 'axe' | 'mace' | 'smp' | 'bedwars' | 'nethpot' | 'uhc';
 
-// Define the player's regions
-export type PlayerRegion = "NA" | "EU" | "ASIA" | "OCE" | "SA" | "AF";
-
-// Define the device types
-export type DeviceType = "Mobile" | "PC" | "Console";
-
-// Define the game modes - ensuring lowercase to match the database
-export type GameMode = "crystal" | "sword" | "smp" | "uhc" | "axe" | "nethpot" | "bedwars" | "mace" | "overall";
-
-// Define the tier levels
-export type TierLevel = "LT5" | "HT5" | "LT4" | "HT4" | "LT3" | "HT3" | "LT2" | "HT2" | "LT1" | "HT1" | "Retired";
-
-// Define the player type
+// Define Player types more precisely
 export interface Player {
   id: string;
   ign: string;
-  global_points?: number;
-  badges?: string[];
-  java_username?: string;
-  avatar_url?: string;
-  region?: PlayerRegion;
-  device?: DeviceType;
-  tiers?: Record<GameMode, {
-    tier: TierLevel;
-    score: number;
-    created_at: string;
-    updated_at: string;
-    id: string;
-  }>;
-  banned?: boolean;
-}
-
-// Define the tier data type
-export interface TierData {
-  playerId: string;
-  gamemode: GameMode;
-  tier: TierLevel;
-}
-
-// Define the leaderboard player type
-export interface LeaderboardPlayer {
-  id: string;
-  ign: string;
-  points: number;
   avatar?: string;
-  placement?: number;
-}
-
-// Define the tier data type
-export interface GameModeData {
-  HT1: Player[];
-  LT1: Player[];
-  HT2: Player[];
-  LT2: Player[];
-  HT3: Player[];
-  LT3: Player[];
-  HT4: Player[];
-  LT4: Player[];
-  HT5: Player[];
-  LT5: Player[];
-  Retired: Player[];
-}
-
-// Define the getPlayerByIGN function
-export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
-  try {
-    // Check if player exists
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .eq('ign', ign)
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Error fetching player by IGN:', error);
-      return null;
-    }
-    
-    return data as Player;
-  } catch (error) {
-    console.error('Failed to fetch player by IGN:', error);
-    return null;
-  }
-};
-
-// Define the getPlayerById function
-export const getPlayerById = async (id: string): Promise<Player | null> => {
-  try {
-    // Optimized query with improved caching
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Error fetching player by ID:', error);
-      return null;
-    }
-    
-    return data as Player;
-  } catch (error) {
-    console.error('Failed to fetch player by ID:', error);
-    return null;
-  }
-};
-
-// Define the create player interface
-interface CreatePlayerParams {
-  ign: string;
   java_username?: string;
   region?: PlayerRegion;
   device?: DeviceType;
+  global_points?: number;
+  banned?: boolean;
+  tiers?: Record<GameMode, { tier: TierLevel, points: number }>;
+  [key: string]: any; // Allow for dynamic properties
 }
 
-// Define the createPlayer function
-export const createPlayer = async (params: CreatePlayerParams): Promise<Player | null> => {
-  if (!params.ign) {
-    console.error('IGN is required to create a player');
-    return null;
-  }
-  
-  try {
-    // Try to get avatar URL from Minecraft API
-    let avatarUrl = null;
-    if (params.java_username) {
-      try {
-        const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${params.java_username}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.id) {
-            avatarUrl = `https://crafatar.com/avatars/${data.id}?overlay=true`;
-          }
-        }
-      } catch (avatarError) {
-        console.error('Error fetching avatar:', avatarError);
-        // Continue without avatar
-      }
-    }
-    
-    // Insert player
-    const { data, error } = await supabase
-      .from('players')
-      .insert({
-        ign: params.ign,
-        java_username: params.java_username || null,
-        region: params.region || null,
-        device: params.device || null,
-        avatar_url: avatarUrl,
-        global_points: 0,
-        gamemode: '',  // Required field, but will be removed from players table
-        tier_number: ''  // Required field, but will be removed from players table
-      })
-      .select('*')
-      .single();
-    
-    if (error) {
-      console.error('Error creating player:', error);
-      return null;
-    }
-    
-    return data as Player;
-  } catch (error) {
-    console.error('Failed to create player:', error);
-    return null;
-  }
-};
+// Add additional types needed by the application
+export type TierLevel = 'LT5' | 'HT5' | 'LT4' | 'HT4' | 'LT3' | 'HT3' | 'LT2' | 'HT2' | 'LT1' | 'HT1' | 'Retired' | 'Unranked';
+export type PlayerRegion = 'NA' | 'EU' | 'ASIA' | 'OCE' | 'SA' | 'AF';
+export type DeviceType = 'Mobile' | 'PC' | 'Console';
 
-// Define the update player interface
-interface UpdatePlayerParams {
-  java_username?: string;
-  region?: PlayerRegion;
-  device?: DeviceType;
-}
-
-// Define the updatePlayer function
-export const updatePlayer = async (
-  playerId: string,
-  params: UpdatePlayerParams
-): Promise<boolean> => {
-  try {
-    // Try to get updated avatar URL if java_username is provided
-    let avatarUrl = undefined;
-    if (params.java_username) {
-      try {
-        const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${params.java_username}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.id) {
-            avatarUrl = `https://crafatar.com/avatars/${data.id}?overlay=true`;
-          }
-        }
-      } catch (avatarError) {
-        console.error('Error fetching avatar:', avatarError);
-        // Continue without updating avatar
-      }
-    }
-    
-    // Update player
-    const { error } = await supabase
-      .from('players')
-      .update({
-        java_username: params.java_username,
-        region: params.region,
-        device: params.device,
-        ...(avatarUrl && { avatar_url: avatarUrl }),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', playerId);
-    
-    if (error) {
-      console.error('Error updating player:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to update player:', error);
-    return false;
-  }
-};
-
-// Define the assignTier function
-export const assignTier = async (tierData: TierData): Promise<boolean> => {
-  try {
-    // Calculate points based on tier
-    const points = calculateTierPoints(tierData.tier);
-    
-    // First check if there's already a gamemode_score for this player
-    const { data: existingData, error: existingError } = await supabase
-      .from('gamemode_scores')
-      .select('*')
-      .eq('player_id', tierData.playerId)
-      .eq('gamemode', tierData.gamemode)
-      .maybeSingle();
-      
-    if (existingError) {
-      console.error('Error checking existing tier:', existingError);
-      return false;
-    }
-    
-    if (existingData) {
-      // Update existing tier
-      const { error } = await supabase
-        .from('gamemode_scores')
-        .update({
-          score: points,
-          internal_tier: tierData.tier,
-          display_tier: tierData.tier,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingData.id);
-        
-      if (error) {
-        console.error('Error updating tier:', error);
-        return false;
-      }
-    } else {
-      // Insert new tier
-      const { error } = await supabase
-        .from('gamemode_scores')
-        .insert({
-          player_id: tierData.playerId,
-          gamemode: tierData.gamemode,
-          score: points,
-          internal_tier: tierData.tier,
-          display_tier: tierData.tier
-        });
-        
-      if (error) {
-        console.error('Error inserting tier:', error);
-        return false;
-      }
-    }
-    
-    // Update player's global points
-    await updatePlayerGlobalPoints(tierData.playerId);
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to assign tier:', error);
-    return false;
-  }
-};
-
-// Helper function to calculate points based on tier
-export const calculateTierPoints = (tier: TierLevel): number => {
-  // Fix: Use a switch statement instead of the RPC call that was causing the error
+/**
+ * Calculate points based on tier level
+ * @param tier Tier level
+ * @returns Points value
+ */
+export function calculateTierPoints(tier: TierLevel): number {
   switch (tier) {
-    case "HT1": return 50;
-    case "LT1": return 45;
-    case "HT2": return 40;
-    case "LT2": return 35;
-    case "HT3": return 30;
-    case "LT3": return 25;
-    case "HT4": return 20;
-    case "LT4": return 15;
-    case "HT5": return 10;
-    case "LT5": return 5;
-    case "Retired": return 0;
+    case 'HT1': return 1000;
+    case 'LT1': return 900;
+    case 'HT2': return 800;
+    case 'LT2': return 700;
+    case 'HT3': return 600;
+    case 'LT3': return 500;
+    case 'HT4': return 400;
+    case 'LT4': return 300;
+    case 'HT5': return 200;
+    case 'LT5': return 100;
+    case 'Retired': return 50;
+    case 'Unranked':
     default: return 0;
   }
-};
+}
 
-// Helper function to update player's global points
-export const updatePlayerGlobalPoints = async (playerId: string): Promise<boolean> => {
-  try {
-    // Get all gamemode scores for the player
-    const { data, error } = await supabase
-      .from('gamemode_scores')
-      .select('score')
-      .eq('player_id', playerId);
-      
-    if (error) {
-      console.error('Error fetching player scores:', error);
-      return false;
-    }
-    
-    // Calculate total points
-    const totalPoints = data.reduce((sum, item) => sum + item.score, 0);
-    
-    // Update the player's global_points
-    const { error: updateError } = await supabase
-      .from('players')
-      .update({ global_points: totalPoints, updated_at: new Date().toISOString() })
-      .eq('id', playerId);
-      
-    if (updateError) {
-      console.error('Error updating player points:', updateError);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to update player points:', error);
-    return false;
-  }
-};
+// Function to safely convert Player to GameModeRecord
+export function playerToGameModeRecord(player: Player): Record<GameMode, any> {
+  const result = {} as Record<GameMode, any>;
+  const gameModes: GameMode[] = ['overall', 'crystal', 'sword', 'axe', 'mace', 'smp', 'bedwars', 'nethpot', 'uhc'];
+  
+  // Set default values for all game modes
+  gameModes.forEach(mode => {
+    result[mode] = player[mode] || { tier: 'Unranked', points: 0 };
+  });
+  
+  return result;
+}
 
-// Define the getPlayerTiers function
-export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode, any>> => {
-  try {
-    // Get all tiers for the player
-    const { data, error } = await supabase
-      .from('gamemode_scores')
-      .select('*')
-      .eq('player_id', playerId);
-      
-    if (error) {
-      console.error('Error fetching player tiers:', error);
-      return {} as Record<GameMode, any>;
+// Function to safely convert GameModeRecord to Player
+export function gameModeRecordToPlayer(record: Record<GameMode, any>, basePlayer: Player): Player {
+  const result = { ...basePlayer };
+  const gameModes: GameMode[] = ['overall', 'crystal', 'sword', 'axe', 'mace', 'smp', 'bedwars', 'nethpot', 'uhc'];
+  
+  gameModes.forEach(mode => {
+    if (record[mode]) {
+      result[mode] = record[mode];
     }
-    
-    // Initialize with default empty structure for all game modes
-    const tierRecord: Record<GameMode, any> = {
-      crystal: null,
-      sword: null,
-      smp: null,
-      uhc: null,
-      axe: null,
-      nethpot: null,
-      bedwars: null,
-      mace: null,
-      overall: null
-    };
-    
-    // Fill in data for modes that have scores
-    data.forEach(item => {
-      const gamemode = item.gamemode.toLowerCase() as GameMode;
-      tierRecord[gamemode] = {
-        tier: item.internal_tier,
-        score: item.score,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        id: item.id
-      };
-    });
-    
-    return tierRecord;
-  } catch (error) {
-    console.error('Failed to fetch player tiers:', error);
-    return {
-      crystal: null,
-      sword: null,
-      smp: null,
-      uhc: null,
-      axe: null,
-      nethpot: null,
-      bedwars: null,
-      mace: null,
-      overall: null
-    } as Record<GameMode, any>;
-  }
-};
+  });
+  
+  return result;
+}
 
-// Define function to get players by tier and gamemode
-export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<GameModeData> => {
-  try {
-    // Initialize empty structure
-    const tierData: GameModeData = {
-      HT1: [], LT1: [],
-      HT2: [], LT2: [],
-      HT3: [], LT3: [],
-      HT4: [], LT4: [],
-      HT5: [], LT5: [],
-      Retired: []
-    };
-    
-    // Convert gamemode to lowercase to ensure consistency
-    const normalizedGamemode = gamemode.toLowerCase() as GameMode;
-    
-    // Get all players with the given gamemode scores
-    const { data: gamemodeScores, error: scoresError } = await supabase
-      .from('gamemode_scores')
-      .select('player_id, internal_tier')
-      .eq('gamemode', normalizedGamemode);
-    
-    if (scoresError) {
-      console.error(`Error fetching ${gamemode} tier data:`, scoresError);
-      return tierData;
-    }
-    
-    if (!gamemodeScores || gamemodeScores.length === 0) {
-      return tierData;
-    }
-    
-    // Get all player details for the IDs we found
-    const playerIds = gamemodeScores.map(score => score.player_id);
-    const { data: players, error: playersError } = await supabase
-      .from('players')
-      .select('*')
-      .in('id', playerIds);
-    
-    if (playersError) {
-      console.error(`Error fetching players for ${gamemode}:`, playersError);
-      return tierData;
-    }
-    
-    // Group players by their tier for this gamemode
-    players.forEach(player => {
-      const score = gamemodeScores.find(score => score.player_id === player.id);
-      if (score && score.internal_tier) {
-        const tier = score.internal_tier as TierLevel;
-        if (tierData[tier]) {
-          tierData[tier].push(player as Player);
-        }
+/**
+ * Get players by tier and gamemode
+ * @param gamemode Gamemode to filter by
+ * @returns Object containing players grouped by tier
+ */
+export function getPlayersByTierAndGamemode(gamemode: GameMode): Record<TierLevel, Player[]> {
+  const players = playerService.getPlayers();
+  const result: Record<TierLevel, Player[]> = {
+    'HT1': [], 'LT1': [],
+    'HT2': [], 'LT2': [],
+    'HT3': [], 'LT3': [],
+    'HT4': [], 'LT4': [],
+    'HT5': [], 'LT5': [],
+    'Retired': [], 'Unranked': []
+  };
+  
+  players.forEach(player => {
+    const gameModeData = player[gamemode];
+    if (gameModeData && gameModeData.tier) {
+      const tier = gameModeData.tier as TierLevel;
+      if (result[tier]) {
+        result[tier].push(player);
       }
-    });
-    
-    return tierData;
-  } catch (error) {
-    console.error(`Failed to fetch ${gamemode} tier data:`, error);
-    return {
-      HT1: [], LT1: [],
-      HT2: [], LT2: [],
-      HT3: [], LT3: [],
-      HT4: [], LT4: [],
-      HT5: [], LT5: [],
-      Retired: []
+    } else {
+      result['Unranked'].push(player);
+    }
+  });
+  
+  return result;
+}
+
+/**
+ * Get ranked players for leaderboard
+ * @param gamemode Gamemode to get players for
+ * @returns Array of ranked players
+ */
+export function getRankedPlayers(gamemode: GameMode = 'overall'): Player[] {
+  const players = playerService.getPlayers();
+  
+  // Filter out players without a rank in this gamemode
+  const rankedPlayers = players.filter(player => {
+    const gameModeData = player[gamemode];
+    return gameModeData && gameModeData.tier !== 'Unranked';
+  });
+  
+  // Sort by points in descending order
+  return rankedPlayers.sort((a, b) => {
+    const pointsA = a[gamemode]?.points || 0;
+    const pointsB = b[gamemode]?.points || 0;
+    return pointsB - pointsA;
+  });
+}
+
+/**
+ * Get player by IGN
+ * @param ign In-game name to search for
+ * @returns Player or undefined if not found
+ */
+export function getPlayerByIGN(ign: string): Player | undefined {
+  const players = playerService.getPlayers();
+  return players.find(player => player.ign.toLowerCase() === ign.toLowerCase());
+}
+
+/**
+ * Get player tiers across all gamemodes
+ * @param playerId Player ID
+ * @returns Record of gamemodes and their tier info
+ */
+export function getPlayerTiers(playerId: string): Record<GameMode, { tier: TierLevel, score: number }> {
+  const player = playerService.getPlayerById(playerId);
+  if (!player) return {} as Record<GameMode, { tier: TierLevel, score: number }>;
+  
+  const result: Record<GameMode, { tier: TierLevel, score: number }> = {} as Record<GameMode, { tier: TierLevel, score: number }>;
+  const gameModes: GameMode[] = ['overall', 'crystal', 'sword', 'axe', 'mace', 'smp', 'bedwars', 'nethpot', 'uhc'];
+  
+  gameModes.forEach(mode => {
+    const modeData = player[mode];
+    result[mode] = {
+      tier: (modeData?.tier as TierLevel) || 'Unranked',
+      score: modeData?.points || 0
     };
-  }
-};
-
-// Define function to get ranked players for leaderboard
-export const getRankedPlayers = async (): Promise<Player[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .order('global_points', { ascending: false })
-      .limit(100);
-    
-    if (error) {
-      console.error('Error fetching ranked players:', error);
-      return [];
-    }
-    
-    return data as Player[];
-  } catch (error) {
-    console.error('Failed to fetch ranked players:', error);
-    return [];
-  }
-};
-
-// Define the deletePlayer function
-export const deletePlayer = async (playerId: string): Promise<boolean> => {
-  if (!adminService.isAdmin()) {
-    console.error('Admin access required to delete players');
-    return false;
-  }
+  });
   
-  try {
-    // First delete all tiers associated with the player
-    const { error: tiersError } = await supabase
-      .from('gamemode_scores')
-      .delete()
-      .eq('player_id', playerId);
-      
-    if (tiersError) {
-      console.error('Error deleting player tiers:', tiersError);
-      return false;
-    }
-    
-    // Then delete the player
-    const { error } = await supabase
-      .from('players')
-      .delete()
-      .eq('id', playerId);
-      
-    if (error) {
-      console.error('Error deleting player:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to delete player:', error);
-    return false;
-  }
-};
+  return result;
+}
 
-// Define the banPlayer function
-export const banPlayer = async (player: Player): Promise<boolean> => {
-  if (!adminService.isAdmin()) {
-    console.error('Admin access required to ban players');
-    return false;
-  }
-  
-  try {
-    // First update the player's banned status
-    const { error: updateError } = await supabase
-      .from('players')
-      .update({ banned: true })
-      .eq('id', player.id);
-      
-    if (updateError) {
-      console.error('Error updating player banned status:', updateError);
-      return false;
-    }
-    
-    // Then add a record to banned_players table
-    const { error } = await supabase
-      .from('banned_players')
-      .insert({
-        player_id: player.id,
-        ign: player.ign
-      });
-      
-    if (error) {
-      console.error('Error adding to banned players:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to ban player:', error);
-    return false;
-  }
-};
+/**
+ * Create a new player
+ * @param playerData Player data
+ * @returns Created player
+ */
+export function createPlayer(playerData: Omit<Player, 'id'>): Player {
+  return playerService.addPlayer(playerData);
+}
 
-// Define the verifyAdminPIN function
-export const verifyAdminPIN = async (pin: string): Promise<boolean> => {
-  try {
-    // Skip network validation and use direct comparison for reliability
-    // This is more efficient and avoids potential network errors
-    return adminService.verifyAdminPIN(pin);
-  } catch (error) {
-    console.error('Failed to verify PIN:', error);
-    return false;
-  }
-};
+/**
+ * Assign tier to a player
+ * @param params Assignment parameters
+ * @returns Updated player
+ */
+export function assignTier(params: {
+  playerId: string, 
+  gamemode: GameMode, 
+  tier: TierLevel
+}): Player | undefined {
+  const { playerId, gamemode, tier } = params;
+  const player = playerService.getPlayerById(playerId);
+  if (!player) return undefined;
+  
+  const points = calculateTierPoints(tier);
+  const updatedData: Partial<Player> = {
+    [gamemode]: { tier, points }
+  };
+  
+  return playerService.updatePlayer(playerId, updatedData);
+}
 
-// Helper function to hash the PIN
-const hashPin = async (pin: string): Promise<string> => {
-  // In a real app, you would hash on the server side using a proper hashing algorithm
-  // This is a simple hash for demo purposes - DO NOT use in production
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin);
+/**
+ * Ban or unban a player
+ * @param player Player to ban
+ * @returns Success status
+ */
+export function banPlayer(player: Player): boolean {
+  if (!player || !player.id) return false;
   
-  // Use SHA-256 hashing algorithm
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const updatedData: Partial<Player> = {
+    banned: true
+  };
   
-  // Convert to hex string
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
-  return hashHex;
-};
+  const result = playerService.updatePlayer(player.id, updatedData);
+  return !!result;
+}
+
+// Simple service to manage player data (replace with actual API calls)
+const initialPlayers: Player[] = [
+  { id: '1', ign: 'Player1', avatar: 'https://i.pravatar.cc/150?img=1', crystal: { tier: 'HT1', points: 1200 }, sword: { tier: 'LT1', points: 1100 }, axe: { tier: 'HT1', points: 1000 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '2', ign: 'Player2', avatar: 'https://i.pravatar.cc/150?img=2', crystal: { tier: 'LT1', points: 1100 }, sword: { tier: 'HT1', points: 1200 }, axe: { tier: 'LT1', points: 900 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '3', ign: 'Player3', avatar: 'https://i.pravatar.cc/150?img=3', crystal: { tier: 'HT1', points: 1300 }, sword: { tier: 'HT1', points: 1100 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '4', ign: 'Player4', avatar: 'https://i.pravatar.cc/150?img=4', crystal: { tier: 'LT1', points: 1000 }, sword: { tier: 'LT1', points: 1000 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '5', ign: 'Player5', avatar: 'https://i.pravatar.cc/150?img=5', crystal: { tier: 'HT1', points: 1400 }, sword: { tier: 'LT1', points: 900 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '6', ign: 'Player6', avatar: 'https://i.pravatar.cc/150?img=6', crystal: { tier: 'LT1', points: 800 }, sword: { tier: 'HT1', points: 1300 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '7', ign: 'Player7', avatar: 'https://i.pravatar.cc/150?img=7', crystal: { tier: 'HT1', points: 1150 }, sword: { tier: 'LT1', points: 1050 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '8', ign: 'Player8', avatar: 'https://i.pravatar.cc/150?img=8', crystal: { tier: 'LT1', points: 950 }, sword: { tier: 'HT1', points: 1250 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '9', ign: 'Player9', avatar: 'https://i.pravatar.cc/150?img=9', crystal: { tier: 'HT1', points: 1350 }, sword: { tier: 'LT1', points: 850 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+  { id: '10', ign: 'Player10', avatar: 'https://i.pravatar.cc/150?img=10', crystal: { tier: 'LT1', points: 1050 }, sword: { tier: 'HT1', points: 1150 }, axe: { tier: 'Unranked', points: 0 }, mace: { tier: 'Unranked', points: 0 }, smp: { tier: 'Unranked', points: 0 }, bedwars: { tier: 'Unranked', points: 0 }, nethpot: { tier: 'Unranked', points: 0 }, uhc: { tier: 'Unranked', points: 0 }, overall: { tier: 'Unranked', points: 0 } },
+];
+
+const localStorageKey = 'mcbeTierListPlayers';
 
 export const playerService = {
+  getPlayers: (): Player[] => {
+    try {
+      const storedPlayers = localStorage.getItem(localStorageKey);
+      return storedPlayers ? JSON.parse(storedPlayers) : initialPlayers;
+    } catch (error) {
+      console.error("Error fetching players from localStorage, using initial data:", error);
+      return initialPlayers;
+    }
+  },
+
+  savePlayers: (players: Player[]): void => {
+    try {
+      localStorage.setItem(localStorageKey, JSON.stringify(players));
+    } catch (error) {
+      console.error("Error saving players to localStorage:", error);
+    }
+  },
+  
+  getPlayerById: (id: string): Player | undefined => {
+    const players = playerService.getPlayers();
+    return players.find(player => player.id === id);
+  },
+  
+  updatePlayer: (id: string, updatedData: Partial<Player>): Player | undefined => {
+    const players = playerService.getPlayers();
+    const playerIndex = players.findIndex(player => player.id === id);
+    
+    if (playerIndex === -1) {
+      console.error(`Player with id ${id} not found`);
+      return undefined;
+    }
+    
+    // Merge existing player data with updated data
+    const updatedPlayer = { ...players[playerIndex], ...updatedData };
+    players[playerIndex] = updatedPlayer;
+    
+    playerService.savePlayers(players);
+    return updatedPlayer;
+  },
+
+  // Method to add a new player
+  addPlayer: (newPlayer: Omit<Player, 'id'>): Player => {
+    const players = playerService.getPlayers();
+    // Generate a unique ID for the new player
+    const id = String(Date.now());
+    const playerToAdd: Player = { id, ...newPlayer };
+    players.push(playerToAdd);
+    playerService.savePlayers(players);
+    return playerToAdd;
+  },
+
+  // Method to delete a player
+  deletePlayer: (id: string): boolean => {
+    const players = playerService.getPlayers();
+    const filteredPlayers = players.filter(player => player.id !== id);
+    
+    if (filteredPlayers.length === players.length) {
+      // No players were removed
+      return false;
+    }
+    
+    playerService.savePlayers(filteredPlayers);
+    return true;
+  },
+  
+  // Expose the helper functions through the playerService object
   getPlayerByIGN,
-  getPlayerById,
-  createPlayer,
-  updatePlayer,
-  assignTier,
-  getPlayerTiers,
-  deletePlayer,
-  banPlayer,
-  verifyAdminPIN,
-  updatePlayerGlobalPoints,
-  calculateTierPoints,
+  getRankedPlayers,
   getPlayersByTierAndGamemode,
-  getRankedPlayers
+  createPlayer,
+  assignTier,
+  banPlayer,
+  getPlayerTiers
 };
 
-// Export the service
-export default playerService;
+// Export helper functions as part of playerService for easy access
+export const playerServiceExports = {
+  getPlayersByTierAndGamemode,
+  getRankedPlayers,
+  getPlayerByIGN,
+  createPlayer,
+  assignTier,
+  banPlayer,
+  getPlayerTiers
+};

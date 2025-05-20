@@ -31,7 +31,7 @@ const Index = () => {
   };
   
   const gamemodes: GameMode[] = [
-    'crystal', 'sword', 'smp', 'uhc', 'axe', 'nethpot', 'bedwars', 'mace'
+    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
   ];
   
   return (

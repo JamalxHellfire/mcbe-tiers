@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import { playerService, GameMode, TierLevel } from '@/services/playerService';
 import { getPlayerRank, formatPointsRange } from '@/utils/rankUtils';
 import { GameModeIcon } from './GameModeIcon';
-import { displayToGameMode } from '@/utils/gamemodeUtils';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -41,17 +40,12 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
   // Fetch player's tiers across all gamemodes
   useEffect(() => {
     if (isOpen && player && player.id) {
-      playerService.getPlayerTiers(player.id)
-        .then(tiers => {
-          setPlayerTiers(tiers);
-        })
-        .catch(err => {
-          console.error('Error fetching player tiers:', err);
-        });
+      const tiers = playerService.getPlayerTiers(player.id);
+      setPlayerTiers(tiers);
     }
   }, [isOpen, player]);
   
-  // List all possible gamemodes - using lowercase to match GameMode type
+  // List all possible gamemodes (in lowercase to match the GameMode type)
   const allGamemodes: GameMode[] = [
     'crystal', 'sword', 'smp', 'uhc', 'axe', 'nethpot', 'bedwars', 'mace'
   ];
@@ -116,7 +110,7 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
             <div className="mt-1 flex items-center">
               <Award size={16} className={cn("mr-1", player.badge?.includes('Master') ? 'text-yellow-400' : player.badge?.includes('Ace') ? 'text-orange-400' : 'text-purple-400')} />
               <span className={cn("text-sm font-medium", player.badge?.includes('Master') ? 'text-yellow-400' : player.badge?.includes('Ace') ? 'text-orange-400' : 'text-purple-400')}>
-                {player.badge || 'Unranked'}
+                {player.badge || 'Player'}
               </span>
             </div>
           </div>
@@ -157,6 +151,9 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
                   }
                 }
                 
+                // Capitalize first letter for display
+                const displayMode = mode.charAt(0).toUpperCase() + mode.slice(1);
+                
                 return (
                   <motion.div 
                     key={mode}
@@ -166,8 +163,8 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
                     transition={{ delay: index * 0.05 }}
                   >
                     <span className="text-sm flex items-center">
-                      <GameModeIcon mode={mode} size="sm" />
-                      <span className="ml-2">{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+                      <GameModeIcon mode={mode} className="h-4 w-4 mr-2" />
+                      {displayMode}
                     </span>
                     <div className="flex flex-col items-end">
                       {tier === 'Not Ranked' ? (

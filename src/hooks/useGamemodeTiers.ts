@@ -11,7 +11,7 @@ export function useGamemodeTiers(gamemode: GameMode) {
       'HT3': [], 'LT3': [],
       'HT4': [], 'LT4': [],
       'HT5': [], 'LT5': [],
-      'Retired': []
+      'Retired': [], 'Unranked': []
     }, 
     isLoading: loading, 
     error 
@@ -19,7 +19,6 @@ export function useGamemodeTiers(gamemode: GameMode) {
     queryKey: ['tierData', gamemode],
     queryFn: async () => {
       try {
-        // Improved error handling and caching for tier data retrieval
         const data = await playerService.getPlayersByTierAndGamemode(gamemode);
         return data;
       } catch (err: any) {
@@ -27,8 +26,7 @@ export function useGamemodeTiers(gamemode: GameMode) {
         throw new Error(err.message || 'Failed to load tier data');
       }
     },
-    staleTime: 300000, // Increased to 5 minutes
-    refetchOnWindowFocus: false, // Avoid unnecessary refetches
+    staleTime: 60000, // 1 minute
   });
   
   return { tierData, loading, error: error ? (error as Error).message : null };

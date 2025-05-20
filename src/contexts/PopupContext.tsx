@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Player, GameMode, TierLevel, playerService } from '@/services/playerService';
 import { toast } from 'sonner';
@@ -100,9 +101,9 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setPopupDataFromPlayer = (player: Player, tierAssignments: TierAssignment[]) => {
     // Calculate total combat points (from Crystal, Axe, Sword, Mace, SMP)
-    const combatGamemodes: GameMode[] = ['crystal', 'axe', 'sword', 'mace', 'smp'];
+    const combatGamemodes: GameMode[] = ['Crystal', 'Axe', 'Sword', 'Mace', 'SMP'];
     const totalCombatPoints = tierAssignments
-      .filter(assignment => combatGamemodes.includes(assignment.gamemode.toLowerCase() as GameMode))
+      .filter(assignment => combatGamemodes.includes(assignment.gamemode))
       .reduce((sum, assignment) => sum + assignment.points, 0);
     
     // Maximum possible points is 50 per gamemode × 5 gamemodes = 250
