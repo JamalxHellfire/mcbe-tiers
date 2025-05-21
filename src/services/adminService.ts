@@ -1,278 +1,209 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { GameMode } from '@/services/playerService';
+import { SiteVisit } from '@/types/visits';
+import { format, subDays, isToday, isYesterday, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 
-// Type definitions for site_visits table
-interface SiteVisit {
-  id?: string;
-  timestamp: string;
-}
-
-// Simple service to manage admin authentication state using localStorage
+// Admin authentication
 export const adminService = {
-  isAdmin(): boolean {
-    return localStorage.getItem('isAdmin') === 'true' && this.checkExpiration();
-  },
-  
-  setAdmin(value: boolean): void {
-    if (value) {
-      // Set an expiration time 24 hours from now
-      const expiration = new Date();
-      expiration.setHours(expiration.getHours() + 24);
-      localStorage.setItem('adminExpiration', expiration.toISOString());
-      localStorage.setItem('isAdmin', 'true');
-    } else {
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('adminExpiration');
-    }
-  },
-  
-  checkExpiration(): boolean {
-    const expirationStr = localStorage.getItem('adminExpiration');
-    if (!expirationStr) {
-      return false;
-    }
-    
-    const expiration = new Date(expirationStr);
-    const now = new Date();
-    
-    if (now > expiration) {
-      // Session expired, clear admin state
-      this.setAdmin(false);
-      return false;
-    }
-    
-    return true;
-  },
-  
-  logoutAdmin(): void {
-    this.setAdmin(false);
-  },
-
-  verifyAdminPIN(pin: string): Promise<boolean> {
-    // Set hardcoded PIN to 1234 as requested
-    return Promise.resolve(pin === '1234');
-  },
-  
-  // Analytics functions
-  recordVisit(): Promise<boolean> {
+  // Verify PIN for admin access
+  async verifyPin(pin: string) {
     try {
-      // Record a visit in the database - create the table if it doesn't exist first
-      const visit: SiteVisit = { timestamp: new Date().toISOString() };
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .single();
       
-      return new Promise((resolve, reject) => {
-        // Try to insert into site_visits table
-        supabase
-          .from('site_visits')
-          .insert(visit)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Error recording visit:', error);
-              // If table doesn't exist yet, we'll resolve as false but not throw an error
-              // In a production environment, you'd need to create the table first
-              resolve(false);
-            } else {
-              resolve(true);
-            }
-          })
-          .catch(err => {
-            console.error('Failed to record visit:', err);
-            resolve(false);
-          });
-      });
-    } catch (error) {
-      console.error('Failed to record visit:', error);
-      return Promise.resolve(false);
+      if (error) {
+        console.error('Error checking admin pin:', error);
+        return { success: false };
+      }
+      
+      // Simple check - in production, this should be hashed
+      return { success: pin === '1234' };
+    } catch (err) {
+      console.error('Unexpected error during pin verification:', err);
+      return { success: false };
     }
   },
   
-  getVisitorStats(): Promise<any> {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
-    const lastWeekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7).toISOString();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    
-    return new Promise((resolve) => {
-      // Try to fetch site visits
-      supabase
-        .from('site_visits')
-        .select('timestamp')
-        .gte('timestamp', monthStart)
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('Error fetching visits:', error);
-            // Return empty data if table doesn't exist or other error
-            resolve({
-              today: 0,
-              yesterday: 0,
-              thisWeek: 0,
-              thisMonth: 0,
-              dailyData: [],
-              weeklyData: [],
-              monthlyData: []
-            });
-          } else {
-            // Process the visit data
-            const visits = data || [];
-            const dailyData = this.processVisitsDaily(visits);
-            const weeklyData = this.processVisitsWeekly(visits);
-            const monthlyData = this.processVisitsMonthly(visits);
-            
-            const todayVisits = visits.filter(v => v.timestamp >= today).length || 0;
-            const yesterdayVisits = visits.filter(v => v.timestamp >= yesterday && v.timestamp < today).length || 0;
-            const weekVisits = visits.filter(v => v.timestamp >= lastWeekStart).length || 0;
-            const monthVisits = visits.length || 0;
-            
-            resolve({
-              today: todayVisits,
-              yesterday: yesterdayVisits,
-              thisWeek: weekVisits,
-              thisMonth: monthVisits,
-              dailyData,
-              weeklyData,
-              monthlyData
-            });
-          }
-        })
-        .catch(err => {
-          console.error('Failed to get visitor stats:', err);
-          resolve({
-            today: 0,
-            yesterday: 0,
-            thisWeek: 0,
-            thisMonth: 0,
-            dailyData: [],
-            weeklyData: [],
-            monthlyData: []
-          });
-        });
-    });
-  },
-  
-  processVisitsDaily(visits: any[]): any[] {
-    // Group visits by day for the last 7 days
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-    
-    return last7Days.map(day => {
-      const count = visits.filter(v => v.timestamp.startsWith(day)).length;
-      return {
-        date: day,
-        visits: count
+  // Record a visit to the website
+  async recordVisit(): Promise<void> {
+    try {
+      // Create a visit record with current timestamp
+      const visit: SiteVisit = {
+        timestamp: new Date().toISOString(),
       };
-    });
-  },
-  
-  processVisitsWeekly(visits: any[]): any[] {
-    // Group visits by week for the last 4 weeks
-    const result = [];
-    const now = new Date();
-    
-    for (let i = 0; i < 4; i++) {
-      const weekEnd = new Date(now);
-      weekEnd.setDate(now.getDate() - (i * 7));
       
-      const weekStart = new Date(weekEnd);
-      weekStart.setDate(weekEnd.getDate() - 6);
+      const { error } = await supabase
+        .from('site_visits')
+        .insert(visit);
       
-      const weekVisits = visits.filter(v => {
-        const visitDate = new Date(v.timestamp);
-        return visitDate >= weekStart && visitDate <= weekEnd;
-      }).length;
-      
-      result.unshift({
-        week: `Week ${i+1}`,
-        visits: weekVisits,
-        start: weekStart.toISOString().split('T')[0],
-        end: weekEnd.toISOString().split('T')[0]
-      });
+      if (error) {
+        console.error('Error recording visit:', error);
+      }
+    } catch (err) {
+      console.error('Failed to record visit:', err);
     }
-    
-    return result;
   },
   
-  processVisitsMonthly(visits: any[]): any[] {
-    // Group visits by month for the last 6 months
-    const result = [];
-    const now = new Date();
-    
-    for (let i = 0; i < 6; i++) {
-      const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+  // Get today's visits
+  async getTodayVisits(): Promise<number> {
+    try {
+      const today = new Date();
+      const startOfToday = startOfDay(today).toISOString();
       
-      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      const { data, error, count } = await supabase
+        .from('site_visits')
+        .select('*', { count: 'exact' })
+        .gte('timestamp', startOfToday);
       
-      const monthVisits = visits.filter(v => {
-        const visitDate = new Date(v.timestamp);
-        return visitDate >= monthStart && visitDate <= monthEnd;
-      }).length;
+      if (error) {
+        console.error('Error fetching today visits:', error);
+        return 0;
+      }
       
-      const monthName = month.toLocaleString('default', { month: 'short' });
-      
-      result.unshift({
-        month: monthName,
-        visits: monthVisits,
-        key: monthKey
-      });
+      return count || 0;
+    } catch (err) {
+      console.error('Failed to get today visits:', err);
+      return 0;
     }
-    
-    return result;
   },
   
-  getPlayerStats(): Promise<any> {
-    return Promise.all([
-      // Get total player count
-      supabase.from('players').select('count').eq('banned', false).single(),
-      // Get player count by region
-      supabase.from('players').select('region').eq('banned', false),
-      // Get gamemode scores count
-      supabase.from('gamemode_scores').select('gamemode, internal_tier')
-    ]).then(([totalResult, regionResult, gamemodeResult]) => {
-      // Process total players
-      const totalPlayers = totalResult.data?.count || 0;
+  // Get visits for different time periods
+  async getVisitsByPeriod(period: 'daily' | 'weekly' | 'monthly'): Promise<any[]> {
+    try {
+      let visits: any[] = [];
+      const now = new Date();
+      let startDate: Date;
       
-      // Process regions
+      if (period === 'daily') {
+        startDate = subDays(now, 7); // Last 7 days
+      } else if (period === 'weekly') {
+        startDate = subDays(now, 28); // Last 4 weeks
+      } else {
+        startDate = subDays(now, 180); // Last 6 months
+      }
+      
+      const { data, error } = await supabase
+        .from('site_visits')
+        .select('*')
+        .gte('timestamp', startDate.toISOString())
+        .order('timestamp', { ascending: true });
+      
+      if (error) {
+        console.error(`Error fetching ${period} visits:`, error);
+        return [];
+      }
+      
+      if (!data) return [];
+      
+      // Process data into appropriate format based on period
+      if (period === 'daily') {
+        // Group by day
+        const visitsByDay = data.reduce((acc: any, visit: any) => {
+          const date = format(new Date(visit.timestamp), 'yyyy-MM-dd');
+          if (!acc[date]) acc[date] = 0;
+          acc[date]++;
+          return acc;
+        }, {});
+        
+        // Convert to array format for charts
+        visits = Object.entries(visitsByDay).map(([date, count]) => ({
+          date: format(new Date(date), 'MMM dd'),
+          visits: count,
+        }));
+      } else if (period === 'weekly') {
+        // Group by week
+        const visitsByWeek = data.reduce((acc: any, visit: any) => {
+          const date = format(startOfWeek(new Date(visit.timestamp)), 'yyyy-MM-dd');
+          if (!acc[date]) acc[date] = 0;
+          acc[date]++;
+          return acc;
+        }, {});
+        
+        // Convert to array format for charts
+        visits = Object.entries(visitsByWeek).map(([date, count]) => ({
+          date: `Week of ${format(new Date(date), 'MMM dd')}`,
+          visits: count,
+        }));
+      } else {
+        // Group by month
+        const visitsByMonth = data.reduce((acc: any, visit: any) => {
+          const date = format(startOfMonth(new Date(visit.timestamp)), 'yyyy-MM');
+          if (!acc[date]) acc[date] = 0;
+          acc[date]++;
+          return acc;
+        }, {});
+        
+        // Convert to array format for charts
+        visits = Object.entries(visitsByMonth).map(([date, count]) => ({
+          date: format(new Date(date), 'MMM yyyy'),
+          visits: count,
+        }));
+      }
+      
+      return visits;
+    } catch (err) {
+      console.error(`Failed to get ${period} visits:`, err);
+      return [];
+    }
+  },
+  
+  // Get statistics about players
+  async getPlayerStatistics() {
+    try {
+      // Get total players
+      const { count: totalPlayers } = await supabase
+        .from('players')
+        .select('*', { count: 'exact' });
+      
+      // Get retired players
+      const { count: retiredPlayers } = await supabase
+        .from('players')
+        .select('*', { count: 'exact' })
+        .eq('tier_number', 'Retired');
+      
+      // Get players by region
+      const { data: regionData } = await supabase
+        .from('players')
+        .select('region')
+        .not('region', 'is', null);
+      
       const regionCounts: Record<string, number> = {};
-      if (regionResult.data) {
-        regionResult.data.forEach(player => {
+      if (regionData) {
+        regionData.forEach((player: any) => {
           const region = player.region || 'Unknown';
           regionCounts[region] = (regionCounts[region] || 0) + 1;
         });
       }
       
-      // Process gamemodes
+      // Get players by gamemode
+      const { data: gamemodeData } = await supabase
+        .from('gamemode_scores')
+        .select('gamemode');
+      
       const gamemodeCounts: Record<string, number> = {};
-      if (gamemodeResult.data) {
-        gamemodeResult.data.forEach(score => {
-          const gamemode = score.gamemode;
+      if (gamemodeData) {
+        gamemodeData.forEach((score: any) => {
+          const gamemode = score.gamemode || 'Unknown';
           gamemodeCounts[gamemode] = (gamemodeCounts[gamemode] || 0) + 1;
         });
       }
       
-      // Count retired players
-      const retiredCount = gamemodeResult.data?.filter(score => score.internal_tier === 'Retired').length || 0;
-      
       return {
-        totalPlayers,
-        retiredPlayers: retiredCount,
-        regionCounts,
-        gamemodeCounts
+        totalPlayers: totalPlayers || 0,
+        retiredPlayers: retiredPlayers || 0,
+        regionDistribution: regionCounts,
+        gamemodeDistribution: gamemodeCounts
       };
-    }).catch(error => {
-      console.error('Error fetching player stats:', error);
+    } catch (err) {
+      console.error('Failed to get player statistics:', err);
       return {
         totalPlayers: 0,
         retiredPlayers: 0,
-        regionCounts: {},
-        gamemodeCounts: {}
+        regionDistribution: {},
+        gamemodeDistribution: {}
       };
-    });
+    }
   }
 };
-
-// Check for expiration on import
-adminService.checkExpiration();
