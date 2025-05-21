@@ -42,9 +42,9 @@ export const adminService = {
     this.setAdmin(false);
   },
 
-  verifyAdminPIN(pin: string): Promise<boolean> {
-    // Set hardcoded PIN to 1234 as requested
-    return Promise.resolve(pin === '1234');
+  verifyAdminPIN(pin: string): boolean {
+    // Setting hardcoded PIN to 1234 as requested
+    return pin === '1234';
   }
 };
 

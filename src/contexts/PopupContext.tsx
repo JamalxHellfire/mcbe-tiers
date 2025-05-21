@@ -61,9 +61,8 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   // Calculate combat rank based on total points
-  // Updated according to new rank thresholds
   const calculateCombatRank = (points: number) => {
-    if (points >= 250) {
+    if (points >= 300) {
       return {
         title: 'Combat General',
         points,
@@ -71,7 +70,7 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         effectType: 'gold-sparkle' as const,
         borderColor: 'border-yellow-400/50',
       };
-    } else if (points >= 150 && points < 250) {
+    } else if (points >= 150 && points < 300) {
       return {
         title: 'Combat Marshal',
         points,
