@@ -1,21 +1,67 @@
 
-/* Glow effects for different combat ranks */
+/* Glow animations for result popup */
+@keyframes gold-sparkle {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.5); }
+  50% { box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.7); }
+}
+
+@keyframes silver-sparkle {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(192, 192, 192, 0.5); }
+  50% { box-shadow: 0 0 20px 5px rgba(192, 192, 192, 0.7); }
+}
+
+@keyframes bronze-sparkle {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(205, 127, 50, 0.5); }
+  50% { box-shadow: 0 0 20px 5px rgba(205, 127, 50, 0.7); }
+}
+
+@keyframes blue-pulse {
+  0%, 100% { box-shadow: 0 0 10px 2px rgba(65, 105, 225, 0.4); }
+  50% { box-shadow: 0 0 25px 8px rgba(65, 105, 225, 0.6); }
+}
+
+@keyframes soft-glow {
+  0%, 100% { box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.3); }
+  50% { box-shadow: 0 0 15px 3px rgba(255, 255, 255, 0.5); }
+}
+
 .effect-gold-sparkle {
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+  animation: gold-sparkle 2s infinite;
 }
 
 .effect-silver-sparkle {
-  filter: drop-shadow(0 0 8px rgba(192, 192, 192, 0.6));
+  animation: silver-sparkle 2s infinite;
 }
 
 .effect-bronze-sparkle {
-  filter: drop-shadow(0 0 8px rgba(205, 127, 50, 0.6));
+  animation: bronze-sparkle 2s infinite;
 }
 
-.effect-blue-glow {
-  filter: drop-shadow(0 0 8px rgba(66, 153, 225, 0.6));
+.effect-blue-pulse {
+  animation: blue-pulse 3s infinite;
 }
 
-.effect-grey-glow {
-  filter: drop-shadow(0 0 8px rgba(160, 174, 192, 0.6));
+.effect-soft-glow {
+  animation: soft-glow 4s infinite;
+}
+
+/* Tier colors */
+.text-tier-1 {
+  color: #FFD700; /* Gold */
+}
+
+.text-tier-2 {
+  color: #4169E1; /* Royal Blue */
+}
+
+.text-tier-3 {
+  color: #32CD32; /* Lime Green */
+}
+
+.text-tier-4 {
+  color: #9932CC; /* Purple */
+}
+
+.text-tier-5 {
+  color: #A9A9A9; /* Dark Gray */
 }

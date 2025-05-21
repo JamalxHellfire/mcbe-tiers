@@ -17,7 +17,8 @@ export interface ResultPopupData {
     title: string;
     points: number;
     color: string;
-    effectType: 'gold-sparkle' | 'silver-sparkle' | 'bronze-sparkle' | 'blue-glow' | 'grey-glow';
+    effectType: 'gold-sparkle' | 'silver-sparkle' | 'bronze-sparkle' | 'blue-pulse' | 'soft-glow';
+    borderColor: string;
   };
   timestamp: string;
 }
@@ -61,19 +62,21 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Calculate combat rank based on total points
   const calculateCombatRank = (points: number) => {
-    if (points >= 200 && points <= 250) {
+    if (points >= 300) {
       return {
         title: 'Combat General',
         points,
         color: 'text-yellow-400',
         effectType: 'gold-sparkle' as const,
+        borderColor: 'border-yellow-400/50',
       };
-    } else if (points >= 150 && points < 200) {
+    } else if (points >= 150 && points < 300) {
       return {
         title: 'Combat Marshal',
         points,
         color: 'text-gray-300',
         effectType: 'silver-sparkle' as const,
+        borderColor: 'border-gray-300/50',
       };
     } else if (points >= 75 && points < 150) {
       return {
@@ -81,36 +84,43 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         points,
         color: 'text-amber-700',
         effectType: 'bronze-sparkle' as const,
+        borderColor: 'border-amber-700/50',
       };
     } else if (points >= 25 && points < 75) {
       return {
         title: 'Combat Cadet',
         points,
         color: 'text-blue-400',
-        effectType: 'blue-glow' as const,
+        effectType: 'blue-pulse' as const,
+        borderColor: 'border-blue-400/50',
       };
-    } else {
+    } else if (points >= 5 && points < 25) {
       return {
         title: 'Combat Rookie',
         points,
         color: 'text-gray-400',
-        effectType: 'grey-glow' as const,
+        effectType: 'soft-glow' as const,
+        borderColor: 'border-gray-400/50',
+      };
+    } else {
+      return {
+        title: 'Unranked',
+        points,
+        color: 'text-white/50',
+        effectType: 'soft-glow' as const,
+        borderColor: 'border-transparent',
       };
     }
   };
 
   const setPopupDataFromPlayer = (player: Player, tierAssignments: TierAssignment[]) => {
-    // Calculate total combat points (from Crystal, Axe, Sword, Mace, SMP)
-    const combatGamemodes: GameMode[] = ['Crystal', 'Axe', 'Sword', 'Mace', 'SMP'];
-    const totalCombatPoints = tierAssignments
-      .filter(assignment => combatGamemodes.includes(assignment.gamemode))
-      .reduce((sum, assignment) => sum + assignment.points, 0);
-    
-    // Maximum possible points is 50 per gamemode × 5 gamemodes = 250
-    const clampedPoints = Math.min(250, totalCombatPoints);
+    // Calculate total combat points across all gamemodes
+    const totalCombatPoints = tierAssignments.reduce(
+      (sum, assignment) => sum + assignment.points, 0
+    );
     
     // Calculate combat rank
-    const combatRank = calculateCombatRank(clampedPoints);
+    const combatRank = calculateCombatRank(totalCombatPoints);
     
     setPopupData({
       player,
@@ -120,6 +130,12 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     
     setShowPopup(true);
+    
+    // Also show a toast notification
+    toast.success("New player results submitted!", {
+      description: `${player.ign} has been ranked as ${combatRank.title} with ${totalCombatPoints} points.`,
+      duration: 5000,
+    });
   };
 
   const closePopup = () => {
