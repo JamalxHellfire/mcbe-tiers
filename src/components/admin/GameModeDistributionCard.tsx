@@ -13,6 +13,27 @@ const GameModeDistributionCard: React.FC<GameModeDistributionCardProps> = ({ gam
     players: value
   }));
 
+  // Custom tick component to render rotated text
+  const CustomXAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="end"
+          fill="#888"
+          fontSize={12}
+          transform="rotate(-45)"
+        >
+          {payload.value}
+        </text>
+      </g>
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -35,8 +56,8 @@ const GameModeDistributionCard: React.FC<GameModeDistributionCardProps> = ({ gam
                 dataKey="name" 
                 stroke="#888" 
                 fontSize={12}
-                tick={{ angle: -45, textAnchor: 'end', dy: 10 }}
                 height={60}
+                tick={CustomXAxisTick}
               />
               <YAxis stroke="#888" fontSize={12} />
               <Tooltip 
