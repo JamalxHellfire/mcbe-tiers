@@ -33,8 +33,23 @@ export function toGameMode(displayMode: string): GameMode {
  * Helper function to convert a GameMode enum to a display string
  */
 export function toDisplayGameMode(gamemode: GameMode): string {
-  // Map database game modes to visible display names
-  const displayMap: Record<GameMode, string> = {
+  // Handle potential undefined gamemode
+  if (!gamemode) return '';
+
+  // For lowercase game modes, use this approach
+  const lowerCaseModes: Record<string, string> = {
+    'crystal': 'Crystal',
+    'sword': 'Sword',
+    'axe': 'Axe',
+    'mace': 'Mace',
+    'smp': 'SMP',
+    'uhc': 'UHC',
+    'nethpot': 'NethPot',
+    'bedwars': 'Bedwars'
+  };
+  
+  // First try as is (for standard GameModes)
+  const displayMap: Record<string, string> = {
     'Crystal': 'Crystal',
     'Sword': 'Sword',
     'Axe': 'Axe',
@@ -42,17 +57,9 @@ export function toDisplayGameMode(gamemode: GameMode): string {
     'SMP': 'SMP',
     'UHC': 'UHC',
     'NethPot': 'NethPot',
-    'Bedwars': 'Bedwars',
-    // Also support lowercase versions for backward compatibility
-    'crystal' as unknown as GameMode: 'Crystal',
-    'sword' as unknown as GameMode: 'Sword',
-    'axe' as unknown as GameMode: 'Axe',
-    'mace' as unknown as GameMode: 'Mace',
-    'smp' as unknown as GameMode: 'SMP',
-    'uhc' as unknown as GameMode: 'UHC',
-    'nethpot' as unknown as GameMode: 'NethPot',
-    'bedwars' as unknown as GameMode: 'Bedwars'
+    'Bedwars': 'Bedwars'
   };
   
-  return displayMap[gamemode] || String(gamemode);
+  // Check both maps
+  return displayMap[gamemode] || lowerCaseModes[gamemode.toLowerCase()] || String(gamemode);
 }

@@ -23,11 +23,11 @@ export const displayToDatabaseGameMode: Record<string, GameMode> = {
   'smp': 'SMP' as GameMode,
   'uhc': 'UHC' as GameMode,
   'nethpot': 'NethPot' as GameMode,
-  'bedwars': 'Bedwars' as GameMode,
+  'bedwars': 'Bedwars' as GameMode
 };
 
-// Map from database case to display case
-export const databaseToDisplayGameMode: Record<GameMode, string> = {
+// Map from database case to display case (standard cases)
+export const databaseToDisplayGameMode: Record<string, string> = {
   'Crystal': 'Crystal',
   'Sword': 'Sword',
   'Axe': 'Axe',
@@ -35,16 +35,19 @@ export const databaseToDisplayGameMode: Record<GameMode, string> = {
   'SMP': 'SMP',
   'UHC': 'UHC',
   'NethPot': 'NethPot',
-  'Bedwars': 'Bedwars',
-  // Also support lowercase versions for backward compatibility
-  'crystal' as unknown as GameMode: 'Crystal',
-  'sword' as unknown as GameMode: 'Sword',
-  'axe' as unknown as GameMode: 'Axe',
-  'mace' as unknown as GameMode: 'Mace',
-  'smp' as unknown as GameMode: 'SMP',
-  'uhc' as unknown as GameMode: 'UHC',
-  'nethpot' as unknown as GameMode: 'NethPot',
-  'bedwars' as unknown as GameMode: 'Bedwars'
+  'Bedwars': 'Bedwars'
+};
+
+// Additional map for lowercase versions
+const lowerCaseModeToDisplay: Record<string, string> = {
+  'crystal': 'Crystal',
+  'sword': 'Sword',
+  'axe': 'Axe',
+  'mace': 'Mace',
+  'smp': 'SMP',
+  'uhc': 'UHC',
+  'nethpot': 'NethPot',
+  'bedwars': 'Bedwars'
 };
 
 /**
@@ -58,7 +61,11 @@ export function toDatabaseGameMode(displayMode: string): GameMode {
  * Convert database format GameMode to display format
  */
 export function toDisplayGameMode(dbGameMode: GameMode): string {
-  return databaseToDisplayGameMode[dbGameMode] || String(dbGameMode);
+  if (!dbGameMode) return '';
+  
+  return databaseToDisplayGameMode[dbGameMode] || 
+         lowerCaseModeToDisplay[dbGameMode.toLowerCase()] || 
+         String(dbGameMode);
 }
 
 /**
