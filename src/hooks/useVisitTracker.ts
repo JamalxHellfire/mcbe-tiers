@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { adminService } from '@/services/adminService';
+import { adminService } from '../services/adminService';
 
 // This hook will be used to track page visits on the public pages
 export function useVisitTracker() {

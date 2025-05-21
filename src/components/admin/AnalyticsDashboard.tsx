@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import StatsCard from './StatsCard';
-import VisitorChart from './VisitorChart';
+import { VisitorChart } from './VisitorChart';
 import RegionDistributionCard from './RegionDistributionCard';
 import GameModeDistributionCard from './GameModeDistributionCard';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';

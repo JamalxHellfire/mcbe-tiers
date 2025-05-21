@@ -5,7 +5,50 @@ import { format, subDays, isToday, isYesterday, startOfDay, startOfWeek, startOf
 
 // Admin authentication
 export const adminService = {
+  // Admin state management
+  isAdmin() {
+    return localStorage.getItem('mc-admin-auth') === 'true';
+  },
+  
+  setAdmin(isAdmin: boolean) {
+    if (isAdmin) {
+      localStorage.setItem('mc-admin-auth', 'true');
+      localStorage.setItem('mc-admin-expiry', (Date.now() + 3600000).toString()); // 1 hour
+    } else {
+      localStorage.removeItem('mc-admin-auth');
+      localStorage.removeItem('mc-admin-expiry');
+    }
+  },
+  
+  checkExpiration() {
+    const expiry = localStorage.getItem('mc-admin-expiry');
+    if (!expiry) return false;
+    
+    const expiryTime = parseInt(expiry, 10);
+    if (Date.now() > expiryTime) {
+      this.logoutAdmin();
+      return false;
+    }
+    
+    return true;
+  },
+  
+  logoutAdmin() {
+    this.setAdmin(false);
+  },
+  
   // Verify PIN for admin access
+  async verifyAdminPIN(pin: string) {
+    try {
+      // Simple check - in production, this should be hashed
+      return pin === '1234';
+    } catch (err) {
+      console.error('Unexpected error during pin verification:', err);
+      return false;
+    }
+  },
+  
+  // Verify PIN against database
   async verifyPin(pin: string) {
     try {
       const { data, error } = await supabase
@@ -36,7 +79,7 @@ export const adminService = {
       
       const { error } = await supabase
         .from('site_visits')
-        .insert(visit);
+        .insert(visit as any);
       
       if (error) {
         console.error('Error recording visit:', error);
@@ -149,6 +192,52 @@ export const adminService = {
     }
   },
   
+  // Get compiled visitor statistics
+  async getVisitorStats() {
+    try {
+      // Get today's visits
+      const today = await this.getTodayVisits();
+      
+      // Get visit data for different periods
+      const dailyData = await this.getVisitsByPeriod('daily');
+      const weeklyData = await this.getVisitsByPeriod('weekly');
+      const monthlyData = await this.getVisitsByPeriod('monthly');
+      
+      // Calculate yesterday's visits
+      const yesterday = dailyData.find(d => 
+        format(new Date(), 'MMM dd') !== d.date && 
+        format(subDays(new Date(), 1), 'MMM dd') === d.date
+      )?.visits || 0;
+      
+      // Calculate this week's total
+      const thisWeek = dailyData.reduce((acc, day) => acc + day.visits, 0);
+      
+      // Calculate this month's total
+      const thisMonth = weeklyData.reduce((acc, week) => acc + week.visits, 0);
+      
+      return {
+        today,
+        yesterday,
+        thisWeek,
+        thisMonth,
+        dailyData,
+        weeklyData,
+        monthlyData
+      };
+    } catch (err) {
+      console.error('Failed to get visitor statistics:', err);
+      return {
+        today: 0,
+        yesterday: 0,
+        thisWeek: 0,
+        thisMonth: 0,
+        dailyData: [],
+        weeklyData: [],
+        monthlyData: []
+      };
+    }
+  },
+  
   // Get statistics about players
   async getPlayerStatistics() {
     try {
@@ -193,17 +282,22 @@ export const adminService = {
       return {
         totalPlayers: totalPlayers || 0,
         retiredPlayers: retiredPlayers || 0,
-        regionDistribution: regionCounts,
-        gamemodeDistribution: gamemodeCounts
+        regionCounts: regionCounts,
+        gamemodeCounts: gamemodeCounts
       };
     } catch (err) {
       console.error('Failed to get player statistics:', err);
       return {
         totalPlayers: 0,
         retiredPlayers: 0,
-        regionDistribution: {},
-        gamemodeDistribution: {}
+        regionCounts: {},
+        gamemodeCounts: {}
       };
     }
+  },
+  
+  // Get player stats for admin dashboard
+  async getPlayerStats() {
+    return await this.getPlayerStatistics();
   }
 };
