@@ -1,15 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Users, CalendarDays, UserCheck, BarChart } from 'lucide-react';
-import { adminService } from '@/services/adminService';
-import VisitorChart from './VisitorChart';
 import StatsCard from './StatsCard';
+import VisitorChart from './VisitorChart';
 import RegionDistributionCard from './RegionDistributionCard';
 import GameModeDistributionCard from './GameModeDistributionCard';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { adminService } from '@/services/adminService';
+import { Users, Calendar, TrendingUp, Flag, Gamepad2 } from 'lucide-react';
 
-const AnalyticsDashboard: React.FC = () => {
+const AnalyticsDashboard = () => {
   const [visitorStats, setVisitorStats] = useState<any>({
     today: 0,
     yesterday: 0,
@@ -27,19 +26,20 @@ const AnalyticsDashboard: React.FC = () => {
     gamemodeCounts: {}
   });
   
+  const [chartPeriod, setChartPeriod] = useState('daily');
   const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch analytics data
+  
+  // Fetch visitor statistics
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
       setIsLoading(true);
       try {
-        const [visitorData, playerData] = await Promise.all([
-          adminService.getVisitorStats(),
-          adminService.getPlayerStats()
-        ]);
-        
+        // Fetch visitor stats
+        const visitorData = await adminService.getVisitorStats();
         setVisitorStats(visitorData);
+        
+        // Fetch player stats
+        const playerData = await adminService.getPlayerStats();
         setPlayerStats(playerData);
       } catch (error) {
         console.error('Error fetching analytics data:', error);
@@ -48,97 +48,77 @@ const AnalyticsDashboard: React.FC = () => {
       }
     };
     
-    fetchData();
+    fetchStats();
     
-    // Refresh data every 5 minutes
-    const intervalId = setInterval(fetchData, 5 * 60 * 1000);
-    return () => clearInterval(intervalId);
+    // Set up a refresh interval (every 5 minutes)
+    const refreshInterval = setInterval(fetchStats, 5 * 60 * 1000);
+    return () => clearInterval(refreshInterval);
   }, []);
-
+  
+  // Determine which data to show based on selected period
+  const getChartData = () => {
+    switch (chartPeriod) {
+      case 'daily':
+        return visitorStats.dailyData;
+      case 'weekly':
+        return visitorStats.weeklyData;
+      case 'monthly':
+        return visitorStats.monthlyData;
+      default:
+        return visitorStats.dailyData;
+    }
+  };
+  
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="visitors">
-        <TabsList className="grid grid-cols-2 mb-4">
-          <TabsTrigger value="visitors">Visitor Insights</TabsTrigger>
-          <TabsTrigger value="players">Player Statistics</TabsTrigger>
-        </TabsList>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard 
+          title="Today's Visits" 
+          value={visitorStats.today} 
+          icon={<Calendar className="h-5 w-5" />} 
+        />
+        <StatsCard 
+          title="This Week's Visits" 
+          value={visitorStats.thisWeek} 
+          icon={<TrendingUp className="h-5 w-5" />} 
+        />
+        <StatsCard 
+          title="Total Players" 
+          value={playerStats.totalPlayers} 
+          icon={<Users className="h-5 w-5" />}
+        />
+        <StatsCard 
+          title="Retired Players" 
+          value={playerStats.retiredPlayers} 
+          icon={<Flag className="h-5 w-5" />}
+        />
+      </div>
+      
+      <Tabs defaultValue="daily" value={chartPeriod} onValueChange={setChartPeriod}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Visitor Trends</h3>
+          <TabsList>
+            <TabsTrigger value="daily">Daily</TabsTrigger>
+            <TabsTrigger value="weekly">Weekly</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+          </TabsList>
+        </div>
         
-        <TabsContent value="visitors" className="space-y-4">
-          {isLoading ? (
-            <Card>
-              <CardContent className="p-6 flex justify-center items-center">
-                <div className="animate-pulse">Loading visitor data...</div>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatsCard 
-                  title="Today's Visits" 
-                  value={visitorStats.today} 
-                  icon={<CalendarDays className="h-8 w-8" />} 
-                />
-                <StatsCard 
-                  title="Yesterday's Visits" 
-                  value={visitorStats.yesterday} 
-                  icon={<CalendarDays className="h-8 w-8" />} 
-                />
-                <StatsCard 
-                  title="This Week" 
-                  value={visitorStats.thisWeek} 
-                  icon={<BarChart className="h-8 w-8" />} 
-                />
-                <StatsCard 
-                  title="This Month" 
-                  value={visitorStats.thisMonth} 
-                  icon={<BarChart className="h-8 w-8" />} 
-                />
-              </div>
-              
-              <VisitorChart 
-                dailyData={visitorStats.dailyData}
-                weeklyData={visitorStats.weeklyData}
-                monthlyData={visitorStats.monthlyData}
-              />
-            </>
-          )}
+        <TabsContent value="daily" className="m-0">
+          <VisitorChart data={getChartData()} period="daily" />
         </TabsContent>
-        
-        <TabsContent value="players" className="space-y-4">
-          {isLoading ? (
-            <Card>
-              <CardContent className="p-6 flex justify-center items-center">
-                <div className="animate-pulse">Loading player statistics...</div>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatsCard 
-                  title="Total Players" 
-                  value={playerStats.totalPlayers} 
-                  icon={<Users className="h-8 w-8" />} 
-                />
-                <StatsCard 
-                  title="Retired Players" 
-                  value={playerStats.retiredPlayers} 
-                  icon={<UserCheck className="h-8 w-8" />} 
-                />
-                <StatsCard 
-                  title="Active Regions" 
-                  value={Object.keys(playerStats.regionCounts).length} 
-                  icon={<BarChart className="h-8 w-8" />} 
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <RegionDistributionCard regionCounts={playerStats.regionCounts} />
-                <GameModeDistributionCard gamemodeCounts={playerStats.gamemodeCounts} className="col-span-1 md:col-span-2" />
-              </div>
-            </>
-          )}
+        <TabsContent value="weekly" className="m-0">
+          <VisitorChart data={getChartData()} period="weekly" />
+        </TabsContent>
+        <TabsContent value="monthly" className="m-0">
+          <VisitorChart data={getChartData()} period="monthly" />
         </TabsContent>
       </Tabs>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <RegionDistributionCard regionCounts={playerStats.regionCounts} />
+        <GameModeDistributionCard gamemodeCounts={playerStats.gamemodeCounts} />
+      </div>
     </div>
   );
 };

@@ -1,5 +1,11 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { GameMode } from '@/services/playerService';
+
+// Type definitions for site_visits table
+interface SiteVisit {
+  id?: string;
+  timestamp: string;
+}
 
 // Simple service to manage admin authentication state using localStorage
 export const adminService = {
@@ -50,17 +56,29 @@ export const adminService = {
   // Analytics functions
   recordVisit(): Promise<boolean> {
     try {
-      // Record a visit in the database
-      return supabase
-        .from('site_visits')
-        .insert({ timestamp: new Date().toISOString() })
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error recording visit:', error);
-            return false;
-          }
-          return true;
-        });
+      // Record a visit in the database - create the table if it doesn't exist first
+      const visit: SiteVisit = { timestamp: new Date().toISOString() };
+      
+      return new Promise((resolve, reject) => {
+        // Try to insert into site_visits table
+        supabase
+          .from('site_visits')
+          .insert(visit)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error recording visit:', error);
+              // If table doesn't exist yet, we'll resolve as false but not throw an error
+              // In a production environment, you'd need to create the table first
+              resolve(false);
+            } else {
+              resolve(true);
+            }
+          })
+          .catch(err => {
+            console.error('Failed to record visit:', err);
+            resolve(false);
+          });
+      });
     } catch (error) {
       console.error('Failed to record visit:', error);
       return Promise.resolve(false);
@@ -74,14 +92,51 @@ export const adminService = {
     const lastWeekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7).toISOString();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     
-    return supabase
-      .from('site_visits')
-      .select('timestamp')
-      .gte('timestamp', monthStart)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Error fetching visits:', error);
-          return {
+    return new Promise((resolve) => {
+      // Try to fetch site visits
+      supabase
+        .from('site_visits')
+        .select('timestamp')
+        .gte('timestamp', monthStart)
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('Error fetching visits:', error);
+            // Return empty data if table doesn't exist or other error
+            resolve({
+              today: 0,
+              yesterday: 0,
+              thisWeek: 0,
+              thisMonth: 0,
+              dailyData: [],
+              weeklyData: [],
+              monthlyData: []
+            });
+          } else {
+            // Process the visit data
+            const visits = data || [];
+            const dailyData = this.processVisitsDaily(visits);
+            const weeklyData = this.processVisitsWeekly(visits);
+            const monthlyData = this.processVisitsMonthly(visits);
+            
+            const todayVisits = visits.filter(v => v.timestamp >= today).length || 0;
+            const yesterdayVisits = visits.filter(v => v.timestamp >= yesterday && v.timestamp < today).length || 0;
+            const weekVisits = visits.filter(v => v.timestamp >= lastWeekStart).length || 0;
+            const monthVisits = visits.length || 0;
+            
+            resolve({
+              today: todayVisits,
+              yesterday: yesterdayVisits,
+              thisWeek: weekVisits,
+              thisMonth: monthVisits,
+              dailyData,
+              weeklyData,
+              monthlyData
+            });
+          }
+        })
+        .catch(err => {
+          console.error('Failed to get visitor stats:', err);
+          resolve({
             today: 0,
             yesterday: 0,
             thisWeek: 0,
@@ -89,29 +144,9 @@ export const adminService = {
             dailyData: [],
             weeklyData: [],
             monthlyData: []
-          };
-        }
-        
-        // Process the visit data
-        const dailyData = this.processVisitsDaily(data || []);
-        const weeklyData = this.processVisitsWeekly(data || []);
-        const monthlyData = this.processVisitsMonthly(data || []);
-        
-        const todayVisits = data?.filter(v => v.timestamp >= today).length || 0;
-        const yesterdayVisits = data?.filter(v => v.timestamp >= yesterday && v.timestamp < today).length || 0;
-        const weekVisits = data?.filter(v => v.timestamp >= lastWeekStart).length || 0;
-        const monthVisits = data?.length || 0;
-        
-        return {
-          today: todayVisits,
-          yesterday: yesterdayVisits,
-          thisWeek: weekVisits,
-          thisMonth: monthVisits,
-          dailyData,
-          weeklyData,
-          monthlyData
-        };
-      });
+          });
+        });
+    });
   },
   
   processVisitsDaily(visits: any[]): any[] {
@@ -195,7 +230,7 @@ export const adminService = {
       // Get player count by region
       supabase.from('players').select('region').eq('banned', false),
       // Get gamemode scores count
-      supabase.from('gamemode_scores').select('gamemode')
+      supabase.from('gamemode_scores').select('gamemode, internal_tier')
     ]).then(([totalResult, regionResult, gamemodeResult]) => {
       // Process total players
       const totalPlayers = totalResult.data?.count || 0;

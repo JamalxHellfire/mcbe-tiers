@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Rankings from './pages/Rankings';
@@ -5,7 +6,7 @@ import Gamemodes from './pages/Gamemodes';
 import News from './pages/News';
 import AdminPanel from './pages/AdminPanel';
 import { PopupProvider } from './contexts/PopupContext';
-import { ToastContainer } from 'sonner';
+import { Toaster } from 'sonner';
 import { useVisitTracker } from '@/hooks/useVisitTracker';
 
 function App() {
@@ -13,7 +14,7 @@ function App() {
 
   return (
     <PopupProvider>
-      <ToastContainer />
+      <Toaster />
       <Router>
         <Routes>
           <Route path="/" element={<Rankings />} />
