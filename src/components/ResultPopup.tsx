@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -166,6 +167,9 @@ export function ResultPopup() {
   // If no data or not showing, don't render
   if (!showPopup || !popupData) return null;
 
+  // Game mode array with proper casing to match GameMode type
+  const gameModes: GameMode[] = ['Crystal', 'Axe', 'Sword', 'Mace', 'SMP', 'Bedwars', 'UHC', 'NethPot'];
+
   return (
     <AnimatePresence mode="wait">
       {showPopup && (
@@ -231,8 +235,10 @@ export function ResultPopup() {
               
               {/* Gamemode Tier Grid */}
               <div className="grid grid-cols-4 gap-4 w-full">
-                {(['crystal', 'axe', 'sword', 'mace', 'smp', 'bedwars', 'uhc', 'nethpot'] as GameMode[]).map(mode => {
-                  const assignment = popupData.tierAssignments.find(a => a.gamemode === mode);
+                {gameModes.map(mode => {
+                  const assignment = popupData.tierAssignments.find(a => 
+                    a.gamemode.toLowerCase() === mode.toLowerCase()
+                  );
                   const tier = assignment?.tier || 'Not Ranked';
                   const points = assignment?.points || 0;
                   
@@ -241,7 +247,7 @@ export function ResultPopup() {
                       <Tooltip delayDuration={300}>
                         <TooltipTrigger asChild>
                           <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                            <GameModeIcon mode={mode} className="h-8 w-8 mb-1" />
+                            <GameModeIcon mode={mode.toLowerCase()} className="h-8 w-8 mb-1" />
                             <span className={`text-xs font-medium ${tier !== 'Not Ranked' ? getTierColor(tier) : 'text-gray-400'}`}>
                               {tier !== 'Not Ranked' ? tier : '—'}
                             </span>

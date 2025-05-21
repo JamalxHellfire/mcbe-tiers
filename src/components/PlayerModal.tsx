@@ -51,9 +51,9 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
     }
   }, [isOpen, player]);
   
-  // List all possible gamemodes as lowercase to match GameMode type
+  // List all possible gamemodes with proper casing to match GameMode type
   const allGamemodes: GameMode[] = [
-    'crystal', 'sword', 'smp', 'uhc', 'axe', 'nethpot', 'bedwars', 'mace'
+    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
   ];
   
   const modalVariants = {
@@ -175,7 +175,7 @@ export function PlayerModal({ isOpen, onClose, player }: PlayerModalProps) {
                     transition={{ delay: index * 0.05 }}
                   >
                     <span className="text-sm flex items-center">
-                      <GameModeIcon mode={mode} />
+                      <GameModeIcon mode={mode.toLowerCase()} />
                       {toDisplayGameMode(mode)}
                     </span>
                     <div className="flex flex-col items-end">

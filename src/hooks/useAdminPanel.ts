@@ -35,16 +35,16 @@ export function useAdminPanel() {
     region: false
   });
   
-  // Track selected tiers for each gamemode
+  // Track selected tiers for each gamemode with proper casing
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
-    crystal: "NA",
-    sword: "NA",
-    smp: "NA",
-    uhc: "NA",
-    axe: "NA",
-    nethpot: "NA",
-    bedwars: "NA",
-    mace: "NA"
+    'Crystal': "NA",
+    'Sword': "NA",
+    'SMP': "NA",
+    'UHC': "NA",
+    'Axe': "NA",
+    'NethPot': "NA",
+    'Bedwars': "NA",
+    'Mace': "NA"
   } as Record<GameMode, TierLevel | "NA">);
   
   const queryClient = useQueryClient();
@@ -594,14 +594,14 @@ export function useAdminPanel() {
       toast.success(`Successfully submitted ${successCount} tier rankings for ${ign}`);
       // Reset tier selections
       setTierSelections({
-        crystal: "NA",
-        sword: "NA",
-        smp: "NA",
-        uhc: "NA",
-        axe: "NA",
-        nethpot: "NA",
-        bedwars: "NA",
-        mace: "NA"
+        'Crystal': "NA",
+        'Sword': "NA",
+        'SMP': "NA",
+        'UHC': "NA",
+        'Axe': "NA",
+        'NethPot': "NA",
+        'Bedwars': "NA",
+        'Mace': "NA"
       } as Record<GameMode, TierLevel | "NA">);
       
       // Reset form
@@ -612,6 +612,20 @@ export function useAdminPanel() {
     } else {
       toast.error('Failed to submit any tier rankings');
     }
+  };
+
+  // Reset tier selections with proper casing for GameMode
+  const resetTierSelections = () => {
+    setTierSelections({
+      'Crystal': "NA",
+      'Sword': "NA",
+      'SMP': "NA",
+      'UHC': "NA",
+      'Axe': "NA",
+      'NethPot': "NA",
+      'Bedwars': "NA",
+      'Mace': "NA"
+    } as Record<GameMode, TierLevel | "NA">);
   };
 
   return {
@@ -649,6 +663,7 @@ export function useAdminPanel() {
     validateForm,
     handleTierChange,
     // Process the form submission
-    handleSubmitAllSelectedTiers
+    handleSubmitAllSelectedTiers,
+    resetTierSelections
   };
 }
