@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { GameMode, TierLevel, PlayerRegion, DeviceType } from '@/services/playerService';
 import { GameModeIcon } from '@/components/GameModeIcon';
 import { toDisplayGameMode } from '@/utils/gamemodeCasing';
-import { AlertCircle, Search, Trash2, Ban, UserPlus, Trophy, RefreshCw } from 'lucide-react';
+import { AlertCircle, Search, Trash2, Ban, UserPlus, Trophy, RefreshCw, BarChart3 } from 'lucide-react';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -54,6 +56,12 @@ const AdminPanel = () => {
     handleTierChange,
     handleSubmitAllSelectedTiers
   } = useAdminPanel();
+  
+  // Record a visit when the site is loaded (but not the admin panel)
+  useEffect(() => {
+    // We don't record admin panel visits
+    // This would be placed on the main site pages
+  }, []);
   
   // Define all game modes with proper casing
   const gameModes: GameMode[] = [
@@ -146,12 +154,37 @@ const AdminPanel = () => {
                 <Button variant="destructive" onClick={handleLogout}>Logout</Button>
               </div>
               
-              <Tabs defaultValue="submit" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-3 mb-4">
-                  <TabsTrigger value="submit">Submit Results</TabsTrigger>
-                  <TabsTrigger value="manage">Manage Players</TabsTrigger>
-                  <TabsTrigger value="tools">Admin Tools</TabsTrigger>
+              <Tabs defaultValue="dashboard" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid grid-cols-4 mb-4">
+                  <TabsTrigger value="dashboard">
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </TabsTrigger>
+                  <TabsTrigger value="submit">
+                    <Trophy className="mr-2 h-4 w-4" />
+                    Submit Results
+                  </TabsTrigger>
+                  <TabsTrigger value="manage">
+                    <Search className="mr-2 h-4 w-4" />
+                    Manage Players
+                  </TabsTrigger>
+                  <TabsTrigger value="tools">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Admin Tools
+                  </TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="dashboard">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Analytics Dashboard</CardTitle>
+                      <CardDescription>View website activity and player statistics</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <AnalyticsDashboard />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
                 
                 <TabsContent value="submit">
                   <Card>
