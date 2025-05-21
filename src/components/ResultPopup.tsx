@@ -28,6 +28,16 @@ const getDeviceIcon = (device?: DeviceType) => {
   }
 };
 
+// Define interface for particle configurations
+interface ParticleConfig {
+  colors: string[];
+  size: { min: number; max: number; };
+  speed: number;
+  opacity: { min: number; max: number; };
+  count: number;
+  pulse?: boolean; // Make pulse optional
+}
+
 export function ResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -55,7 +65,7 @@ export function ResultPopup() {
     let animationFrameId: number;
     
     // Particle configurations
-    const particleConfigs = {
+    const particleConfigs: Record<string, ParticleConfig> = {
       'gold-sparkle': {
         colors: ['#FFD700', '#FFA500', '#FFFF00', '#F0E68C'],
         size: { min: 1, max: 4 },
