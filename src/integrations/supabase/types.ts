@@ -178,21 +178,6 @@ export type Database = {
         }
         Relationships: []
       }
-      site_visits: {
-        Row: {
-          id: string
-          timestamp: string
-        }
-        Insert: {
-          id?: string
-          timestamp?: string
-        }
-        Update: {
-          id?: string
-          timestamp?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never

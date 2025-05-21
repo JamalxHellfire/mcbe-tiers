@@ -6,13 +6,15 @@ import Gamemodes from './pages/Gamemodes';
 import News from './pages/News';
 import AdminPanel from './pages/AdminPanel';
 import { PopupProvider } from './contexts/PopupContext';
-import { useVisitTracker } from './hooks/useVisitTracker';
+import { Toaster } from 'sonner';
+import { useVisitTracker } from '@/hooks/useVisitTracker';
 
 function App() {
   useVisitTracker();
 
   return (
     <PopupProvider>
+      <Toaster />
       <Router>
         <Routes>
           <Route path="/" element={<Rankings />} />
