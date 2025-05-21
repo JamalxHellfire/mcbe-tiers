@@ -1,6 +1,5 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import Index from "./pages/Index";
 import SubcategoryPage from "./pages/SubcategoryPage";
@@ -14,42 +13,29 @@ import { PopupProvider } from "./contexts/PopupContext";
 import { ResultPopup } from "./components/ResultPopup";
 import "./components/ResultPopup.css";
 
-// Create a react-query client with default options that avoids React 18 strict mode issues
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-      staleTime: 60000,
-    },
-  },
-});
-
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <PopupProvider>
-          <BrowserRouter>
-            <div className="app">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/news" element={<News />} />
-                <Route path="/admin" element={<AdminPanel />} />
-                <Route 
-                  path="/:gameMode" 
-                  element={<SubcategoryPage />} 
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster position="top-center" />
-              <ResultPopup />
-            </div>
-          </BrowserRouter>
-        </PopupProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <PopupProvider>
+        <BrowserRouter>
+          <div className="app">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route 
+                path="/:gameMode" 
+                element={<SubcategoryPage />} 
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster position="top-center" />
+            <ResultPopup />
+          </div>
+        </BrowserRouter>
+      </PopupProvider>
+    </ThemeProvider>
   );
 }
 
