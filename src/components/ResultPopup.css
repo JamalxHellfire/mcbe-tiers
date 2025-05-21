@@ -1,67 +1,70 @@
 
-/* Glow animations for result popup */
-@keyframes gold-sparkle {
-  0%, 100% { box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.5); }
-  50% { box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.7); }
+/* Rank specific animations */
+@keyframes firestorm-swirl {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.2; }
+  50% { transform: translateY(-10px) rotate(180deg); opacity: 0.8; }
+  100% { transform: translateY(-20px) rotate(360deg); opacity: 0; }
 }
 
-@keyframes silver-sparkle {
-  0%, 100% { box-shadow: 0 0 10px 2px rgba(192, 192, 192, 0.5); }
-  50% { box-shadow: 0 0 20px 5px rgba(192, 192, 192, 0.7); }
+@keyframes lightning-pulse {
+  0% { opacity: 0.1; transform: scale(0.8); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+  100% { opacity: 0.1; transform: scale(0.8); }
 }
 
-@keyframes bronze-sparkle {
-  0%, 100% { box-shadow: 0 0 10px 2px rgba(205, 127, 50, 0.5); }
-  50% { box-shadow: 0 0 20px 5px rgba(205, 127, 50, 0.7); }
+@keyframes silver-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
 }
 
-@keyframes blue-pulse {
-  0%, 100% { box-shadow: 0 0 10px 2px rgba(65, 105, 225, 0.4); }
-  50% { box-shadow: 0 0 25px 8px rgba(65, 105, 225, 0.6); }
+@keyframes blue-twinkle {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.7; }
 }
 
-@keyframes soft-glow {
-  0%, 100% { box-shadow: 0 0 5px 1px rgba(255, 255, 255, 0.3); }
-  50% { box-shadow: 0 0 15px 3px rgba(255, 255, 255, 0.5); }
+@keyframes white-static {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.3; }
 }
 
-.effect-gold-sparkle {
-  animation: gold-sparkle 2s infinite;
+/* Avatar glow effects */
+.avatar-glow-red {
+  box-shadow: 0 0 15px 5px rgba(220, 38, 38, 0.4);
+  animation: firestorm-swirl 3s infinite alternate;
 }
 
-.effect-silver-sparkle {
-  animation: silver-sparkle 2s infinite;
+.avatar-glow-gold {
+  box-shadow: 0 0 15px 5px rgba(234, 179, 8, 0.4);
+  animation: lightning-pulse 2s infinite;
 }
 
-.effect-bronze-sparkle {
-  animation: bronze-sparkle 2s infinite;
+.avatar-glow-silver {
+  box-shadow: 0 0 15px 5px rgba(192, 192, 192, 0.4);
+  animation: silver-ring 4s infinite;
 }
 
-.effect-blue-pulse {
-  animation: blue-pulse 3s infinite;
+.avatar-glow-blue {
+  box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.4);
+  animation: blue-twinkle 3s infinite alternate;
 }
 
-.effect-soft-glow {
-  animation: soft-glow 4s infinite;
+.avatar-glow-white {
+  box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.3);
+  animation: white-static 4s infinite;
 }
 
-/* Tier colors */
-.text-tier-1 {
-  color: #FFD700; /* Gold */
-}
-
-.text-tier-2 {
-  color: #4169E1; /* Royal Blue */
-}
-
-.text-tier-3 {
-  color: #32CD32; /* Lime Green */
-}
-
-.text-tier-4 {
-  color: #9932CC; /* Purple */
-}
-
-.text-tier-5 {
-  color: #A9A9A9; /* Dark Gray */
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .gamemode-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .avatar-container {
+    transform: scale(0.9);
+  }
+  
+  .rank-device-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }

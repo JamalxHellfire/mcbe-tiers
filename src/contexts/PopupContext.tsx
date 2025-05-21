@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Player, GameMode, TierLevel, playerService } from '@/services/playerService';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getPlayerRank } from '@/utils/rankUtils';
 
 export interface TierAssignment {
   gamemode: GameMode;
@@ -17,8 +18,10 @@ export interface ResultPopupData {
     title: string;
     points: number;
     color: string;
-    effectType: 'gold-sparkle' | 'silver-sparkle' | 'bronze-sparkle' | 'blue-pulse' | 'soft-glow';
+    effectType: string;
     borderColor: string;
+    icon: string;
+    rankNumber: number;
   };
   timestamp: string;
 }
@@ -61,67 +64,81 @@ export const PopupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   // Calculate combat rank based on total points
-  // Updated according to new rank thresholds
-  const calculateCombatRank = (points: number) => {
-    if (points >= 250) {
+  // Updated according to new rank thresholds from requirements
+  const calculateCombatRank = (points: number, leaderboardPosition: number = 1) => {
+    if (points >= 300) {
       return {
         title: 'Combat General',
         points,
-        color: 'text-yellow-400',
-        effectType: 'gold-sparkle' as const,
-        borderColor: 'border-yellow-400/50',
+        color: 'text-red-500',
+        effectType: 'firestorm',
+        borderColor: 'border-red-500/50',
+        icon: 'general-icon.svg',
+        rankNumber: leaderboardPosition
       };
-    } else if (points >= 150 && points < 250) {
+    } else if (points >= 200 && points < 300) {
       return {
         title: 'Combat Marshal',
         points,
-        color: 'text-gray-300',
-        effectType: 'silver-sparkle' as const,
-        borderColor: 'border-gray-300/50',
+        color: 'text-yellow-400',
+        effectType: 'lightning',
+        borderColor: 'border-yellow-400/50',
+        icon: 'marshal-icon.svg',
+        rankNumber: leaderboardPosition
       };
-    } else if (points >= 75 && points < 150) {
+    } else if (points >= 100 && points < 200) {
       return {
         title: 'Combat Ace',
         points,
-        color: 'text-amber-700',
-        effectType: 'bronze-sparkle' as const,
-        borderColor: 'border-amber-700/50',
+        color: 'text-gray-300',
+        effectType: 'silver',
+        borderColor: 'border-gray-300/50',
+        icon: 'ace-icon.svg',
+        rankNumber: leaderboardPosition
       };
-    } else if (points >= 25 && points < 75) {
+    } else if (points >= 50 && points < 100) {
       return {
         title: 'Combat Cadet',
         points,
         color: 'text-blue-400',
-        effectType: 'blue-pulse' as const,
+        effectType: 'blue',
         borderColor: 'border-blue-400/50',
-      };
-    } else if (points >= 5 && points < 25) {
-      return {
-        title: 'Combat Rookie',
-        points,
-        color: 'text-gray-400',
-        effectType: 'soft-glow' as const,
-        borderColor: 'border-gray-400/50',
+        icon: 'cadet-icon.svg',
+        rankNumber: leaderboardPosition
       };
     } else {
       return {
-        title: 'Unranked',
+        title: 'Combat Rookie',
         points,
-        color: 'text-white/50',
-        effectType: 'soft-glow' as const,
-        borderColor: 'border-transparent',
+        color: 'text-white',
+        effectType: 'white',
+        borderColor: 'border-white/30',
+        icon: 'rookie-icon.svg',
+        rankNumber: leaderboardPosition
       };
     }
   };
 
-  const setPopupDataFromPlayer = (player: Player, tierAssignments: TierAssignment[]) => {
+  const setPopupDataFromPlayer = async (player: Player, tierAssignments: TierAssignment[]) => {
     // Calculate total combat points across all gamemodes
     const totalCombatPoints = tierAssignments.reduce(
       (sum, assignment) => sum + assignment.points, 0
     );
     
+    // Get player's leaderboard position
+    let leaderboardPosition = 1;
+    try {
+      const leaderboardPlayers = await playerService.getRankedPlayers();
+      const playerIndex = leaderboardPlayers.findIndex(p => p.id === player.id);
+      if (playerIndex !== -1) {
+        leaderboardPosition = playerIndex + 1;
+      }
+    } catch (error) {
+      console.error("Error fetching leaderboard position:", error);
+    }
+    
     // Calculate combat rank
-    const combatRank = calculateCombatRank(totalCombatPoints);
+    const combatRank = calculateCombatRank(totalCombatPoints, leaderboardPosition);
     
     setPopupData({
       player,
