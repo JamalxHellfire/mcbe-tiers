@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { playerService, GameMode, TierLevel } from '@/services/playerService';
 import { getPlayerRank, formatPointsRange } from '@/utils/rankUtils';
 import { GameModeIcon } from './GameModeIcon';
-import { toGameMode } from '@/utils/gamemodeUtils';
+import { toDisplayGameMode } from '@/utils/gamemodeCasing';
 
 interface PlayerModalProps {
   isOpen: boolean;
