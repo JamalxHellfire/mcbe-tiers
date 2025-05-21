@@ -213,7 +213,7 @@ export function ResultPopup() {
 
   // Game mode array with proper casing
   const gameModes: GameMode[] = [
-    'Crystal', 'Sword', 'Bedwars', 'Mace', 'SMP', 'UHC', 'NethPot'
+    'Crystal', 'Sword', 'Bedwars', 'Mace', 'SMP', 'UHC', 'NethPot', 'Axe'
   ];
 
   return (
