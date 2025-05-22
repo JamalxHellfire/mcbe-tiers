@@ -1,94 +1,70 @@
 
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trophy, Smartphone, Laptop, Monitor } from 'lucide-react';
+import { X, Trophy } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { usePopup, TierAssignment } from '@/contexts/PopupContext';
-import { GameMode, DeviceType } from '@/services/playerService';
+import { usePopup } from '@/contexts/PopupContext';
+import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
 
 // Helper to get region full name and colors
 const getRegionInfo = (regionCode: string = 'NA') => {
-  const regions: Record<string, { name: string, color: string, accentColor: string }> = {
-    'NA': { 
-      name: 'North America', 
-      color: 'bg-red-500', 
-      accentColor: 'from-red-600/20 to-red-900/5' 
-    },
-    'EU': { 
-      name: 'Europe', 
-      color: 'bg-blue-500', 
-      accentColor: 'from-blue-600/20 to-blue-900/5' 
-    },
-    'ASIA': { 
-      name: 'Asia', 
-      color: 'bg-yellow-500', 
-      accentColor: 'from-yellow-600/20 to-yellow-900/5' 
-    },
-    'SA': { 
-      name: 'South America', 
-      color: 'bg-green-500', 
-      accentColor: 'from-green-600/20 to-green-900/5' 
-    },
-    'AF': { 
-      name: 'Africa', 
-      color: 'bg-purple-500', 
-      accentColor: 'from-purple-600/20 to-purple-900/5' 
-    },
-    'OCE': { 
-      name: 'Oceania', 
-      color: 'bg-teal-500', 
-      accentColor: 'from-teal-600/20 to-teal-900/5' 
-    }
+  const regions: Record<string, { name: string, cssClass: string }> = {
+    'NA': { name: 'North America', cssClass: 'region-na' },
+    'EU': { name: 'Europe', cssClass: 'region-eu' },
+    'ASIA': { name: 'Asia', cssClass: 'region-asia' },
+    'SA': { name: 'South America', cssClass: 'region-sa' },
+    'AF': { name: 'Africa', cssClass: 'region-af' },
+    'OCE': { name: 'Oceania', cssClass: 'region-oce' }
   };
   
   return regions[regionCode] || regions['NA'];
 };
 
 // Get device icon component
-const DeviceIcon = ({ device }: { device?: DeviceType }) => {
-  switch (device) {
-    case 'Mobile':
-      return <Smartphone className="mr-2 h-4 w-4" />;
-    case 'Console':
-      return <Monitor className="mr-2 h-4 w-4" />;
-    default:
-      return <Laptop className="mr-2 h-4 w-4" />;
-  }
+const DeviceInfo = ({ device }: { device?: string }) => {
+  return (
+    <div className="flex items-center justify-center">
+      <span className="text-white text-sm">{device || 'PC'}</span>
+    </div>
+  );
 };
 
-// Get tier display label (High/Low)
-const getTierLabel = (tier: string): string => {
-  if (tier.includes('H')) return 'High';
-  if (tier.includes('L')) return 'Low';
-  return '';
-};
-
-// Format tier for display (T1, T2, etc)
-const formatTierDisplay = (tier: string): string => {
-  if (tier === 'Retired') return 'RT';
-  if (tier.includes('T1')) return 'T1';
-  if (tier.includes('T2')) return 'T2';
-  if (tier.includes('T3')) return 'T3';
-  if (tier.includes('T4')) return 'T4';
-  if (tier.includes('T5')) return 'T5';
-  return 'T?';
+// Format tier for display
+const formatTierDisplay = (tier: string): { code: string, label: string } => {
+  let code = 'T?';
+  let label = '';
+  
+  if (tier === 'Retired') return { code: 'RT', label: '' };
+  
+  // Extract tier number (T1-T5)
+  if (tier.includes('T1')) code = 'T1';
+  else if (tier.includes('T2')) code = 'T2';
+  else if (tier.includes('T3')) code = 'T3';
+  else if (tier.includes('T4')) code = 'T4';
+  else if (tier.includes('T5')) code = 'T5';
+  
+  // Extract High/Low label
+  if (tier.includes('H')) label = 'High';
+  else if (tier.includes('L')) label = 'Low';
+  
+  return { code, label };
 };
 
 export function ResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Animation for avatar effects
+  // Setup canvas for rank-specific effects
   useEffect(() => {
     if (!showPopup || !popupData || !canvasRef.current) return;
-
+    
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
+    
     // Set canvas dimensions to match container
     const resizeCanvas = () => {
       if (canvas.parentElement) {
@@ -100,281 +76,208 @@ export function ResultPopup() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
+    // Effect configurations based on rank
     const effectType = popupData.combatRank.effectType;
-    let animationFrameId: number;
     
     // Particle configurations for different ranks
-    const particleConfigs: Record<string, any> = {
-      'firestorm': {
+    const particleConfigs = {
+      'general': {
         colors: ['#ff4d4d', '#ff7f50', '#ffcc00', '#ff9966'],
-        size: { min: 1, max: 5 },
-        speed: 2,
-        opacity: { min: 0.4, max: 0.8 },
-        count: 120,
-        lifespan: { min: 20, max: 80 },
-        spiral: true
-      },
-      'lightning': {
-        colors: ['#ffd700', '#ffcc00', '#ffec99', '#fff9c4'],
-        size: { min: 1, max: 3.5 },
-        speed: 2.5,
-        opacity: { min: 0.3, max: 0.9 },
-        count: 100,
-        lifespan: { min: 10, max: 50 },
-        lightning: true
-      },
-      'silver': {
-        colors: ['#C0C0C0', '#E8E8E8', '#A9A9A9', '#D3D3D3'],
-        size: { min: 0.8, max: 3 },
-        speed: 1.2,
-        opacity: { min: 0.3, max: 0.7 },
+        size: { min: 2, max: 5 },
+        speed: 1.5,
         count: 80,
-        lifespan: { min: 30, max: 90 },
-        rings: true
+        opacity: { min: 0.4, max: 0.8 }
       },
-      'blue': {
-        colors: ['#4169E1', '#1E90FF', '#87CEEB', '#00BFFF'],
-        size: { min: 1, max: 4 },
+      'marshal': {
+        colors: ['#ffd700', '#ffcc00', '#ffec99', '#fff9c4'],
+        size: { min: 1.5, max: 4 },
+        speed: 1.2,
+        count: 60,
+        opacity: { min: 0.3, max: 0.7 }
+      },
+      'ace': {
+        colors: ['#C0C0C0', '#E8E8E8', '#A9A9A9', '#D3D3D3'],
+        size: { min: 1, max: 3 },
         speed: 1,
-        opacity: { min: 0.2, max: 0.6 },
-        count: 70,
-        lifespan: { min: 40, max: 100 },
-        twinkle: true
-      },
-      'white': {
-        colors: ['#FFFFFF', '#F8F8FF', '#F0F8FF'],
-        size: { min: 0.5, max: 2 },
-        speed: 0.7,
-        opacity: { min: 0.1, max: 0.4 },
         count: 50,
-        lifespan: { min: 50, max: 120 },
-        static: true
+        opacity: { min: 0.2, max: 0.6 }
+      },
+      'cadet': {
+        colors: ['#4169E1', '#1E90FF', '#87CEEB', '#00BFFF'],
+        size: { min: 0.8, max: 2.5 },
+        speed: 0.8,
+        count: 40,
+        opacity: { min: 0.2, max: 0.5 }
+      },
+      'rookie': {
+        colors: ['#FFFFFF', '#F8F8FF', '#F0F8FF'],
+        size: { min: 0.5, max: 1.5 },
+        speed: 0.5,
+        count: 30,
+        opacity: { min: 0.1, max: 0.3 }
       }
     };
     
-    const config = particleConfigs[effectType] || particleConfigs['white'];
-    const particles: {
+    const config = particleConfigs[effectType as keyof typeof particleConfigs] || particleConfigs.rookie;
+    const particles: Array<{
       x: number;
       y: number;
-      initialX: number;
-      initialY: number;
       size: number;
       color: string;
       speedX: number;
       speedY: number;
+      opacity: number;
       life: number;
       maxLife: number;
-      opacity: number;
-      angle?: number;
-      radius?: number;
-    }[] = [];
+    }> = [];
     
+    // Avatar position (center of the avatar)
     const avatarX = canvas.width / 2;
-    const avatarY = canvas.height * 0.25;
+    const avatarY = canvas.height / 4;
     const avatarRadius = 40;
     
-    // Create particles
+    // Create particles around the avatar
     const createParticle = () => {
       if (particles.length > config.count) return;
       
-      // Different particle creation strategies based on effect type
-      let x, y, speedX, speedY;
+      // Create particle at random position around avatar
+      const angle = Math.random() * Math.PI * 2;
+      const distance = avatarRadius + Math.random() * 10;
       
-      if (config.spiral) {
-        // Spiral pattern for firestorm
-        const angle = Math.random() * Math.PI * 2;
-        const distance = avatarRadius + Math.random() * 10;
-        x = avatarX + Math.cos(angle) * distance;
-        y = avatarY + Math.sin(angle) * distance;
-        speedX = Math.cos(angle) * config.speed * (0.5 + Math.random());
-        speedY = Math.sin(angle) * config.speed * (0.5 + Math.random());
-      } else if (config.lightning) {
-        // Lightning pattern
-        x = avatarX + (Math.random() - 0.5) * avatarRadius * 2;
-        y = avatarY + (Math.random() - 0.5) * avatarRadius * 2;
-        const angle = Math.random() * Math.PI * 2;
-        speedX = Math.cos(angle) * config.speed * (0.5 + Math.random() * 1.5);
-        speedY = Math.sin(angle) * config.speed * (0.5 + Math.random() * 1.5);
-      } else if (config.rings) {
-        // Ring pattern for silver
-        const angle = Math.random() * Math.PI * 2;
-        const distance = avatarRadius + Math.random() * 20;
-        x = avatarX + Math.cos(angle) * distance;
-        y = avatarY + Math.sin(angle) * distance;
-        speedX = (Math.random() - 0.5) * config.speed;
-        speedY = (Math.random() - 0.5) * config.speed;
-      } else if (config.twinkle) {
-        // Twinkle pattern for blue
-        const angle = Math.random() * Math.PI * 2;
-        const distance = avatarRadius + Math.random() * 30;
-        x = avatarX + Math.cos(angle) * distance;
-        y = avatarY + Math.sin(angle) * distance;
-        speedX = (Math.random() - 0.5) * config.speed * 0.7;
-        speedY = (Math.random() - 0.5) * config.speed * 0.7;
-      } else {
-        // Static glow for rookie
-        const angle = Math.random() * Math.PI * 2;
-        const distance = avatarRadius + Math.random() * 15;
-        x = avatarX + Math.cos(angle) * distance;
-        y = avatarY + Math.sin(angle) * distance;
-        speedX = (Math.random() - 0.5) * config.speed * 0.5;
-        speedY = (Math.random() - 0.5) * config.speed * 0.5;
-      }
+      const x = avatarX + Math.cos(angle) * distance;
+      const y = avatarY + Math.sin(angle) * distance;
       
-      const maxLife = config.lifespan.min + Math.random() * (config.lifespan.max - config.lifespan.min);
+      const size = config.size.min + Math.random() * (config.size.max - config.size.min);
+      const color = config.colors[Math.floor(Math.random() * config.colors.length)];
       
+      // Random direction
+      const speedX = (Math.random() - 0.5) * config.speed;
+      const speedY = (Math.random() - 0.5) * config.speed;
+      
+      const opacity = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+      
+      // Add to particles array
       particles.push({
         x,
         y,
-        initialX: x,
-        initialY: y,
-        size: config.size.min + Math.random() * (config.size.max - config.size.min),
-        color: config.colors[Math.floor(Math.random() * config.colors.length)],
+        size,
+        color,
         speedX,
         speedY,
+        opacity,
         life: 0,
-        maxLife,
-        opacity: config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min),
-        angle: Math.random() * Math.PI * 2,
-        radius: avatarRadius + Math.random() * 20
+        maxLife: 50 + Math.random() * 50
       });
     };
     
     // Animation loop
+    let animationId: number;
+    
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Create new particles
-      for (let i = 0; i < 3; i++) {
-        if (Math.random() > 0.7) {
-          createParticle();
-        }
+      if (Math.random() > 0.8) {
+        createParticle();
       }
       
-      // Update time variable for animation
-      const time = Date.now() * 0.001;
-      
-      // Draw and update particles
+      // Update and draw particles
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         
-        // Different update logic based on effect type
-        if (config.spiral) {
-          // Spiral motion with outward movement
-          p.angle = (p.angle || 0) + 0.02;
-          p.radius = (p.radius || avatarRadius) + 0.2;
-          p.x = avatarX + Math.cos(p.angle) * p.radius;
-          p.y = avatarY + Math.sin(p.angle) * p.radius;
-        } else if (config.lightning) {
-          // Lightning-like erratic movement
-          if (Math.random() > 0.9) {
-            p.speedX = (Math.random() - 0.5) * config.speed * 2;
-            p.speedY = (Math.random() - 0.5) * config.speed * 2;
-          }
-          p.x += p.speedX;
-          p.y += p.speedY;
-        } else if (config.rings) {
-          // Orbit with slight drift
-          p.angle = (p.angle || 0) + 0.01;
-          p.x = avatarX + Math.cos(p.angle) * (p.radius || avatarRadius);
-          p.y = avatarY + Math.sin(p.angle) * (p.radius || avatarRadius);
-          p.x += p.speedX * 0.3;
-          p.y += p.speedY * 0.3;
-        } else if (config.twinkle) {
-          // Twinkle with pulsing opacity
-          p.x += p.speedX;
-          p.y += p.speedY;
-          p.opacity = p.opacity * (0.9 + 0.1 * Math.sin(time * 3 + i));
-        } else {
-          // Standard movement for static glow
-          p.x += p.speedX;
-          p.y += p.speedY;
-        }
-        
+        p.x += p.speedX;
+        p.y += p.speedY;
         p.life++;
         
-        // Determine opacity based on life
-        let opacity = p.opacity * (1 - (p.life / p.maxLife));
+        // Fade out as life increases
+        const opacity = p.opacity * (1 - (p.life / p.maxLife));
         
-        // Add pulsing effect for twinkle
-        if (config.twinkle) {
-          opacity *= (0.7 + 0.3 * Math.sin(time * 5 + i));
-        }
-        
-        ctx.fillStyle = p.color;
+        // Draw particle
         ctx.globalAlpha = opacity;
+        ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
         
         // Remove dead particles
-        if (p.life >= p.maxLife || 
-            p.x < 0 || p.x > canvas.width || 
-            p.y < 0 || p.y > canvas.height) {
+        if (p.life >= p.maxLife) {
           particles.splice(i, 1);
           i--;
         }
       }
       
       ctx.globalAlpha = 1;
-      animationFrameId = requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
     
-    // Start animation
     animate();
     
     // Cleanup
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resizeCanvas);
     };
   }, [showPopup, popupData]);
-
-  // If no data or not showing, don't render
+  
+  // Click outside to close
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      closePopup();
+    }
+  };
+  
   if (!showPopup || !popupData) return null;
-
-  // Get region styling
+  
+  // Get region info for styling
   const region = popupData.player.region || 'NA';
   const regionInfo = getRegionInfo(region);
-
-  // Game mode array with proper casing
-  const gameModes: GameMode[] = [
-    'Crystal', 'Sword', 'Bedwars', 'Mace', 'SMP', 'UHC', 'NethPot', 'Axe'
+  
+  // Rank CSS class
+  const rankColorClass = `rank-color-${popupData.combatRank.effectType}`;
+  
+  // Ordered gamemode layout
+  const orderedGamemodes: GameMode[] = [
+    'Crystal', 'Sword', 'Bedwars',
+    'Mace', 'SMP', 'UHC',
+    'NethPot', 'Axe'
   ];
-
+  
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {showPopup && (
         <motion.div
+          className="popup-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={handleOverlayClick}
         >
           <motion.div 
+            className={`popup-container ${rankColorClass}`}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className={`relative w-full max-w-md bg-gradient-to-b from-gray-900 to-black rounded-xl border-2 ${popupData.combatRank.borderColor} shadow-xl overflow-hidden`}
           >
-            {/* Canvas for visual effects */}
-            <canvas 
-              ref={canvasRef} 
+            {/* Canvas for particle effects */}
+            <canvas
+              ref={canvasRef}
               className="absolute inset-0 pointer-events-none z-10"
             />
             
-            {/* Region gradient overlay for accent color */}
-            <div className={`absolute inset-0 bg-gradient-to-b ${regionInfo.accentColor} pointer-events-none opacity-40`}></div>
+            {/* Region-based gradient overlay */}
+            <div className={`region-gradient ${regionInfo.cssClass}`}></div>
             
-            {/* Header */}
+            {/* Header bar */}
             <div className="relative py-4 text-center border-b border-white/10 bg-black/30">
               <h2 className="text-xl font-bold text-white">Player Profile</h2>
               
               {/* Close button */}
               <button 
-                onClick={closePopup}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closePopup();
+                }}
                 className="absolute top-3 right-3 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                 aria-label="Close"
               >
@@ -382,70 +285,58 @@ export function ResultPopup() {
               </button>
             </div>
             
-            <div className="relative z-20 p-6 flex flex-col items-center">
-              {/* Avatar Section */}
-              <div className="relative mb-4">
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Avatar className="h-24 w-24 border-4 border-white/20 shadow-lg">
-                    <AvatarImage 
-                      src={`https://crafatar.com/avatars/${popupData.player.java_username || popupData.player.ign}?size=128&overlay=true`}
-                      alt={popupData.player.ign}
-                    />
-                    <AvatarFallback>{popupData.player.ign.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                </motion.div>
+            <div className="p-6 relative z-20">
+              {/* Avatar section */}
+              <div className="flex flex-col sm:flex-row items-center mb-6">
+                <div className="relative mb-4 sm:mb-0 sm:mr-6">
+                  <div className={`avatar-effect-wrapper`}>
+                    <Avatar className="h-24 w-24 border-4 border-white/20 shadow-lg">
+                      <AvatarImage 
+                        src={`https://crafatar.com/avatars/${popupData.player.ign}?size=128&overlay=true`}
+                        alt={popupData.player.ign}
+                      />
+                      <AvatarFallback>{popupData.player.ign.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    
+                    {/* Rank-based effect */}
+                    <div className={`avatar-effect effect-${popupData.combatRank.effectType}`}></div>
+                  </div>
+                </div>
+                
+                <div className="text-center sm:text-left flex-1">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span 
+                            className="px-3 py-0.5 rounded-full text-xs font-medium"
+                            style={{ backgroundColor: `var(--region-color)` }}
+                          >
+                            {region}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{regionInfo.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <h3 className="text-xl font-bold text-white">{popupData.player.ign}</h3>
+                  </div>
+                  
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+                    <Trophy className="h-4 w-4 text-yellow-400" />
+                    <span className="text-yellow-200 font-medium">{popupData.combatRank.points} points</span>
+                  </div>
+                  
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${popupData.combatRank.color} bg-black/40 border ${popupData.combatRank.borderColor}`}>
+                    <span>{popupData.combatRank.title}</span>
+                  </div>
+                </div>
               </div>
               
-              {/* Player Info */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-center mb-5"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <TooltipProvider>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <span className={`px-3 py-0.5 ${regionInfo.color} text-white rounded-full text-xs font-medium`}>
-                          {region}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{regionInfo.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  <h2 className="text-xl font-bold text-white">{popupData.player.ign}</h2>
-                </div>
-                
-                <div className="mt-2 flex items-center justify-center gap-2">
-                  <Trophy className="h-4 w-4 text-yellow-400" />
-                  <span className="text-yellow-200 font-medium">{popupData.combatRank.points} points</span>
-                </div>
-                
-                <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${popupData.combatRank.color} bg-black/40 border border-white/10`}>
-                  <img 
-                    src={`/icons/${popupData.combatRank.icon}`} 
-                    alt={popupData.combatRank.title} 
-                    className="h-4 w-4"
-                  />
-                  <span>{popupData.combatRank.title}</span>
-                </div>
-              </motion.div>
-              
-              {/* Rank & Device */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="grid grid-cols-2 gap-4 w-full mb-6"
-              >
+              {/* Rank & Device information */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-black/40 border border-white/10 rounded-lg p-3 text-center">
                   <span className="text-gray-400 text-xs block mb-1">Rank</span>
                   <span className="text-white text-lg font-bold">#{popupData.combatRank.rankNumber}</span>
@@ -453,55 +344,45 @@ export function ResultPopup() {
                 
                 <div className="bg-black/40 border border-white/10 rounded-lg p-3 text-center">
                   <span className="text-gray-400 text-xs block mb-1">Device</span>
-                  <span className="text-white text-sm font-medium flex items-center justify-center">
-                    <DeviceIcon device={popupData.player.device} />
-                    {popupData.player.device || 'PC'}
-                  </span>
+                  <DeviceInfo device={popupData.player.device} />
                 </div>
-              </motion.div>
+              </div>
               
-              {/* Gamemode Rankings Title */}
+              {/* Gamemode Grid */}
               <div className="w-full mb-3">
                 <h3 className="text-white/80 text-sm font-medium">Gamemode Rankings</h3>
               </div>
               
-              {/* Gamemode Grid */}
-              <div className="grid grid-cols-2 gap-3 w-full">
-                {gameModes.map((mode, index) => {
-                  const assignment = popupData.tierAssignments.find(a => 
-                    a.gamemode === mode
-                  );
-                  
+              <div className="gamemode-grid">
+                {orderedGamemodes.map((mode, index) => {
+                  const assignment = popupData.tierAssignments.find(a => a.gamemode === mode);
                   const tier = assignment?.tier || 'Not Ranked';
-                  const formattedTier = formatTierDisplay(tier);
-                  const tierLabel = getTierLabel(tier);
+                  const { code, label } = formatTierDisplay(tier);
                   
                   return (
                     <motion.div
                       key={mode}
+                      className="gamemode-card"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 + index * 0.05 }}
+                      transition={{ delay: 0.1 + index * 0.05 }}
                     >
                       <TooltipProvider>
-                        <Tooltip delayDuration={300}>
+                        <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex items-center p-2 bg-black/40 rounded-lg border border-white/10 hover:border-white/20 transition-all cursor-help">
-                              <div className="mr-3">
-                                <GameModeIcon mode={mode.toLowerCase()} className="h-8 w-8" />
+                            <div className="flex flex-col items-center p-3 bg-black/40 rounded-lg border border-white/10 hover:border-white/20 transition-all cursor-help">
+                              <div className="mb-2">
+                                <GameModeIcon mode={mode.toLowerCase()} className="h-10 w-10" />
                               </div>
-                              <div>
-                                <span className="text-white/80 text-xs block">{toDisplayGameMode(mode)}</span>
-                                <div className="flex items-center gap-1.5">
-                                  {tier !== 'Not Ranked' ? (
-                                    <>
-                                      <span className="text-white font-bold">{formattedTier}</span>
-                                      <span className="text-xs text-white/60">{tierLabel}</span>
-                                    </>
-                                  ) : (
-                                    <span className="text-gray-500 text-xs">Unranked</span>
-                                  )}
-                                </div>
+                              <div className="text-center">
+                                {tier !== 'Not Ranked' ? (
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-white font-bold">{code}</span>
+                                    {label && <span className="text-xs text-white/60">{label}</span>}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-xs">Unranked</span>
+                                )}
                               </div>
                             </div>
                           </TooltipTrigger>
