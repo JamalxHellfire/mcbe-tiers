@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { enhancedPlayerService as playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
+import { enhancedPlayerService } from '@/services/enhancedPlayerService';
+import { PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';

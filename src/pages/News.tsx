@@ -71,10 +71,10 @@ const News = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <NewsArticleCard
-                  title={article.title}
-                  description={article.description || article.content.substring(0, 150) + '...'}
-                  author={article.author}
-                  date={new Date(article.published_at).toLocaleDateString()}
+                  headline={article.title}
+                  summary={article.description || article.content.substring(0, 150) + '...'}
+                  byline={article.author}
+                  publishDate={new Date(article.published_at).toLocaleDateString()}
                   category={article.category}
                 />
               </motion.div>
