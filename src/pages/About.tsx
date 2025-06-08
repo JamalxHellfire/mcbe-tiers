@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -27,15 +26,6 @@ const About = () => {
       
       <main className="flex-grow">
         <div className="content-container py-6 md:py-8">
-          <motion.h1 
-            className="section-heading mb-6 md:mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            About MCBE TIERS
-          </motion.h1>
-          
           <motion.div
             className="bg-dark-surface/40 backdrop-blur-md rounded-xl p-6 border border-white/5"
             initial={{ opacity: 0 }}

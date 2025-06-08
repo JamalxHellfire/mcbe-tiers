@@ -5,7 +5,6 @@ import { Footer } from '../components/Footer';
 import { LeaderboardTable } from '../components/LeaderboardTable';
 import { useGamemodeTiers } from '../hooks/useGamemodeTiers';
 import { useLeaderboard } from '../hooks/useLeaderboard';
-import { GameModeSelector } from '../components/GameModeSelector';
 import { TierGrid } from '../components/TierGrid';
 import { PlayerModal } from '../components/PlayerModal';
 import { ResultPopup } from '../components/ResultPopup';
@@ -51,20 +50,6 @@ const Index = () => {
       
       <main className="flex-grow">
         <div className="content-container py-6">
-          <motion.h1 
-            className="section-heading mb-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Crystal PvP Tierlist
-          </motion.h1>
-          
-          <GameModeSelector 
-            selectedMode={selectedMode} 
-            onSelectMode={handleSelectMode} 
-          />
-          
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="text-white">Loading...</div>

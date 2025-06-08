@@ -7,12 +7,9 @@ import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
-import { MobileNavMenu } from '../components/MobileNavMenu';
 
 const SubcategoryPage = () => {
-  // Get gameMode from URL parameters
   const { gameMode: gameModeParam } = useParams<{ gameMode: string }>();
-  // Convert to proper GameMode type with fallback
   const gameMode = (gameModeParam as GameMode) || 'Crystal';
 
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -42,11 +39,6 @@ const SubcategoryPage = () => {
       
       <main className="flex-grow">
         <div className="content-container py-4 md:py-6">
-          {/* Heading removed as requested */}
-          
-          {/* Mobile navigation menu */}
-          <MobileNavMenu currentMode={gameMode.toLowerCase()} />
-          
           <AnimatePresence mode="wait">
             <motion.div
               key={gameMode.toLowerCase()}
@@ -63,7 +55,6 @@ const SubcategoryPage = () => {
       
       <Footer />
       
-      {/* Player Modal */}
       {selectedPlayer && (
         <PlayerModal
           isOpen={isPlayerModalOpen}

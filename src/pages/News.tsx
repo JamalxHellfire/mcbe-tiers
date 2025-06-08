@@ -21,15 +21,6 @@ const News = () => {
       
       <main className="flex-grow">
         <div className="content-container py-6">
-          <motion.h1 
-            className="section-heading mb-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Latest News
-          </motion.h1>
-          
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="text-white">Loading news...</div>
@@ -48,11 +39,13 @@ const News = () => {
               {articles.map((article) => (
                 <NewsArticleCard
                   key={article.id}
-                  title={article.title}
-                  content={article.content}
-                  author={article.author}
-                  category={article.category}
-                  published_at={article.published_at}
+                  article={{
+                    title: article.title,
+                    content: article.content,
+                    author: article.author,
+                    category: article.category,
+                    publishedAt: article.published_at
+                  }}
                 />
               ))}
             </motion.div>
