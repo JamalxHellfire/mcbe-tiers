@@ -9,120 +9,212 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      banned_players: {
+        Row: {
+          banned_at: string
+          id: string
+          ign: string
+          player_id: string
+          reason: string | null
+        }
+        Insert: {
+          banned_at?: string
+          id?: string
+          ign: string
+          player_id: string
+          reason?: string | null
+        }
+        Update: {
+          banned_at?: string
+          id?: string
+          ign?: string
+          player_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banned_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gamemode_scores: {
+        Row: {
+          created_at: string
+          display_tier: Database["public"]["Enums"]["tier_level"]
+          gamemode: Database["public"]["Enums"]["game_mode"]
+          id: string
+          internal_tier: Database["public"]["Enums"]["tier_level"]
+          player_id: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_tier: Database["public"]["Enums"]["tier_level"]
+          gamemode: Database["public"]["Enums"]["game_mode"]
+          id?: string
+          internal_tier: Database["public"]["Enums"]["tier_level"]
+          player_id: string
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_tier?: Database["public"]["Enums"]["tier_level"]
+          gamemode?: Database["public"]["Enums"]["game_mode"]
+          id?: string
+          internal_tier?: Database["public"]["Enums"]["tier_level"]
+          player_id?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamemode_scores_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_articles: {
+        Row: {
+          author: string
+          category: string
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          published_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          category?: string
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          published_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          published_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          avatar_url: string | null
+          banned: boolean
+          created_at: string
+          device: Database["public"]["Enums"]["device_type"] | null
+          global_points: number
+          id: string
+          ign: string
+          java_username: string | null
+          overall_rank: number | null
+          region: Database["public"]["Enums"]["player_region"] | null
+          updated_at: string
+          uuid: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banned?: boolean
+          created_at?: string
+          device?: Database["public"]["Enums"]["device_type"] | null
+          global_points?: number
+          id?: string
+          ign: string
+          java_username?: string | null
+          overall_rank?: number | null
+          region?: Database["public"]["Enums"]["player_region"] | null
+          updated_at?: string
+          uuid?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banned?: boolean
+          created_at?: string
+          device?: Database["public"]["Enums"]["device_type"] | null
+          global_points?: number
+          id?: string
+          ign?: string
+          java_username?: string | null
+          overall_rank?: number | null
+          region?: Database["public"]["Enums"]["player_region"] | null
+          updated_at?: string
+          uuid?: string | null
+        }
+        Relationships: []
+      }
+      system_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          level: Database["public"]["Enums"]["log_level"]
+          message: string
+          operation: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          level: Database["public"]["Enums"]["log_level"]
+          message: string
+          operation?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          level?: Database["public"]["Enums"]["log_level"]
+          message?: string
+          operation?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      admin_assign_tier: {
-        Args: {
-          player_id: string
-          game_mode: Database["public"]["Enums"]["game_mode"]
-          tier_level: Database["public"]["Enums"]["tier_level"]
-          tier_score: number
-        }
-        Returns: undefined
-      }
       admin_ban_player: {
         Args: { player_id: string; player_ign: string }
         Returns: undefined
-      }
-      admin_create_player: {
-        Args: {
-          player_ign: string
-          player_java_username?: string
-          player_uuid?: string
-          player_region?: Database["public"]["Enums"]["player_region"]
-          player_device?: Database["public"]["Enums"]["device_type"]
-          player_avatar_url?: string
-        }
-        Returns: {
-          id: string
-          ign: string
-          java_username: string
-          uuid: string
-          avatar_url: string
-          region: Database["public"]["Enums"]["player_region"]
-          device: Database["public"]["Enums"]["device_type"]
-          global_points: number
-          overall_rank: number
-          banned: boolean
-          created_at: string
-          updated_at: string
-        }[]
       }
       admin_delete_player: {
         Args: { player_id: string }
         Returns: undefined
       }
-      admin_get_player_by_id: {
-        Args: { player_id: string }
-        Returns: {
-          id: string
-          ign: string
-          java_username: string
-          uuid: string
-          avatar_url: string
-          region: Database["public"]["Enums"]["player_region"]
-          device: Database["public"]["Enums"]["device_type"]
-          global_points: number
-          overall_rank: number
-          banned: boolean
-          created_at: string
-          updated_at: string
-        }[]
-      }
-      admin_get_player_by_ign: {
-        Args: { player_ign: string }
-        Returns: {
-          id: string
-          ign: string
-          java_username: string
-          uuid: string
-          avatar_url: string
-          region: Database["public"]["Enums"]["player_region"]
-          device: Database["public"]["Enums"]["device_type"]
-          global_points: number
-          overall_rank: number
-          banned: boolean
-          created_at: string
-          updated_at: string
-        }[]
-      }
-      admin_get_player_tiers: {
-        Args: { player_id: string }
-        Returns: {
-          id: string
-          gamemode: Database["public"]["Enums"]["game_mode"]
-          score: number
-          internal_tier: Database["public"]["Enums"]["tier_level"]
-          display_tier: Database["public"]["Enums"]["tier_level"]
-          created_at: string
-          updated_at: string
-        }[]
-      }
       admin_update_global_points: {
         Args: { player_id: string }
         Returns: undefined
       }
-      admin_update_player: {
-        Args: {
-          player_id: string
-          player_java_username?: string
-          player_uuid?: string
-          player_region?: Database["public"]["Enums"]["player_region"]
-          player_device?: Database["public"]["Enums"]["device_type"]
-          player_avatar_url?: string
-        }
-        Returns: undefined
-      }
-      assign_player_tier: {
-        Args: {
-          player_id: string
-          game_mode: Database["public"]["Enums"]["game_mode"]
-          tier_level: Database["public"]["Enums"]["tier_level"]
-        }
+      calculate_tier_points: {
+        Args: { tier: Database["public"]["Enums"]["tier_level"] }
         Returns: number
       }
       check_user_auth: {
@@ -137,43 +229,8 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_gamemode_leaderboard: {
-        Args: { game_mode: Database["public"]["Enums"]["game_mode"] }
-        Returns: {
-          id: string
-          ign: string
-          java_username: string
-          uuid: string
-          avatar_url: string
-          region: Database["public"]["Enums"]["player_region"]
-          device: Database["public"]["Enums"]["device_type"]
-          global_points: number
-          tier: Database["public"]["Enums"]["tier_level"]
-          score: number
-          banned: boolean
-          created_at: string
-          updated_at: string
-        }[]
-      }
-      get_player_by_ign: {
-        Args: { player_ign: string }
-        Returns: {
-          id: string
-          ign: string
-          java_username: string
-          uuid: string
-          avatar_url: string
-          region: Database["public"]["Enums"]["player_region"]
-          device: Database["public"]["Enums"]["device_type"]
-          global_points: number
-          overall_rank: number
-          banned: boolean
-          created_at: string
-          updated_at: string
-        }[]
-      }
       get_players_by_gamemode: {
-        Args: { game_mode: Database["public"]["Enums"]["game_mode"] }
+        Args: { game_mode_param: Database["public"]["Enums"]["game_mode"] }
         Returns: {
           id: string
           ign: string
@@ -183,15 +240,14 @@ export type Database = {
           region: Database["public"]["Enums"]["player_region"]
           device: Database["public"]["Enums"]["device_type"]
           global_points: number
-          overall_rank: number
+          tier: Database["public"]["Enums"]["tier_level"]
+          score: number
           banned: boolean
           created_at: string
           updated_at: string
-          tier: Database["public"]["Enums"]["tier_level"]
-          score: number
         }[]
       }
-      get_ranked_leaderboard: {
+      get_ranked_players: {
         Args: { limit_count?: number }
         Returns: {
           id: string
@@ -202,7 +258,7 @@ export type Database = {
           region: Database["public"]["Enums"]["player_region"]
           device: Database["public"]["Enums"]["device_type"]
           global_points: number
-          player_rank: number
+          overall_rank: number
           banned: boolean
           created_at: string
           updated_at: string
@@ -220,17 +276,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      update_player_info: {
-        Args: {
-          player_id: string
-          player_java_username?: string
-          player_uuid?: string
-          player_region?: Database["public"]["Enums"]["player_region"]
-          player_device?: Database["public"]["Enums"]["device_type"]
-          player_avatar_url?: string
-        }
-        Returns: undefined
-      }
       verify_admin_pin: {
         Args: { input_pin: string }
         Returns: {
@@ -240,7 +285,7 @@ export type Database = {
       }
     }
     Enums: {
-      device_type: "Mobile" | "PC" | "Console"
+      device_type: "PC" | "Mobile" | "Console"
       game_mode:
         | "Crystal"
         | "Sword"
@@ -250,6 +295,7 @@ export type Database = {
         | "NethPot"
         | "Bedwars"
         | "Mace"
+      log_level: "info" | "warn" | "error" | "debug"
       player_region: "NA" | "EU" | "ASIA" | "OCE" | "SA" | "AF"
       tier_level:
         | "LT5"
@@ -263,15 +309,6 @@ export type Database = {
         | "LT1"
         | "HT1"
         | "Retired"
-        | "Crystal1"
-        | "Crystal2"
-        | "Crystal3"
-        | "Crystal4"
-        | "Crystal5"
-        | "Crystal6"
-        | "Crystal7"
-        | "Crystal8"
-        | "Crystal9"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -387,7 +424,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      device_type: ["Mobile", "PC", "Console"],
+      device_type: ["PC", "Mobile", "Console"],
       game_mode: [
         "Crystal",
         "Sword",
@@ -398,6 +435,7 @@ export const Constants = {
         "Bedwars",
         "Mace",
       ],
+      log_level: ["info", "warn", "error", "debug"],
       player_region: ["NA", "EU", "ASIA", "OCE", "SA", "AF"],
       tier_level: [
         "LT5",
@@ -411,15 +449,6 @@ export const Constants = {
         "LT1",
         "HT1",
         "Retired",
-        "Crystal1",
-        "Crystal2",
-        "Crystal3",
-        "Crystal4",
-        "Crystal5",
-        "Crystal6",
-        "Crystal7",
-        "Crystal8",
-        "Crystal9",
       ],
     },
   },

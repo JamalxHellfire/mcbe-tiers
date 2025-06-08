@@ -1,7 +1,5 @@
-// This file contains all the functionality related to players
-import { adminService } from './adminService';
+
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 // Define the player's regions
 export type PlayerRegion = "NA" | "EU" | "ASIA" | "OCE" | "SA" | "AF";
@@ -42,15 +40,6 @@ export interface TierData {
   tier: TierLevel;
 }
 
-// Define the leaderboard player type
-export interface LeaderboardPlayer {
-  id: string;
-  ign: string;
-  points: number;
-  avatar?: string;
-  placement?: number;
-}
-
 // Define the tier data type
 export interface GameModeData {
   HT1: Player[];
@@ -69,7 +58,6 @@ export interface GameModeData {
 // Define the getPlayerByIGN function
 export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
   try {
-    // Check if player exists
     const { data, error } = await supabase
       .from('players')
       .select('*')
@@ -91,7 +79,6 @@ export const getPlayerByIGN = async (ign: string): Promise<Player | null> => {
 // Define the getPlayerById function
 export const getPlayerById = async (id: string): Promise<Player | null> => {
   try {
-    // Check if player exists
     const { data, error } = await supabase
       .from('players')
       .select('*')
@@ -152,9 +139,7 @@ export const createPlayer = async (params: CreatePlayerParams): Promise<Player |
         region: params.region || null,
         device: params.device || null,
         avatar_url: avatarUrl,
-        global_points: 0,
-        gamemode: '',  // Required field, but will be removed from players table
-        tier_number: ''  // Required field, but will be removed from players table
+        global_points: 0
       })
       .select('*')
       .single();
@@ -278,9 +263,6 @@ export const assignTier = async (tierData: TierData): Promise<boolean> => {
       }
     }
     
-    // Update player's global points
-    await updatePlayerGlobalPoints(tierData.playerId);
-    
     return true;
   } catch (error) {
     console.error('Failed to assign tier:', error);
@@ -290,7 +272,6 @@ export const assignTier = async (tierData: TierData): Promise<boolean> => {
 
 // Helper function to calculate points based on tier
 export const calculateTierPoints = (tier: TierLevel): number => {
-  // Fix: Use a switch statement instead of the RPC call that was causing the error
   switch (tier) {
     case "HT1": return 50;
     case "LT1": return 45;
@@ -304,41 +285,6 @@ export const calculateTierPoints = (tier: TierLevel): number => {
     case "LT5": return 5;
     case "Retired": return 0;
     default: return 0;
-  }
-};
-
-// Helper function to update player's global points
-export const updatePlayerGlobalPoints = async (playerId: string): Promise<boolean> => {
-  try {
-    // Get all gamemode scores for the player
-    const { data, error } = await supabase
-      .from('gamemode_scores')
-      .select('score')
-      .eq('player_id', playerId);
-      
-    if (error) {
-      console.error('Error fetching player scores:', error);
-      return false;
-    }
-    
-    // Calculate total points
-    const totalPoints = data.reduce((sum, item) => sum + item.score, 0);
-    
-    // Update the player's global_points
-    const { error: updateError } = await supabase
-      .from('players')
-      .update({ global_points: totalPoints, updated_at: new Date().toISOString() })
-      .eq('id', playerId);
-      
-    if (updateError) {
-      console.error('Error updating player points:', updateError);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Failed to update player points:', error);
-    return false;
   }
 };
 
@@ -463,11 +409,7 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
 // Define function to get ranked players for leaderboard
 export const getRankedPlayers = async (): Promise<Player[]> => {
   try {
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .order('global_points', { ascending: false })
-      .limit(100);
+    const { data, error } = await supabase.rpc('get_ranked_players', { limit_count: 100 });
     
     if (error) {
       console.error('Error fetching ranked players:', error);
@@ -483,11 +425,6 @@ export const getRankedPlayers = async (): Promise<Player[]> => {
 
 // Define the deletePlayer function
 export const deletePlayer = async (playerId: string): Promise<boolean> => {
-  if (!adminService.isAdmin()) {
-    console.error('Admin access required to delete players');
-    return false;
-  }
-  
   try {
     // First delete all tiers associated with the player
     const { error: tiersError } = await supabase
@@ -520,11 +457,6 @@ export const deletePlayer = async (playerId: string): Promise<boolean> => {
 
 // Define the banPlayer function
 export const banPlayer = async (player: Player): Promise<boolean> => {
-  if (!adminService.isAdmin()) {
-    console.error('Admin access required to ban players');
-    return false;
-  }
-  
   try {
     // First update the player's banned status
     const { error: updateError } = await supabase
@@ -557,48 +489,6 @@ export const banPlayer = async (player: Player): Promise<boolean> => {
   }
 };
 
-// Define the verifyAdminPIN function
-export const verifyAdminPIN = async (pin: string): Promise<boolean> => {
-  try {
-    // Hash the PIN client-side (in a real app you would hash on the server)
-    const hashedPin = await hashPin(pin);
-    
-    // Verify the PIN
-    const { data, error } = await supabase
-      .from('admins')
-      .select('id')
-      .eq('hashed_pin', hashedPin)
-      .maybeSingle();
-      
-    if (error) {
-      console.error('Error verifying PIN:', error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (error) {
-    console.error('Failed to verify PIN:', error);
-    return false;
-  }
-};
-
-// Helper function to hash the PIN
-const hashPin = async (pin: string): Promise<string> => {
-  // In a real app, you would hash on the server side using a proper hashing algorithm
-  // This is a simple hash for demo purposes - DO NOT use in production
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin);
-  
-  // Use SHA-256 hashing algorithm
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  
-  // Convert to hex string
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
-  return hashHex;
-};
-
 export const playerService = {
   getPlayerByIGN,
   getPlayerById,
@@ -608,12 +498,9 @@ export const playerService = {
   getPlayerTiers,
   deletePlayer,
   banPlayer,
-  verifyAdminPIN,
-  updatePlayerGlobalPoints,
   calculateTierPoints,
   getPlayersByTierAndGamemode,
   getRankedPlayers
 };
 
-// Export the service
 export default playerService;

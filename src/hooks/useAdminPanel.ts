@@ -1,15 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { enhancedPlayerService } from '@/services/enhancedPlayerService';
 import { PlayerRegion, DeviceType, GameMode, TierLevel, Player, playerService } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { injectTestPlayers, getPlayerCount } from '@/utils/testDataGenerator';
-import { usePopup, TierAssignment } from '@/contexts/PopupContext';
-import { toDatabaseGameMode, toDisplayGameMode, asGameModeArray } from '@/utils/gamemodeCasing';
-import { deepSeekService } from '@/services/deepSeekService';
+import { usePopup } from '@/contexts/PopupContext';
 
 export function useAdminPanel() {
   const { setPopupDataFromPlayer } = usePopup();
@@ -38,7 +35,7 @@ export function useAdminPanel() {
     region: false
   });
   
-  // Track selected tiers for each gamemode with proper casing
+  // Track selected tiers for each gamemode
   const [tierSelections, setTierSelections] = useState<Record<GameMode, TierLevel | "NA">>({
     'Crystal': "NA",
     'Sword': "NA",
@@ -81,19 +78,16 @@ export function useAdminPanel() {
         adminService.setAdmin(true);
         setIsAdminMode(true);
         toast.success('Admin access granted');
-        deepSeekService.logApiCall('POST', 'admin/login', { success: true });
         
         // Get current player count
         const count = await getPlayerCount();
         setPlayerCount(count);
       } else {
         toast.error('Invalid PIN. Access denied.');
-        deepSeekService.logError(new Error('Invalid admin PIN attempt'), { pinAttempt: true });
       }
     } catch (error) {
       console.error('Admin login error:', error);
       toast.error('Failed to validate admin access');
-      deepSeekService.logError(error, { operation: 'adminLogin' });
     } finally {
       setIsSubmitting(false);
       setPinInputValue('');
@@ -104,7 +98,6 @@ export function useAdminPanel() {
     adminService.logoutAdmin();
     setIsAdminMode(false);
     toast.info('Admin session ended');
-    deepSeekService.logApiCall('POST', 'admin/logout', { success: true });
   };
   
   // Generate test data function
@@ -117,7 +110,6 @@ export function useAdminPanel() {
     setIsGeneratingData(true);
     
     try {
-      deepSeekService.logApiCall('POST', 'admin/generate-test-data', { count });
       const success = await injectTestPlayers(count);
       
       if (success) {
@@ -130,17 +122,14 @@ export function useAdminPanel() {
         const newCount = await getPlayerCount();
         setPlayerCount(newCount);
         
-        deepSeekService.logApiCall('POST', 'admin/generate-test-data', { count }, { success: true });
         return true;
       } else {
         toast.error('Failed to generate test data');
-        deepSeekService.logError(new Error('Failed to generate test data'), { count });
         return false;
       }
     } catch (error) {
       console.error('Error generating test data:', error);
       toast.error('An error occurred while generating test data');
-      deepSeekService.logError(error, { operation: 'generateTestData', count });
       return false;
     } finally {
       setIsGeneratingData(false);
@@ -166,21 +155,6 @@ export function useAdminPanel() {
     }
   };
 
-  // Calculate tier based on points (for the result popup calculation)
-  const calculateTierFromPoints = (points: number): TierLevel | "NA" => {
-    if (points >= 45) return "HT1";
-    if (points >= 40) return "LT1";
-    if (points >= 35) return "HT2";
-    if (points >= 30) return "LT2";
-    if (points >= 25) return "HT3";
-    if (points >= 20) return "LT3";
-    if (points >= 15) return "HT4";
-    if (points >= 10) return "HT4";
-    if (points >= 5) return "HT5";
-    if (points > 0) return "LT5";
-    return "NA";
-  };
-
   // Search for players by IGN
   const searchPlayerByIGN = async (query: string) => {
     if (!query || query.trim().length < 2) {
@@ -191,7 +165,6 @@ export function useAdminPanel() {
     setIsSearching(true);
     
     try {
-      deepSeekService.logApiCall('GET', `players/search/${query}`);
       const { data, error } = await supabase
         .from('players')
         .select('*')
@@ -202,17 +175,13 @@ export function useAdminPanel() {
         console.error('Error searching for players:', error);
         toast.error('Failed to search for players');
         setSearchResults([]);
-        deepSeekService.logError(error, { operation: 'searchPlayers', query });
       } else {
-        // Use type assertion to ensure types match
         setSearchResults(data as unknown as Player[] || []);
-        deepSeekService.logApiCall('GET', `players/search/${query}`, undefined, { count: data?.length || 0 });
       }
     } catch (error) {
       console.error('Player search error:', error);
       toast.error('An error occurred during player search');
       setSearchResults([]);
-      deepSeekService.logError(error, { operation: 'searchPlayers', query });
     } finally {
       setIsSearching(false);
     }
@@ -232,7 +201,6 @@ export function useAdminPanel() {
     } catch (error) {
       console.error('Error loading player details:', error);
       toast.error('Failed to load player details');
-      deepSeekService.logError(error, { operation: 'loadPlayerDetails', playerId });
     }
   };
   
@@ -240,178 +208,7 @@ export function useAdminPanel() {
   const clearSelectedPlayer = () => {
     setSelectedPlayer(null);
   };
-  
-  // Player management mutations
-  const submitPlayerResultMutation = useMutation({
-    mutationFn: async ({
-      ign,
-      javaUsername,
-      device,
-      region,
-      gamemode,
-      tier
-    }: {
-      ign: string,
-      javaUsername?: string,
-      device?: DeviceType,
-      region?: PlayerRegion,
-      gamemode: GameMode,
-      tier: TierLevel | "NA"
-    }) => {
-      // Validate required fields
-      if (!ign) {
-        toast.error('Player IGN is required');
-        return false;
-      }
 
-      try {
-        // First, check if the player exists
-        let player = await playerService.getPlayerByIGN(ign);
-        
-        if (!player) {
-          // Create the player if they don't exist
-          player = await playerService.createPlayer({
-            ign,
-            java_username: javaUsername,
-            device,
-            region
-          });
-          
-          if (!player) {
-            toast.error(`Could not create player: ${ign}`);
-            return false;
-          }
-        } else {
-          // Update the player's info if needed
-          if (
-            (javaUsername && player.java_username !== javaUsername) ||
-            (device && player.device !== device) ||
-            (region && player.region !== region)
-          ) {
-            await playerService.updatePlayer(player.id, {
-              java_username: javaUsername || player.java_username,
-              device: device || player.device,
-              region: region || player.region
-            });
-          }
-        }
-        
-        // If tier is "NA" (unranked), no need to assign tier
-        if (tier === "NA") {
-          return true;
-        }
-        
-        // Assign the tier to the player
-        const result = await playerService.assignTier({
-          playerId: player.id,
-          gamemode,
-          tier: tier as TierLevel // Safe cast as we've checked it's not "NA"
-        });
-        
-        return !!result;
-      } catch (error) {
-        deepSeekService.logError(error, { operation: 'submitPlayerResult', ign, gamemode, tier });
-        throw error;
-      }
-    },
-    onSuccess: (success, variables) => {
-      if (success) {
-        if (variables.tier !== "NA") {
-          queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
-        }
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-        toast.success('Player result submitted successfully');
-      }
-    }
-  });
-  
-  const updatePlayerMutation = useMutation({
-    mutationFn: async ({
-      playerId,
-      javaUsername,
-      region,
-      device,
-    }: {
-      playerId: string,
-      javaUsername?: string,
-      region?: PlayerRegion,
-      device?: DeviceType
-    }) => {
-      return await playerService.updatePlayer(playerId, {
-        java_username: javaUsername,
-        region,
-        device
-      });
-    },
-    onSuccess: (success, variables) => {
-      if (success) {
-        toast.success('Player updated successfully');
-        loadPlayerDetails(variables.playerId);
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-      } else {
-        toast.error('Failed to update player');
-      }
-    }
-  });
-  
-  const updatePlayerTierMutation = useMutation({
-    mutationFn: async ({
-      playerId,
-      gamemode,
-      tier
-    }: {
-      playerId: string,
-      gamemode: GameMode,
-      tier: TierLevel
-    }) => {
-      return await playerService.assignTier({
-        playerId,
-        gamemode,
-        tier
-      });
-    },
-    onSuccess: (success, variables) => {
-      if (success) {
-        toast.success(`Updated ${variables.gamemode} tier to ${variables.tier}`);
-        loadPlayerDetails(variables.playerId);
-        queryClient.invalidateQueries({ queryKey: ['tierData', variables.gamemode] });
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-      } else {
-        toast.error(`Failed to update ${variables.gamemode} tier`);
-      }
-    }
-  });
-  
-  const deletePlayerMutation = useMutation({
-    mutationFn: async (playerId: string) => {
-      return await playerService.deletePlayer(playerId);
-    },
-    onSuccess: (success, playerId) => {
-      if (success) {
-        toast.success('Player deleted successfully');
-        setSelectedPlayer(null);
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-      } else {
-        toast.error('Failed to delete player');
-      }
-    }
-  });
-  
-  const banPlayerMutation = useMutation({
-    mutationFn: async (player: Player) => {
-      return await playerService.banPlayer(player);
-    },
-    onSuccess: (success, player) => {
-      if (success) {
-        toast.success(`${player.ign} has been banned`);
-        setSelectedPlayer(null);
-        queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-      } else {
-        toast.error(`Failed to ban ${player.ign}`);
-      }
-    }
-  });
-  
   // Handle search input changes with debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -422,64 +219,6 @@ export function useAdminPanel() {
     
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  
-  const submitPlayerResult = (
-    ign: string,
-    javaUsername: string | undefined,
-    device: DeviceType | undefined,
-    region: PlayerRegion | undefined,
-    gamemode: GameMode,
-    tier: TierLevel | "NA"
-  ) => {
-    // Validate mandatory fields
-    if (!ign) {
-      toast.error('Player IGN is required');
-      return Promise.resolve(false);
-    }
-    
-    return submitPlayerResultMutation.mutateAsync({
-      ign,
-      javaUsername,
-      device,
-      region,
-      gamemode,
-      tier
-    });
-  };
-  
-  const updatePlayer = (
-    playerId: string,
-    javaUsername?: string,
-    region?: PlayerRegion,
-    device?: DeviceType
-  ) => {
-    return updatePlayerMutation.mutateAsync({
-      playerId,
-      javaUsername,
-      region,
-      device
-    });
-  };
-  
-  const updatePlayerTier = (
-    playerId: string,
-    gamemode: GameMode,
-    tier: TierLevel
-  ) => {
-    return updatePlayerTierMutation.mutateAsync({
-      playerId,
-      gamemode,
-      tier
-    });
-  };
-  
-  const deletePlayer = (playerId: string) => {
-    return deletePlayerMutation.mutateAsync(playerId);
-  };
-  
-  const banPlayer = (player: Player) => {
-    return banPlayerMutation.mutateAsync(player);
-  };
 
   // Validate form before submission
   const validateForm = () => {
@@ -545,28 +284,28 @@ export function useAdminPanel() {
       }
       
       // Create the tier assignments for the popup
-      const tierAssignments: TierAssignment[] = [];
+      const tierAssignments: Array<{
+        gamemode: GameMode;
+        tier: TierLevel;
+        points: number;
+      }> = [];
 
       // Submit all selected tiers
       for (const gamemode of Object.keys(tierSelections) as GameMode[]) {
         const tier = tierSelections[gamemode];
-        // Submit for all gamemodes, using "NA" as default
-        hasAttempts = true;
-        try {
-          const success = await submitPlayerResultMutation.mutateAsync({
-            ign,
-            javaUsername,
-            device,
-            region,
-            gamemode,
-            tier
-          });
-          
-          if (success) {
-            successCount++;
+        if (tier !== "NA") {
+          hasAttempts = true;
+          try {
+            const success = await playerService.assignTier({
+              playerId: player.id,
+              gamemode,
+              tier: tier as TierLevel
+            });
             
-            // Add to tier assignments for the popup
-            if (tier !== "NA") {
+            if (success) {
+              successCount++;
+              
+              // Add to tier assignments for the popup
               const points = calculatePointsFromTier(tier);
               tierAssignments.push({
                 gamemode,
@@ -574,10 +313,9 @@ export function useAdminPanel() {
                 points,
               });
             }
+          } catch (err) {
+            console.error(`Error submitting ${gamemode} player:`, err);
           }
-        } catch (err) {
-          console.error(`Error submitting ${gamemode} player:`, err);
-          deepSeekService.logError(err, { gamemode, ign, tier });
         }
       }
       
@@ -588,25 +326,11 @@ export function useAdminPanel() {
         if (updatedPlayer) {
           // Trigger the popup
           setPopupDataFromPlayer(updatedPlayer, tierAssignments);
-          
-          // Also broadcast the result to anyone else viewing the site
-          try {
-            const channel = supabase.channel('result-submissions');
-            channel.send({
-              type: 'broadcast',
-              event: 'result-submitted',
-              payload: { player: updatedPlayer, tierAssignments }
-            });
-          } catch (err) {
-            console.error('Failed to broadcast result submission:', err);
-            deepSeekService.logError(err, { operation: 'broadcastResult' });
-          }
         }
       }
     } catch (err) {
       console.error('Error during result submission:', err);
       toast.error('An error occurred during submission');
-      deepSeekService.logError(err, { operation: 'submitAllTiers', ign });
     }
     
     if (!hasAttempts) {
@@ -638,7 +362,7 @@ export function useAdminPanel() {
     }
   };
 
-  // Reset tier selections with proper casing for GameMode
+  // Reset tier selections
   const resetTierSelections = () => {
     setTierSelections({
       'Crystal': "NA",
@@ -659,7 +383,6 @@ export function useAdminPanel() {
     isSubmitting,
     handlePinSubmit,
     handleLogout,
-    submitPlayerResult,
     // Player search and edit
     searchQuery,
     setSearchQuery,
@@ -669,10 +392,6 @@ export function useAdminPanel() {
     setSelectedPlayer,
     loadPlayerDetails,
     clearSelectedPlayer,
-    updatePlayer,
-    updatePlayerTier,
-    deletePlayer,
-    banPlayer,
     // Test data generation
     generateTestData,
     isGeneratingData,

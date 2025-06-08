@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { playerService, Player } from '@/services/playerService';
 import { useQuery } from '@tanstack/react-query';
+import { playerService, Player } from '@/services/playerService';
 
 export function useLeaderboard() {
   const { data: players = [], isLoading: loading, error } = useQuery({

@@ -11,12 +11,16 @@ const News = () => {
   const navigate = useNavigate();
   const { articles, loading, error } = useNews();
 
+  const handleSelectMode = (mode: string) => {
+    // No-op for news page
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-dark">
         <Navbar 
           selectedMode="overall" 
-          onSelectMode={() => {}} 
+          onSelectMode={handleSelectMode} 
           navigate={navigate} 
         />
         <main className="flex-grow flex items-center justify-center">
@@ -32,7 +36,7 @@ const News = () => {
       <div className="flex flex-col min-h-screen bg-gradient-dark">
         <Navbar 
           selectedMode="overall" 
-          onSelectMode={() => {}} 
+          onSelectMode={handleSelectMode} 
           navigate={navigate} 
         />
         <main className="flex-grow flex items-center justify-center">
@@ -47,7 +51,7 @@ const News = () => {
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
         selectedMode="overall" 
-        onSelectMode={() => {}} 
+        onSelectMode={handleSelectMode} 
         navigate={navigate} 
       />
       
@@ -71,11 +75,13 @@ const News = () => {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <NewsArticleCard
-                  title={article.title}
-                  description={article.description || article.content.substring(0, 150) + '...'}
-                  author={article.author}
-                  date={new Date(article.published_at).toLocaleDateString()}
-                  category={article.category}
+                  article={{
+                    title: article.title,
+                    description: article.description || article.content.substring(0, 150) + '...',
+                    author: article.author,
+                    date: new Date(article.published_at).toLocaleDateString(),
+                    category: article.category
+                  }}
                 />
               </motion.div>
             ))}

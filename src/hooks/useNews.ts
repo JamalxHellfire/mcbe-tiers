@@ -6,6 +6,7 @@ interface NewsArticle {
   id: string;
   title: string;
   content: string;
+  description?: string;
   author: string;
   category: string;
   published_at: string;
@@ -13,12 +14,8 @@ interface NewsArticle {
   updated_at: string;
 }
 
-interface NewsArticleWithRequiredId extends NewsArticle {
-  description?: string;
-}
-
 export function useNews() {
-  const [articles, setArticles] = useState<NewsArticleWithRequiredId[]>([]);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +35,7 @@ export function useNews() {
 
       const articlesWithDescription = (data || []).map(article => ({
         ...article,
-        description: article.content.substring(0, 150) + '...'
+        description: article.description || article.content.substring(0, 150) + '...'
       }));
 
       setArticles(articlesWithDescription);

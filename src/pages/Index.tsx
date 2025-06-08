@@ -24,7 +24,7 @@ const Index = () => {
     selectedMode !== 'overall' ? selectedMode : 'Crystal'
   );
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
-  const { isVisible, popupData, hidePopup } = usePopup();
+  const { popupData, hidePopup } = usePopup();
 
   const handlePlayerClick = (player: Player) => {
     setSelectedPlayer(player);
@@ -34,6 +34,10 @@ const Index = () => {
     setSelectedPlayer(null);
   };
 
+  const handleSelectMode = (mode: string) => {
+    setSelectedMode(mode as GameMode | 'overall');
+  };
+
   const loading = selectedMode === 'overall' ? leaderboardLoading : tierLoading;
   const error = selectedMode === 'overall' ? leaderboardError : tierError;
 
@@ -41,7 +45,7 @@ const Index = () => {
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
         selectedMode={selectedMode} 
-        onSelectMode={setSelectedMode} 
+        onSelectMode={handleSelectMode} 
         navigate={navigate} 
       />
       
@@ -58,7 +62,7 @@ const Index = () => {
           
           <GameModeSelector 
             selectedMode={selectedMode} 
-            onSelectMode={setSelectedMode} 
+            onSelectMode={handleSelectMode} 
           />
           
           {loading ? (
@@ -87,7 +91,7 @@ const Index = () => {
               transition={{ duration: 0.5 }}
             >
               <TierGrid 
-                tierData={tierData} 
+                gameMode={selectedMode as GameMode}
                 onPlayerClick={handlePlayerClick} 
               />
             </motion.div>
@@ -100,14 +104,14 @@ const Index = () => {
       {selectedPlayer && (
         <PlayerModal 
           player={selectedPlayer} 
+          isOpen={true}
           onClose={closeModal} 
         />
       )}
       
-      {isVisible && popupData && (
+      {popupData && (
         <ResultPopup 
-          player={popupData.player}
-          tierAssignments={popupData.tierAssignments}
+          {...popupData}
           onClose={hidePopup}
         />
       )}
