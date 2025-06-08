@@ -29,13 +29,8 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           {players.map((player, index) => (
             <PlayerRow
               key={player.id}
-              id={player.id}
-              position={index + 1}
-              displayName={player.ign}
-              avatar={player.avatar_url}
-              points={player.global_points || 0}
-              country={player.region}
-              device={player.device}
+              player={player}
+              rank={index + 1}
               onClick={() => onPlayerClick(player)}
             />
           ))}

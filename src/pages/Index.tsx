@@ -1,85 +1,114 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Navbar } from '../components/Navbar';
-import { TierGrid } from '../components/TierGrid';
-import { LeaderboardTable } from '../components/LeaderboardTable';
 import { Footer } from '../components/Footer';
+import { LeaderboardTable } from '../components/LeaderboardTable';
+import { useGamemodeTiers } from '../hooks/useGamemodeTiers';
+import { useLeaderboard } from '../hooks/useLeaderboard';
+import { GameModeSelector } from '../components/GameModeSelector';
+import { TierGrid } from '../components/TierGrid';
 import { PlayerModal } from '../components/PlayerModal';
+import { ResultPopup } from '../components/ResultPopup';
+import { usePopup } from '../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GameMode } from '@/services/playerService';
-import { MobileNavMenu } from '../components/MobileNavMenu';
-import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
+import { useState } from 'react';
+import { GameMode, Player } from '../services/playerService';
+import { motion } from 'framer-motion';
 
 const Index = () => {
-  const [selectedMode, setSelectedMode] = useState<string>('overall');
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const navigate = useNavigate();
+  const [selectedMode, setSelectedMode] = useState<GameMode | 'overall'>('overall');
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   
-  const handleModeChange = (mode: string) => {
-    if (mode === 'overall') {
-      setSelectedMode('overall');
-    } else {
-      // Navigate to the specific gamemode page
-      navigate(`/${mode.toLowerCase()}`);
-    }
-  };
-  
-  const handlePlayerClick = (player: any) => {
+  const { tierData, loading: tierLoading, error: tierError } = useGamemodeTiers(
+    selectedMode !== 'overall' ? selectedMode : 'Crystal'
+  );
+  const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
+  const { isVisible, popupData, hidePopup } = usePopup();
+
+  const handlePlayerClick = (player: Player) => {
     setSelectedPlayer(player);
-    setIsPlayerModalOpen(true);
   };
-  
-  // Define gamemodes with proper casing
-  const gamemodes: GameMode[] = [
-    'Crystal', 'Sword', 'SMP', 'UHC', 'Axe', 'NethPot', 'Bedwars', 'Mace'
-  ];
-  
+
+  const closeModal = () => {
+    setSelectedPlayer(null);
+  };
+
+  const loading = selectedMode === 'overall' ? leaderboardLoading : tierLoading;
+  const error = selectedMode === 'overall' ? leaderboardError : tierError;
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
         selectedMode={selectedMode} 
-        onSelectMode={handleModeChange} 
+        onSelectMode={setSelectedMode} 
         navigate={navigate} 
       />
       
       <main className="flex-grow">
-        <div className="content-container py-4 md:py-6">
+        <div className="content-container py-6">
           <motion.h1 
-            className="section-heading mb-4 md:mb-6"
+            className="section-heading mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Overall Rankings
+            Crystal PvP Tierlist
           </motion.h1>
           
-          {/* Mobile navigation menu */}
-          <MobileNavMenu currentMode={selectedMode} />
+          <GameModeSelector 
+            selectedMode={selectedMode} 
+            onSelectMode={setSelectedMode} 
+          />
           
-          <AnimatePresence mode="wait">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-white">Loading...</div>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center py-8">
+              Error: {error}
+            </div>
+          ) : selectedMode === 'overall' ? (
             <motion.div
-              key={selectedMode}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
             >
-              <LeaderboardTable onPlayerClick={handlePlayerClick} />
+              <LeaderboardTable 
+                players={players}
+                onPlayerClick={handlePlayerClick} 
+              />
             </motion.div>
-          </AnimatePresence>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <TierGrid 
+                tierData={tierData} 
+                onPlayerClick={handlePlayerClick} 
+              />
+            </motion.div>
+          )}
         </div>
       </main>
       
       <Footer />
       
-      {/* Player Modal */}
       {selectedPlayer && (
-        <PlayerModal
-          isOpen={isPlayerModalOpen}
-          onClose={() => setIsPlayerModalOpen(false)}
-          player={selectedPlayer}
+        <PlayerModal 
+          player={selectedPlayer} 
+          onClose={closeModal} 
+        />
+      )}
+      
+      {isVisible && popupData && (
+        <ResultPopup 
+          player={popupData.player}
+          tierAssignments={popupData.tierAssignments}
+          onClose={hidePopup}
         />
       )}
     </div>
