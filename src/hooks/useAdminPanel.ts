@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
+import { enhancedPlayerService as playerService, PlayerRegion, DeviceType, GameMode, TierLevel, Player } from '@/services/playerService';
 import { adminService } from '@/services/adminService';
 import { toast } from "sonner";
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { injectTestPlayers, getPlayerCount } from '@/utils/testDataGenerator';
 import { usePopup, TierAssignment } from '@/contexts/PopupContext';
 import { toDatabaseGameMode, toDisplayGameMode, asGameModeArray } from '@/utils/gamemodeCasing';
+import { deepSeekService } from '@/services/deepSeekService';
 
 export function useAdminPanel() {
   const { setPopupDataFromPlayer } = usePopup();
@@ -78,16 +79,19 @@ export function useAdminPanel() {
         adminService.setAdmin(true);
         setIsAdminMode(true);
         toast.success('Admin access granted');
+        deepSeekService.logApiCall('POST', 'admin/login', { success: true });
         
         // Get current player count
         const count = await getPlayerCount();
         setPlayerCount(count);
       } else {
         toast.error('Invalid PIN. Access denied.');
+        deepSeekService.logError(new Error('Invalid admin PIN attempt'), { pinAttempt: true });
       }
     } catch (error) {
       console.error('Admin login error:', error);
       toast.error('Failed to validate admin access');
+      deepSeekService.logError(error, { operation: 'adminLogin' });
     } finally {
       setIsSubmitting(false);
       setPinInputValue('');
@@ -98,6 +102,7 @@ export function useAdminPanel() {
     adminService.logoutAdmin();
     setIsAdminMode(false);
     toast.info('Admin session ended');
+    deepSeekService.logApiCall('POST', 'admin/logout', { success: true });
   };
   
   // Generate test data function
@@ -110,6 +115,7 @@ export function useAdminPanel() {
     setIsGeneratingData(true);
     
     try {
+      deepSeekService.logApiCall('POST', 'admin/generate-test-data', { count });
       const success = await injectTestPlayers(count);
       
       if (success) {
@@ -122,14 +128,17 @@ export function useAdminPanel() {
         const newCount = await getPlayerCount();
         setPlayerCount(newCount);
         
+        deepSeekService.logApiCall('POST', 'admin/generate-test-data', { count }, { success: true });
         return true;
       } else {
         toast.error('Failed to generate test data');
+        deepSeekService.logError(new Error('Failed to generate test data'), { count });
         return false;
       }
     } catch (error) {
       console.error('Error generating test data:', error);
       toast.error('An error occurred while generating test data');
+      deepSeekService.logError(error, { operation: 'generateTestData', count });
       return false;
     } finally {
       setIsGeneratingData(false);
@@ -180,6 +189,7 @@ export function useAdminPanel() {
     setIsSearching(true);
     
     try {
+      deepSeekService.logApiCall('GET', `players/search/${query}`);
       const { data, error } = await supabase
         .from('players')
         .select('*')
@@ -190,14 +200,17 @@ export function useAdminPanel() {
         console.error('Error searching for players:', error);
         toast.error('Failed to search for players');
         setSearchResults([]);
+        deepSeekService.logError(error, { operation: 'searchPlayers', query });
       } else {
         // Use type assertion to ensure types match
         setSearchResults(data as unknown as Player[] || []);
+        deepSeekService.logApiCall('GET', `players/search/${query}`, undefined, { count: data?.length || 0 });
       }
     } catch (error) {
       console.error('Player search error:', error);
       toast.error('An error occurred during player search');
       setSearchResults([]);
+      deepSeekService.logError(error, { operation: 'searchPlayers', query });
     } finally {
       setIsSearching(false);
     }
@@ -217,6 +230,7 @@ export function useAdminPanel() {
     } catch (error) {
       console.error('Error loading player details:', error);
       toast.error('Failed to load player details');
+      deepSeekService.logError(error, { operation: 'loadPlayerDetails', playerId });
     }
   };
   
@@ -248,50 +262,55 @@ export function useAdminPanel() {
         return false;
       }
 
-      // First, check if the player exists
-      let player = await playerService.getPlayerByIGN(ign);
-      
-      if (!player) {
-        // Create the player if they don't exist
-        player = await playerService.createPlayer({
-          ign,
-          java_username: javaUsername,
-          device,
-          region
-        });
+      try {
+        // First, check if the player exists
+        let player = await playerService.getPlayerByIGN(ign);
         
         if (!player) {
-          toast.error(`Could not create player: ${ign}`);
-          return false;
-        }
-      } else {
-        // Update the player's info if needed
-        if (
-          (javaUsername && player.java_username !== javaUsername) ||
-          (device && player.device !== device) ||
-          (region && player.region !== region)
-        ) {
-          await playerService.updatePlayer(player.id, {
-            java_username: javaUsername || player.java_username,
-            device: device || player.device,
-            region: region || player.region
+          // Create the player if they don't exist
+          player = await playerService.createPlayer({
+            ign,
+            java_username: javaUsername,
+            device,
+            region
           });
+          
+          if (!player) {
+            toast.error(`Could not create player: ${ign}`);
+            return false;
+          }
+        } else {
+          // Update the player's info if needed
+          if (
+            (javaUsername && player.java_username !== javaUsername) ||
+            (device && player.device !== device) ||
+            (region && player.region !== region)
+          ) {
+            await playerService.updatePlayer(player.id, {
+              java_username: javaUsername || player.java_username,
+              device: device || player.device,
+              region: region || player.region
+            });
+          }
         }
+        
+        // If tier is "NA" (unranked), no need to assign tier
+        if (tier === "NA") {
+          return true;
+        }
+        
+        // Assign the tier to the player
+        const result = await playerService.assignTier({
+          playerId: player.id,
+          gamemode,
+          tier: tier as TierLevel // Safe cast as we've checked it's not "NA"
+        });
+        
+        return !!result;
+      } catch (error) {
+        deepSeekService.logError(error, { operation: 'submitPlayerResult', ign, gamemode, tier });
+        throw error;
       }
-      
-      // If tier is "NA" (unranked), no need to assign tier
-      if (tier === "NA") {
-        return true;
-      }
-      
-      // Assign the tier to the player
-      const result = await playerService.assignTier({
-        playerId: player.id,
-        gamemode,
-        tier: tier as TierLevel // Safe cast as we've checked it's not "NA"
-      });
-      
-      return !!result;
     },
     onSuccess: (success, variables) => {
       if (success) {
@@ -556,6 +575,7 @@ export function useAdminPanel() {
           }
         } catch (err) {
           console.error(`Error submitting ${gamemode} player:`, err);
+          deepSeekService.logError(err, { gamemode, ign, tier });
         }
       }
       
@@ -577,12 +597,14 @@ export function useAdminPanel() {
             });
           } catch (err) {
             console.error('Failed to broadcast result submission:', err);
+            deepSeekService.logError(err, { operation: 'broadcastResult' });
           }
         }
       }
     } catch (err) {
       console.error('Error during result submission:', err);
       toast.error('An error occurred during submission');
+      deepSeekService.logError(err, { operation: 'submitAllTiers', ign });
     }
     
     if (!hasAttempts) {

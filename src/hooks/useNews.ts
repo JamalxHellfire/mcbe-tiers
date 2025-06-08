@@ -1,63 +1,53 @@
 
-import { useState } from 'react';
-import { useQuery, RefetchOptions } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { NewsArticle } from '@/integrations/supabase/client';
 
-export interface NewsArticleWithRequiredId extends NewsArticle {
-  id: string; // Making id required
-  created_at: string; // Ensuring created_at is required
+interface NewsArticle {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  category: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface NewsArticleWithRequiredId extends NewsArticle {
+  description?: string;
 }
 
 export function useNews() {
-  const [selectedArticle, setSelectedArticle] = useState<NewsArticleWithRequiredId | null>(null);
-  
-  const { 
-    data: newsArticles = [],
-    isLoading: loading,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ['news'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('news')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          throw new Error(error.message);
-        }
-        
-        // Ensure all articles have an id
-        return data.map(article => ({
-          ...article,
-          id: article.id || `news-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-        })) as NewsArticleWithRequiredId[];
-      } catch (err) {
-        console.error('Error fetching news:', err);
-        throw err;
-      }
-    },
-    staleTime: 60000 // 1 minute
-  });
-  
-  const openArticle = (article: NewsArticleWithRequiredId) => {
-    setSelectedArticle(article);
+  const [articles, setArticles] = useState<NewsArticleWithRequiredId[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select('*')
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+
+      const articlesWithDescription = (data || []).map(article => ({
+        ...article,
+        description: article.content.substring(0, 150) + '...'
+      }));
+
+      setArticles(articlesWithDescription);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch news');
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  const closeArticle = () => {
-    setSelectedArticle(null);
-  };
-  
-  return {
-    newsArticles,
-    loading,
-    error: error ? (error as Error).message : null,
-    selectedArticle,
-    openArticle,
-    closeArticle,
-    refetch
-  };
+
+  return { articles, loading, error, refetch: fetchNews };
 }

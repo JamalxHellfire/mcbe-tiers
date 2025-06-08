@@ -1,71 +1,90 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { NewsArticleCard } from '../components/NewsArticleCard';
 import { useNavigate } from 'react-router-dom';
+import { useNews } from '@/hooks/useNews';
+import { NewsArticleCard } from '@/components/NewsArticleCard';
 import { motion } from 'framer-motion';
-import { useNews, NewsArticleWithRequiredId } from '@/hooks/useNews';
 
 const News = () => {
   const navigate = useNavigate();
-  const { newsArticles, loading, error, selectedArticle, openArticle, closeArticle } = useNews();
-  
-  const handleModeChange = (mode: string) => {
-    if (mode === 'overall') {
-      navigate('/');
-    } else {
-      navigate(`/${mode.toLowerCase()}`);
-    }
-  };
-  
+  const { articles, loading, error } = useNews();
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-dark">
+        <Navbar 
+          selectedMode="overall" 
+          onSelectMode={() => {}} 
+          navigate={navigate} 
+        />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-white">Loading news...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-dark">
+        <Navbar 
+          selectedMode="overall" 
+          onSelectMode={() => {}} 
+          navigate={navigate} 
+        />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-red-500">Error loading news: {error}</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
         selectedMode="overall" 
-        onSelectMode={handleModeChange} 
-        navigate={navigate}
-        activePage="news"
+        onSelectMode={() => {}} 
+        navigate={navigate} 
       />
       
       <main className="flex-grow">
-        <div className="content-container py-4 md:py-6">
+        <div className="content-container py-6">
           <motion.h1 
-            className="section-heading mb-4 md:mb-6"
+            className="section-heading mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            News & Announcements
+            Latest News
           </motion.h1>
           
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-pulse">Loading news articles...</div>
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-400 py-8">
-              Error loading news: {error}
-            </div>
-          ) : newsArticles.length === 0 ? (
-            <div className="text-center text-white/60 py-12">
-              No news articles available at this time.
-            </div>
-          ) : (
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {newsArticles.map((article) => (
-                <NewsArticleCard 
-                  key={article.id} 
-                  article={article} 
-                  onClick={() => openArticle(article)}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {articles.map((article, index) => (
+              <motion.div
+                key={article.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <NewsArticleCard
+                  title={article.title}
+                  description={article.description || article.content.substring(0, 150) + '...'}
+                  author={article.author}
+                  date={new Date(article.published_at).toLocaleDateString()}
+                  category={article.category}
                 />
-              ))}
-            </motion.div>
+              </motion.div>
+            ))}
+          </div>
+          
+          {articles.length === 0 && (
+            <div className="text-center text-gray-400 py-12">
+              No news articles found.
+            </div>
           )}
         </div>
       </main>

@@ -15,7 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { GameMode, TierLevel, PlayerRegion, DeviceType } from '@/services/playerService';
 import { GameModeIcon } from '@/components/GameModeIcon';
 import { toDisplayGameMode } from '@/utils/gamemodeCasing';
-import { AlertCircle, Search, Trash2, Ban, UserPlus, Trophy, RefreshCw } from 'lucide-react';
+import { AlertCircle, Search, Trash2, Ban, UserPlus, Trophy, RefreshCw, Bug } from 'lucide-react';
+import { AdminLogViewer } from '@/components/AdminLogViewer';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -70,18 +71,6 @@ const AdminPanel = () => {
   
   // Define devices
   const devices: DeviceType[] = ["PC", "Mobile", "Console"];
-  
-  // Initialize tierSelections with proper casing
-  const initialTierSelections: Record<GameMode, TierLevel | "NA"> = {
-    'Crystal': 'NA', 
-    'Sword': 'NA', 
-    'Axe': 'NA', 
-    'Mace': 'NA',
-    'SMP': 'NA', 
-    'UHC': 'NA', 
-    'NethPot': 'NA', 
-    'Bedwars': 'NA'
-  };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -147,10 +136,14 @@ const AdminPanel = () => {
               </div>
               
               <Tabs defaultValue="submit" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-3 mb-4">
+                <TabsList className="grid grid-cols-4 mb-4">
                   <TabsTrigger value="submit">Submit Results</TabsTrigger>
                   <TabsTrigger value="manage">Manage Players</TabsTrigger>
                   <TabsTrigger value="tools">Admin Tools</TabsTrigger>
+                  <TabsTrigger value="logs">
+                    <Bug className="h-4 w-4 mr-1" />
+                    System Logs
+                  </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="submit">
@@ -492,6 +485,10 @@ const AdminPanel = () => {
                       </div>
                     </CardContent>
                   </Card>
+                </TabsContent>
+                
+                <TabsContent value="logs">
+                  <AdminLogViewer />
                 </TabsContent>
               </Tabs>
             </div>
