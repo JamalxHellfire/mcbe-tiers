@@ -29,7 +29,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           {players.map((player, index) => (
             <PlayerRow
               key={player.id}
-              id={player.id}
               position={index + 1}
               displayName={player.ign}
               avatar={player.avatar_url || undefined}

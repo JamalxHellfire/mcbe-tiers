@@ -24,7 +24,7 @@ const Index = () => {
     selectedMode !== 'overall' ? selectedMode : 'Crystal'
   );
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
-  const { popupData, hidePopup } = usePopup();
+  const { popupData } = usePopup();
 
   const handlePlayerClick = (player: Player) => {
     setSelectedPlayer(player);
@@ -91,7 +91,7 @@ const Index = () => {
               transition={{ duration: 0.5 }}
             >
               <TierGrid 
-                gameMode={selectedMode as GameMode}
+                selectedMode={selectedMode as GameMode}
                 onPlayerClick={handlePlayerClick} 
               />
             </motion.div>
@@ -112,7 +112,6 @@ const Index = () => {
       {popupData && (
         <ResultPopup 
           {...popupData}
-          onClose={hidePopup}
         />
       )}
     </div>

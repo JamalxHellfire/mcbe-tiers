@@ -147,22 +147,29 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               exit={{ opacity: 0 }}
                               transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
                             >
-                              <PlayerRow 
-                                player={{
-                                  ...player,
-                                  tier: tier,
-                                  // Fix Type Error: Convert global_points to number before passing it
-                                  points: typeof player.global_points === 'string' 
-                                    ? Number(player.global_points) || 0 
-                                    : player.global_points || 0,
-                                  badge: player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`,
-                                  displayName: player.ign,
-                                  avatar: player.avatar_url || `/default-avatar.png`
-                                }} 
-                                onClick={() => onPlayerClick(player)} 
-                                delay={playerIndex * 0.05}
-                                compact={true}
-                              />
+                              <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center text-xs">
+                                    {player.ign?.charAt(0) || "?"}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">{player.ign}</span>
+                                    <span className={`text-xs ${
+                                      player.subtier === 'High' ? `text-tier-${tier}` : 'text-white/50'
+                                    }`}>
+                                      {player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center text-xs">
+                                  <Trophy size={12} className="mr-1 text-yellow-400" />
+                                  <span>
+                                    {typeof player.global_points === 'string' 
+                                      ? Number(player.global_points) || 0 
+                                      : player.global_points || 0}
+                                  </span>
+                                </div>
+                              </div>
                             </motion.div>
                           ))}
                         </AnimatePresence>
@@ -232,22 +239,25 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
                           >
-                            <PlayerRow 
-                              player={{
-                                ...player,
-                                tier: "R",
-                                // Fix: Properly convert global_points to number
-                                points: typeof player.global_points === 'string' 
-                                  ? parseFloat(player.global_points) || 0 
-                                  : player.global_points || 0,
-                                badge: "Retired Player",
-                                displayName: player.ign,
-                                avatar: player.avatar_url || `/default-avatar.png`
-                              }} 
-                              onClick={() => onPlayerClick(player)} 
-                              delay={playerIndex * 0.05}
-                              compact={true}
-                            />
+                            <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center text-xs">
+                                  {player.ign?.charAt(0) || "?"}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium">{player.ign}</span>
+                                  <span className="text-xs text-gray-400">Retired Player</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center text-xs">
+                                <Trophy size={12} className="mr-1 text-yellow-400" />
+                                <span>
+                                  {typeof player.global_points === 'string' 
+                                    ? parseFloat(player.global_points) || 0 
+                                    : player.global_points || 0}
+                                </span>
+                              </div>
+                            </div>
                           </motion.div>
                         ))}
                     </AnimatePresence>
