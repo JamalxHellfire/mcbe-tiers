@@ -6,7 +6,7 @@ export const getAvatarUrl = async (ign: string, javaUsername?: string | null): P
   // Use java username if provided, otherwise use IGN
   const username = javaUsername || ign;
   
-  // Primary: Visage Bust API (3D renders)
+  // Primary: Visage Bust API (3D renders) - centered bust
   try {
     const visageUrl = `https://visage.surgeplay.com/bust/128/${username}`;
     // Test if the image exists

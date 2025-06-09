@@ -1,117 +1,175 @@
 
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Player } from '@/services/playerService';
+import { X, Trophy, MapPin, Monitor } from 'lucide-react';
+import { Player, GameMode } from '@/services/playerService';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { GameModeIcon } from './GameModeIcon';
+import { Badge } from '@/components/ui/badge';
 
 interface MinecraftPlayerModalProps {
+  player: Player;
   isOpen: boolean;
   onClose: () => void;
-  player: Player;
 }
 
-export function MinecraftPlayerModal({ isOpen, onClose, player }: MinecraftPlayerModalProps) {
-  if (!player) return null;
+export const MinecraftPlayerModal: React.FC<MinecraftPlayerModalProps> = ({
+  player,
+  isOpen,
+  onClose,
+}) => {
+  if (!isOpen || !player) return null;
+
+  // Mock tier data for demonstration
+  const mockTiers = {
+    crystal: 'HT1',
+    sword: 'LT2', 
+    mace: 'HT3',
+    axe: 'LT1',
+    smp: 'HT2',
+    uhc: 'LT3',
+    nethpot: 'HT4',
+    bedwars: 'LT2'
+  };
+
+  const gameModes: GameMode[] = ['crystal', 'sword', 'mace', 'axe', 'smp', 'uhc', 'nethpot', 'bedwars'];
+
+  const getRankInfo = (points: number) => {
+    if (points >= 300) return { title: 'Combat Master', color: 'text-red-400', bg: 'bg-red-500/20' };
+    if (points >= 200) return { title: 'Combat Marshal', color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
+    if (points >= 100) return { title: 'Combat Ace', color: 'text-blue-400', bg: 'bg-blue-500/20' };
+    return { title: 'Combat Cadet', color: 'text-gray-400', bg: 'bg-gray-500/20' };
+  };
+
+  const rankInfo = getRankInfo(player.global_points || 0);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-[#2a2d3a] border-gray-600 max-w-md p-0 overflow-hidden">
-        <div className="relative">
-          {/* Close button */}
-          <button 
+    <motion.div
+      className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-gray-900/95 backdrop-blur-md rounded-2xl border border-gray-700/50 w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative bg-gradient-to-r from-gray-800/80 to-gray-900/80 px-6 py-4 border-b border-gray-700/50">
+          <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-white" />
+            <X className="w-5 h-5 text-white/80" />
           </button>
+          <h2 className="text-xl font-bold text-white">Player Profile</h2>
+        </div>
 
-          <div className="p-8 text-center">
-            {/* Avatar with golden border */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative mx-auto mb-4"
-            >
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 p-1">
-                <Avatar className="w-full h-full">
-                  <AvatarImage 
-                    src={`https://visage.surgeplay.com/bust/128/${player.ign}`}
-                    alt={player.ign}
-                  />
-                  <AvatarFallback className="bg-gray-700 text-white text-2xl">
-                    {player.ign.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+        {/* Content */}
+        <div className="p-6 space-y-6 max-h-[calc(90vh-8rem)] overflow-y-auto">
+          {/* Player Info Section */}
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {/* Avatar - Centered and Prominent */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-xl overflow-hidden border-4 border-gray-600/50 shadow-lg bg-gray-800">
+                <img
+                  src={`https://visage.surgeplay.com/bust/128/${player.ign}`}
+                  alt={`${player.ign}'s skin`}
+                  className="w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://crafatar.com/avatars/${player.ign}?size=128&overlay=true`;
+                  }}
+                />
               </div>
-            </motion.div>
-
-            {/* Player name */}
-            <h2 className="text-2xl font-bold text-white mb-2">{player.ign}</h2>
-            
-            {/* Combat rank badge */}
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-600 to-yellow-700 px-4 py-2 rounded-full mb-4">
-              <span className="text-yellow-100 text-sm">◆</span>
-              <span className="text-yellow-100 font-medium">
-                Combat {player.global_points >= 300 ? 'Master' : player.global_points >= 200 ? 'Marshal' : player.global_points >= 100 ? 'Ace' : 'Cadet'}
-              </span>
+              {/* Rank Badge */}
+              <div className={`absolute -bottom-2 -right-2 px-2 py-1 rounded-lg text-xs font-bold ${rankInfo.bg} ${rankInfo.color} border border-current/20`}>
+                #{Math.floor(Math.random() * 100) + 1}
+              </div>
             </div>
 
-            {/* Region */}
-            <p className="text-gray-400 mb-6">{player.region === 'NA' ? 'North America' : player.region}</p>
-
-            {/* Position section */}
-            <div className="mb-6">
-              <h3 className="text-gray-400 text-sm font-medium mb-2">POSITION</h3>
-              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-6 bg-yellow-600 rounded text-black font-bold flex items-center justify-center text-sm">
-                    1.
-                  </div>
-                  <span className="text-black font-bold">🏆 OVERALL</span>
+            {/* Player Details */}
+            <div className="flex-1 text-center sm:text-left space-y-3">
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-1">{player.ign}</h3>
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${rankInfo.bg} ${rankInfo.color}`}>
+                  <Trophy className="w-4 h-4" />
+                  <span className="font-semibold">{rankInfo.title}</span>
                 </div>
-                <span className="text-black font-bold">({player.global_points || 0} points)</span>
               </div>
-            </div>
 
-            {/* Tiers section */}
-            <div>
-              <h3 className="text-gray-400 text-sm font-medium mb-3">TIERS</h3>
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {[
-                    { mode: 'crystal', tier: 'HT1' },
-                    { mode: 'sword', tier: 'HT1' },
-                    { mode: 'crystal', tier: 'HT1' },
-                    { mode: 'axe', tier: 'LT1' },
-                    { mode: 'uhc', tier: 'LT1' },
-                    { mode: 'smp', tier: 'LT1' },
-                    { mode: 'nethpot', tier: 'LT2' },
-                    { mode: 'bedwars', tier: 'LT1' }
-                  ].map((item, index) => (
-                    <div key={index} className="relative">
-                      <div className="w-10 h-10 rounded-full bg-gray-600 border-2 border-gray-500 flex items-center justify-center">
-                        <GameModeIcon mode={item.mode} className="w-5 h-5" />
-                      </div>
-                      <div className={`
-                        absolute -bottom-1 -right-1 w-6 h-5 rounded text-xs flex items-center justify-center font-bold
-                        ${item.tier.startsWith('HT') ? 'bg-yellow-500 text-black' : 'bg-gray-500 text-white'}
-                      `}>
-                        {item.tier}
-                      </div>
-                    </div>
-                  ))}
+              <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                <div className="flex items-center gap-2 text-white/80">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{player.region || 'NA'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Monitor className="w-4 h-4" />
+                  <span className="text-sm">{player.device || 'PC'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-yellow-400">
+                  <Trophy className="w-4 h-4" />
+                  <span className="text-sm font-medium">{player.global_points || 0} points</span>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Game Mode Rankings */}
+          <div className="space-y-3">
+            <h4 className="text-lg font-semibold text-white/90">Game Mode Rankings</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {gameModes.map((mode) => {
+                const tier = mockTiers[mode as keyof typeof mockTiers];
+                const isHighTier = tier?.includes('HT');
+                
+                return (
+                  <div
+                    key={mode}
+                    className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/30 hover:border-gray-600/50 transition-colors"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <GameModeIcon mode={mode} className="w-8 h-8" />
+                      <div className="text-center">
+                        <div className="text-xs text-white/60 capitalize mb-1">{mode}</div>
+                        <Badge
+                          variant={isHighTier ? "default" : "secondary"}
+                          className={`text-xs font-bold ${
+                            isHighTier 
+                              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' 
+                              : 'bg-gray-600/20 text-gray-400 border-gray-600/30'
+                          }`}
+                        >
+                          {tier}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/30">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">{player.global_points || 0}</div>
+                <div className="text-sm text-white/60">Total Points</div>
+              </div>
+            </div>
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/30">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">#{Math.floor(Math.random() * 100) + 1}</div>
+                <div className="text-sm text-white/60">Global Rank</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </motion.div>
+    </motion.div>
   );
-}
+};
