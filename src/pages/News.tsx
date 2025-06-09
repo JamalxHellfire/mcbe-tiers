@@ -41,7 +41,7 @@ const News = () => {
                   key={article.id}
                   article={{
                     title: article.title,
-                    description: article.description,
+                    content: article.content,
                     author: article.author,
                     category: article.category,
                     publishedAt: article.published_at

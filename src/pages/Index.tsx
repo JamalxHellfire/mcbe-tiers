@@ -2,11 +2,13 @@
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { MinecraftLeaderboardTable } from '../components/MinecraftLeaderboardTable';
-import { MinecraftPlayerModal } from '../components/MinecraftPlayerModal';
+import { LeaderboardTable } from '../components/LeaderboardTable';
 import { useGamemodeTiers } from '../hooks/useGamemodeTiers';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { TierGrid } from '../components/TierGrid';
+import { PlayerModal } from '../components/PlayerModal';
+import { ResultPopup } from '../components/ResultPopup';
+import { usePopup } from '../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { GameMode, Player } from '../services/playerService';
@@ -21,6 +23,7 @@ const Index = () => {
     selectedMode !== 'overall' ? selectedMode : 'Crystal'
   );
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
+  const { popupData } = usePopup();
 
   const handlePlayerClick = (player: Player) => {
     setSelectedPlayer(player);
@@ -61,7 +64,7 @@ const Index = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <MinecraftLeaderboardTable 
+              <LeaderboardTable 
                 players={players}
                 onPlayerClick={handlePlayerClick} 
               />
@@ -83,11 +86,19 @@ const Index = () => {
       
       <Footer />
       
-      <MinecraftPlayerModal 
-        player={selectedPlayer} 
-        isOpen={!!selectedPlayer}
-        onClose={closeModal} 
-      />
+      {selectedPlayer && (
+        <PlayerModal 
+          player={selectedPlayer} 
+          isOpen={true}
+          onClose={closeModal} 
+        />
+      )}
+      
+      {popupData && (
+        <ResultPopup 
+          {...popupData}
+        />
+      )}
     </div>
   );
 };

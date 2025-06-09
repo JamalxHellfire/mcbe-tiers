@@ -84,6 +84,8 @@ class EnhancedPlayerService {
   getPlayerTiers = playerService.getPlayerTiers;
   deletePlayer = playerService.deletePlayer;
   banPlayer = playerService.banPlayer;
+  verifyAdminPIN = playerService.verifyAdminPIN;
+  updatePlayerGlobalPoints = playerService.updatePlayerGlobalPoints;
   calculateTierPoints = playerService.calculateTierPoints;
   getPlayersByTierAndGamemode = playerService.getPlayersByTierAndGamemode;
 }
