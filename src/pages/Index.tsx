@@ -2,11 +2,10 @@
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { LeaderboardTable } from '../components/LeaderboardTable';
-import { useGamemodeTiers } from '../hooks/useGamemodeTiers';
+import { MinecraftLeaderboardTable } from '../components/MinecraftLeaderboardTable';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { TierGrid } from '../components/TierGrid';
-import { PlayerModal } from '../components/PlayerModal';
+import { MinecraftPlayerModal } from '../components/MinecraftPlayerModal';
 import { ResultPopup } from '../components/ResultPopup';
 import { usePopup } from '../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
@@ -19,9 +18,6 @@ const Index = () => {
   const [selectedMode, setSelectedMode] = useState<GameMode | 'overall'>('overall');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   
-  const { tierData, loading: tierLoading, error: tierError } = useGamemodeTiers(
-    selectedMode !== 'overall' ? selectedMode : 'Crystal'
-  );
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
   const { popupData } = usePopup();
 
@@ -37,8 +33,8 @@ const Index = () => {
     setSelectedMode(mode as GameMode | 'overall');
   };
 
-  const loading = selectedMode === 'overall' ? leaderboardLoading : tierLoading;
-  const error = selectedMode === 'overall' ? leaderboardError : tierError;
+  const loading = leaderboardLoading;
+  const error = leaderboardError;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
@@ -64,7 +60,7 @@ const Index = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <LeaderboardTable 
+              <MinecraftLeaderboardTable 
                 players={players}
                 onPlayerClick={handlePlayerClick} 
               />
@@ -87,7 +83,7 @@ const Index = () => {
       <Footer />
       
       {selectedPlayer && (
-        <PlayerModal 
+        <MinecraftPlayerModal 
           player={selectedPlayer} 
           isOpen={true}
           onClose={closeModal} 
@@ -95,9 +91,7 @@ const Index = () => {
       )}
       
       {popupData && (
-        <ResultPopup 
-          {...popupData}
-        />
+        <ResultPopup />
       )}
     </div>
   );

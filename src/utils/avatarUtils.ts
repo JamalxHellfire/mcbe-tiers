@@ -1,10 +1,24 @@
 
 /**
- * Formats a Minecraft avatar URL with proper fallback handling
- * Uses Crafatar API to fetch skins with priority on Java usernames
+ * Formats a Minecraft avatar URL using Visage Bust API as primary and Crafatar as fallback
  */
 export const getAvatarUrl = async (ign: string, javaUsername?: string | null): Promise<string> => {
-  // If Java username is provided, use the Mojang API to get UUID and then Crafatar for the skin
+  // Use java username if provided, otherwise use IGN
+  const username = javaUsername || ign;
+  
+  // Primary: Visage Bust API (3D renders)
+  try {
+    const visageUrl = `https://visage.surgeplay.com/bust/128/${username}`;
+    // Test if the image exists
+    const response = await fetch(visageUrl, { method: 'HEAD' });
+    if (response.ok) {
+      return visageUrl;
+    }
+  } catch (error) {
+    console.error('Visage API error:', error);
+  }
+  
+  // Fallback 1: Try Mojang API + Crafatar for Java usernames
   if (javaUsername) {
     try {
       const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${javaUsername}`);
@@ -12,17 +26,16 @@ export const getAvatarUrl = async (ign: string, javaUsername?: string | null): P
       if (response.ok) {
         const data = await response.json();
         if (data && data.id) {
-          return `https://crafatar.com/avatars/${data.id}?size=160&overlay=true`;
+          return `https://crafatar.com/avatars/${data.id}?size=128&overlay=true`;
         }
       }
     } catch (error) {
       console.error('Error fetching Java skin:', error);
-      // Silently fall through to fallback options
     }
   }
   
-  // Fallback to using the IGN directly with Crafatar API
-  return `https://crafatar.com/avatars/${ign}?size=160&overlay=true`;
+  // Fallback 2: Crafatar with IGN
+  return `https://crafatar.com/avatars/${username}?size=128&overlay=true`;
 };
 
 /**
@@ -31,15 +44,14 @@ export const getAvatarUrl = async (ign: string, javaUsername?: string | null): P
 export const handleAvatarError = (event: React.SyntheticEvent<HTMLImageElement>) => {
   try {
     event.currentTarget.src = '/default-avatar.png';
-    event.currentTarget.style.opacity = '0.8'; // Slightly fade the fallback image
+    event.currentTarget.style.opacity = '0.8';
   } catch (e) {
-    // Silent fail - no visual indication as per requirements
+    // Silent fail
   }
 };
 
 /**
  * Cache for storing fetched avatar URLs
- * This helps improve performance for repeat views
  */
 export const avatarCache: Record<string, string> = {};
 
@@ -52,20 +64,17 @@ export const prefetchAvatar = async (ign: string, javaUsername?: string | null):
     
     const url = await getAvatarUrl(ign, javaUsername);
     
-    // Preload the image
     const img = new Image();
     img.src = url;
     
-    // Store in cache when loaded
     img.onload = () => {
       avatarCache[ign] = url;
     };
     
     img.onerror = () => {
-      // Silently use default
       avatarCache[ign] = '/default-avatar.png';
     };
   } catch (e) {
-    // Silent failure - no UI indication as per requirements
+    // Silent failure
   }
 };
