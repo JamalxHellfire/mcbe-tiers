@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Trophy, Shield, ChevronDown } from 'lucide-react';
-import { PlayerRow } from './PlayerRow';
+import { TierResultButton } from './TierResultButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGamemodeTiers } from '@/hooks/useGamemodeTiers';
 import { GameMode } from '@/services/playerService';
@@ -146,30 +146,12 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0 }}
                               transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
+                              className="p-2"
                             >
-                              <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
-                                <div className="flex items-center gap-3">
-                                  <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center text-xs">
-                                    {player.ign?.charAt(0) || "?"}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-sm font-medium">{player.ign}</span>
-                                    <span className={`text-xs ${
-                                      player.subtier === 'High' ? `text-tier-${tier}` : 'text-white/50'
-                                    }`}>
-                                      {player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center text-xs">
-                                  <Trophy size={12} className="mr-1 text-yellow-400" />
-                                  <span>
-                                    {typeof player.global_points === 'string' 
-                                      ? Number(player.global_points) || 0 
-                                      : player.global_points || 0}
-                                  </span>
-                                </div>
-                              </div>
+                              <TierResultButton
+                                player={player}
+                                onClick={() => onPlayerClick(player)}
+                              />
                             </motion.div>
                           ))}
                         </AnimatePresence>
@@ -227,7 +209,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                 </div>
                 
                 {tierData["Retired"] && tierData["Retired"].length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y divide-white/5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-4">
                     <AnimatePresence>
                       {tierData["Retired"]
                         .slice(0, tierVisibility.retired.count)
@@ -239,25 +221,10 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
                           >
-                            <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
-                              <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center text-xs">
-                                  {player.ign?.charAt(0) || "?"}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-medium">{player.ign}</span>
-                                  <span className="text-xs text-gray-400">Retired Player</span>
-                                </div>
-                              </div>
-                              <div className="flex items-center text-xs">
-                                <Trophy size={12} className="mr-1 text-yellow-400" />
-                                <span>
-                                  {typeof player.global_points === 'string' 
-                                    ? parseFloat(player.global_points) || 0 
-                                    : player.global_points || 0}
-                                </span>
-                              </div>
-                            </div>
+                            <TierResultButton
+                              player={player}
+                              onClick={() => onPlayerClick(player)}
+                            />
                           </motion.div>
                         ))}
                     </AnimatePresence>
