@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { Trophy, Shield, ChevronDown } from 'lucide-react';
-import { PlayerRow } from './PlayerRow';
+import { Trophy, Shield, ChevronDown, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGamemodeTiers } from '@/hooks/useGamemodeTiers';
 import { GameMode } from '@/services/playerService';
@@ -146,6 +145,7 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0 }}
                               transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
+                              className="relative group"
                             >
                               <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
                                 <div className="flex items-center gap-3">
@@ -168,6 +168,22 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                       ? Number(player.global_points) || 0 
                                       : player.global_points || 0}
                                   </span>
+                                </div>
+                              </div>
+                              
+                              {/* Result popup button (like in image 3) */}
+                              <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="bg-gray-700/90 backdrop-blur-sm p-2 border-t border-white/10">
+                                  <button 
+                                    className="w-full flex items-center justify-center gap-2 text-xs text-white hover:text-blue-400 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onPlayerClick(player);
+                                    }}
+                                  >
+                                    <User size={12} />
+                                    <span>{player.ign}</span>
+                                  </button>
                                 </div>
                               </div>
                             </motion.div>

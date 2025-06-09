@@ -42,7 +42,6 @@ const News = () => {
                   article={{
                     title: article.title,
                     author: article.author,
-                    category: article.category,
                     publishedAt: article.published_at
                   }}
                 />
