@@ -2,12 +2,13 @@
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { EnhancedLeaderboardTable } from '../components/EnhancedLeaderboardTable';
+import { LeaderboardTable } from '../components/LeaderboardTable';
 import { useGamemodeTiers } from '../hooks/useGamemodeTiers';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { TierGrid } from '../components/TierGrid';
-import { EnhancedPlayerModal } from '../components/EnhancedPlayerModal';
+import { PlayerModal } from '../components/PlayerModal';
 import { ResultPopup } from '../components/ResultPopup';
+import { usePopup } from '../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { GameMode, Player } from '../services/playerService';
@@ -22,6 +23,7 @@ const Index = () => {
     selectedMode !== 'overall' ? selectedMode : 'Crystal'
   );
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
+  const { popupData } = usePopup();
 
   const handlePlayerClick = (player: Player) => {
     setSelectedPlayer(player);
@@ -62,7 +64,7 @@ const Index = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <EnhancedLeaderboardTable 
+              <LeaderboardTable 
                 players={players}
                 onPlayerClick={handlePlayerClick} 
               />
@@ -85,14 +87,18 @@ const Index = () => {
       <Footer />
       
       {selectedPlayer && (
-        <EnhancedPlayerModal 
+        <PlayerModal 
           player={selectedPlayer} 
           isOpen={true}
           onClose={closeModal} 
         />
       )}
       
-      <ResultPopup />
+      {popupData && (
+        <ResultPopup 
+          {...popupData}
+        />
+      )}
     </div>
   );
 };
