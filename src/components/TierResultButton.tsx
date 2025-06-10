@@ -2,7 +2,8 @@
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChevronRight, Trophy, Star } from 'lucide-react';
+import { ChevronRight, Trophy, Star, Sword, Shield, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface TierResultButtonProps {
   player: Player;
@@ -11,71 +12,158 @@ interface TierResultButtonProps {
 
 export function TierResultButton({ player, onClick }: TierResultButtonProps) {
   const getRankInfo = (points: number) => {
-    if (points >= 300) return { title: 'Combat Master', color: 'text-yellow-400', bg: 'bg-yellow-500/20', icon: Star };
-    if (points >= 200) return { title: 'Combat Marshal', color: 'text-purple-400', bg: 'bg-purple-500/20', icon: Trophy };
-    if (points >= 100) return { title: 'Combat Ace', color: 'text-blue-400', bg: 'bg-blue-500/20', icon: Trophy };
-    return { title: 'Combat Cadet', color: 'text-gray-400', bg: 'bg-gray-500/20', icon: Trophy };
+    if (points >= 300) return { 
+      title: 'Combat Master', 
+      color: 'text-yellow-300', 
+      bg: 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20', 
+      icon: Star,
+      borderColor: 'border-yellow-400/50',
+      glowColor: 'shadow-yellow-500/25'
+    };
+    if (points >= 200) return { 
+      title: 'Combat Marshal', 
+      color: 'text-purple-300', 
+      bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20', 
+      icon: Sword,
+      borderColor: 'border-purple-400/50',
+      glowColor: 'shadow-purple-500/25'
+    };
+    if (points >= 100) return { 
+      title: 'Combat Ace', 
+      color: 'text-blue-300', 
+      bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20', 
+      icon: Trophy,
+      borderColor: 'border-blue-400/50',
+      glowColor: 'shadow-blue-500/25'
+    };
+    return { 
+      title: 'Combat Cadet', 
+      color: 'text-gray-300', 
+      bg: 'bg-gradient-to-r from-gray-500/20 to-slate-500/20', 
+      icon: Shield,
+      borderColor: 'border-gray-400/50',
+      glowColor: 'shadow-gray-500/25'
+    };
   };
 
   const rankInfo = getRankInfo(player.global_points || 0);
   const IconComponent = rankInfo.icon;
 
   return (
-    <button
+    <motion.button
       onClick={() => onClick(player)}
-      className="w-full group relative overflow-hidden bg-gradient-to-r from-slate-800/90 to-slate-700/90 hover:from-slate-700/90 hover:to-slate-600/90 border border-slate-600/50 hover:border-slate-500/70 rounded-xl px-4 py-3 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+      className={`w-full group relative overflow-hidden bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 hover:from-slate-700/90 hover:via-slate-600/90 hover:to-slate-700/90 border-2 border-slate-600/50 hover:${rankInfo.borderColor} rounded-2xl px-6 py-4 transition-all duration-500 shadow-xl hover:shadow-2xl hover:${rankInfo.glowColor} hover:scale-[1.02] backdrop-blur-sm`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
     >
-      {/* Background gradient effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      {/* Animated background gradient */}
+      <div className={`absolute inset-0 ${rankInfo.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
       
-      <div className="relative flex items-center gap-4">
-        {/* Avatar with glow effect */}
+      {/* Subtle particle effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(5)].map((_, i) => (
+          <motion.div
+            key={i}
+            className={`absolute w-1 h-1 ${rankInfo.color} rounded-full opacity-0 group-hover:opacity-60`}
+            initial={{ x: Math.random() * 100 + '%', y: '100%' }}
+            animate={{ 
+              y: ['-10%', '-20%'],
+              opacity: [0, 0.6, 0]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              delay: i * 0.4,
+              ease: "easeOut"
+            }}
+          />
+        ))}
+      </div>
+      
+      <div className="relative flex items-center gap-5 z-10">
+        {/* Enhanced Avatar with glow effect */}
         <div className="relative">
-          <Avatar className="w-10 h-10 border-2 border-slate-500/50 group-hover:border-blue-400/50 transition-colors duration-300">
+          {/* Glow ring */}
+          <div className={`absolute inset-0 w-14 h-14 rounded-full ${rankInfo.bg} blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse`} />
+          
+          <Avatar className={`w-14 h-14 border-3 border-slate-500/50 group-hover:${rankInfo.borderColor} transition-all duration-300 shadow-lg relative z-10`}>
             <AvatarImage 
               src={`https://visage.surgeplay.com/bust/64/${player.ign}`}
               alt={player.ign}
+              className="object-cover object-center scale-110"
             />
-            <AvatarFallback className="bg-slate-700 text-white text-sm font-medium">
+            <AvatarFallback className="bg-slate-700 text-white text-sm font-bold">
               {player.ign.charAt(0)}
             </AvatarFallback>
           </Avatar>
           
-          {/* Rank indicator */}
-          <div className={`absolute -bottom-1 -right-1 ${rankInfo.bg} ${rankInfo.color} rounded-full p-1 border border-current/30`}>
-            <IconComponent className="w-3 h-3" />
-          </div>
+          {/* Enhanced rank indicator */}
+          <motion.div 
+            className={`absolute -bottom-1 -right-1 ${rankInfo.bg} ${rankInfo.color} rounded-full p-2 border-2 ${rankInfo.borderColor} shadow-lg backdrop-blur-sm`}
+            whileHover={{ scale: 1.1, rotate: 360 }}
+            transition={{ duration: 0.3 }}
+          >
+            <IconComponent className="w-4 h-4" />
+          </motion.div>
         </div>
         
-        {/* Player info */}
+        {/* Enhanced player info */}
         <div className="flex-1 text-left">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-white font-semibold group-hover:text-blue-200 transition-colors duration-300">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-white font-bold text-lg group-hover:text-blue-200 transition-colors duration-300">
               {player.ign}
             </span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${rankInfo.bg} ${rankInfo.color} border border-current/20`}>
+            <motion.span 
+              className={`text-xs px-3 py-1 rounded-full ${rankInfo.bg} ${rankInfo.color} border ${rankInfo.borderColor} font-bold backdrop-blur-sm`}
+              whileHover={{ scale: 1.05 }}
+            >
               {rankInfo.title.replace('Combat ', '')}
-            </span>
+            </motion.span>
           </div>
           
-          <div className="flex items-center gap-3 text-sm text-slate-400">
-            <span className="flex items-center gap-1">
-              <Trophy className="w-3 h-3" />
-              {player.global_points || 0} pts
+          <div className="flex items-center gap-4 text-sm text-slate-400">
+            <span className="flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              <span className="font-semibold">{player.global_points || 0} pts</span>
             </span>
-            <span>•</span>
-            <span>{player.region || 'NA'}</span>
+            <span className="w-1 h-1 rounded-full bg-slate-500" />
+            <span className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${
+                player.region === 'NA' ? 'bg-red-500' :
+                player.region === 'EU' ? 'bg-green-500' :
+                player.region === 'ASIA' ? 'bg-blue-500' :
+                'bg-gray-500'
+              }`} />
+              {player.region || 'NA'}
+            </span>
           </div>
         </div>
         
-        {/* Arrow indicator */}
-        <div className="text-slate-400 group-hover:text-blue-400 transition-colors duration-300">
-          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+        {/* Enhanced arrow indicator with lightning effect */}
+        <div className="flex flex-col items-center gap-1">
+          <motion.div 
+            className="text-slate-400 group-hover:text-blue-400 transition-colors duration-300"
+            whileHover={{ x: 5 }}
+          >
+            <ChevronRight className="w-6 h-6" />
+          </motion.div>
+          <motion.div
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            initial={{ scale: 0 }}
+            whileHover={{ scale: 1 }}
+          >
+            <Zap className="w-3 h-3 text-yellow-400" />
+          </motion.div>
         </div>
       </div>
       
-      {/* Animated border effect */}
-      <div className="absolute inset-0 rounded-xl border border-blue-400/0 group-hover:border-blue-400/30 transition-colors duration-300" />
-    </button>
+      {/* Enhanced animated border effect */}
+      <div className={`absolute inset-0 rounded-2xl border-2 border-transparent group-hover:${rankInfo.borderColor} transition-all duration-300`} />
+      
+      {/* Shine effect on hover */}
+      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+    </motion.button>
   );
 }
