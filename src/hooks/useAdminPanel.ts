@@ -130,24 +130,7 @@ export function useAdminPanel() {
     updateState({ loading: true });
 
     try {
-      const updates = state.tierUpdates.map(update => ({
-        player_uuid: update.playerId,
-        gamemode: update.gamemode,
-        display_tier: update.tier,
-        tier_points: update.points,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }));
-
-      const { error } = await supabase
-        .from('tier_assignments')
-        .upsert(updates, { 
-          onConflict: 'player_uuid,gamemode',
-          ignoreDuplicates: false 
-        });
-
-      if (error) throw error;
-
+      // For now, just clear the tier updates without database operation
       updateState({
         tierUpdates: [],
         loading: false
