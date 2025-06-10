@@ -1,137 +1,174 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Player, GameMode, TierLevel } from '@/services/playerService';
 import { toast } from 'sonner';
 
-interface TierAssignment {
-  gamemode: string;
-  tier: string;
+export interface AdminPanelState {
+  players: Player[];
+  loading: boolean;
+  error: string | null;
+  searchTerm: string;
+  selectedPlayer: Player | null;
+  isModalOpen: boolean;
+  isAddModalOpen: boolean;
+  newPlayerData: {
+    ign: string;
+    java_username: string;
+    region: string;
+    device: string;
+    global_points: number;
+  };
+  tierUpdates: Array<{
+    playerId: string;
+    gamemode: GameMode;
+    tier: TierLevel;
+    points: number;
+  }>;
 }
 
+const initialState: AdminPanelState = {
+  players: [],
+  loading: false,
+  error: null,
+  searchTerm: '',
+  selectedPlayer: null,
+  isModalOpen: false,
+  isAddModalOpen: false,
+  newPlayerData: {
+    ign: '',
+    java_username: '',
+    region: 'NA',
+    device: 'PC',
+    global_points: 0,
+  },
+  tierUpdates: [],
+};
+
 export function useAdminPanel() {
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [pinInputValue, setPinInputValue] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-  const [tierAssignments, setTierAssignments] = useState<TierAssignment[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  
-  // Additional states for AdminPanel
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
-  const [isGeneratingData, setIsGeneratingData] = useState(false);
-  const [playerCount, setPlayerCount] = useState(50);
-  const [ign, setIgn] = useState('');
-  const [javaUsername, setJavaUsername] = useState('');
-  const [region, setRegion] = useState('');
-  const [device, setDevice] = useState('');
-  const [formErrors, setFormErrors] = useState<any>({});
-  const [tierSelections, setTierSelections] = useState<any>({});
+  const [state, setState] = useState<AdminPanelState>(initialState);
 
-  const handlePinSubmit = async () => {
-    setIsSubmitting(true);
+  const updateState = useCallback((updates: Partial<AdminPanelState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const loadPlayers = useCallback(async () => {
+    updateState({ loading: true, error: null });
+    
     try {
-      if (pinInputValue === '1234') {
-        setIsAdminMode(true);
-        toast.success('Admin mode activated');
-      } else {
-        toast.error('Invalid PIN');
-      }
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('global_points', { ascending: false });
+
+      if (error) throw error;
+
+      updateState({ 
+        players: data || [], 
+        loading: false 
+      });
     } catch (error) {
-      toast.error('PIN verification failed');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error loading players:', error);
+      updateState({ 
+        error: error instanceof Error ? error.message : 'Failed to load players',
+        loading: false 
+      });
     }
-  };
+  }, [updateState]);
 
-  const handleLogout = () => {
-    setIsAdminMode(false);
-    setPinInputValue('');
-    toast.success('Logged out');
-  };
-
-  const searchPlayers = async (term: string) => {
-    if (!term.trim()) {
-      setSearchResults([]);
+  const createPlayer = useCallback(async () => {
+    const { newPlayerData } = state;
+    
+    if (!newPlayerData.ign.trim()) {
+      toast.error('IGN is required');
       return;
     }
 
-    setIsSearching(true);
+    updateState({ loading: true });
+
     try {
+      const validRegions = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'];
+      const validDevices = ['PC', 'Mobile', 'Console'];
+      
+      const playerToCreate = {
+        ign: newPlayerData.ign.trim(),
+        java_username: newPlayerData.java_username?.trim() || null,
+        region: validRegions.includes(newPlayerData.region) ? newPlayerData.region as any : 'NA',
+        device: validDevices.includes(newPlayerData.device) ? newPlayerData.device as any : 'PC',
+        global_points: Number(newPlayerData.global_points) || 0,
+      };
+
       const { data, error } = await supabase
         .from('players')
-        .select('*')
-        .ilike('ign', `%${term}%`)
-        .limit(10);
-
-      if (error) throw error;
-      setSearchResults(data || []);
-    } catch (error) {
-      console.error('Search error:', error);
-      toast.error('Search failed');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const loadPlayerDetails = async (playerId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('id', playerId)
+        .insert([playerToCreate])
+        .select()
         .single();
 
       if (error) throw error;
-      setSelectedPlayer(data);
+
+      updateState({
+        players: [data, ...state.players],
+        isAddModalOpen: false,
+        newPlayerData: initialState.newPlayerData,
+        loading: false
+      });
+
+      toast.success('Player created successfully');
     } catch (error) {
-      console.error('Load player error:', error);
-      toast.error('Failed to load player details');
+      console.error('Error creating player:', error);
+      updateState({ loading: false });
+      toast.error(error instanceof Error ? error.message : 'Failed to create player');
     }
-  };
+  }, [state, updateState]);
 
-  const clearSelectedPlayer = () => {
-    setSelectedPlayer(null);
-  };
-
-  const updatePlayer = async (playerData: any) => {
-    try {
-      const { error } = await supabase
-        .from('players')
-        .update(playerData)
-        .eq('id', selectedPlayer.id);
-
-      if (error) throw error;
-      toast.success('Player updated successfully');
-    } catch (error) {
-      console.error('Update player error:', error);
-      toast.error('Failed to update player');
+  const updatePlayerTiers = useCallback(async () => {
+    if (state.tierUpdates.length === 0) {
+      toast.error('No tier updates to apply');
+      return;
     }
-  };
 
-  const updatePlayerTier = async (playerId: string, gamemode: string, tier: string) => {
+    updateState({ loading: true });
+
     try {
+      const updates = state.tierUpdates.map(update => ({
+        player_uuid: update.playerId,
+        gamemode: update.gamemode,
+        display_tier: update.tier,
+        tier_points: update.points,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
       const { error } = await supabase
-        .from('gamemode_scores')
-        .upsert({
-          player_id: playerId,
-          gamemode,
-          internal_tier: tier,
-          display_tier: tier,
-          score: 0
+        .from('tier_assignments')
+        .upsert(updates, { 
+          onConflict: 'player_uuid,gamemode',
+          ignoreDuplicates: false 
         });
 
       if (error) throw error;
-      toast.success('Player tier updated successfully');
-    } catch (error) {
-      console.error('Update tier error:', error);
-      toast.error('Failed to update player tier');
-    }
-  };
 
-  const deletePlayer = async (playerId: string) => {
+      updateState({
+        tierUpdates: [],
+        loading: false
+      });
+
+      toast.success('Tier updates applied successfully');
+      await loadPlayers();
+    } catch (error) {
+      console.error('Error updating tiers:', error);
+      updateState({ loading: false });
+      toast.error(error instanceof Error ? error.message : 'Failed to update tiers');
+    }
+  }, [state.tierUpdates, updateState, loadPlayers]);
+
+  const deletePlayer = useCallback(async (playerId: string) => {
+    if (!confirm('Are you sure you want to delete this player?')) {
+      return;
+    }
+
+    updateState({ loading: true });
+
     try {
       const { error } = await supabase
         .from('players')
@@ -139,141 +176,52 @@ export function useAdminPanel() {
         .eq('id', playerId);
 
       if (error) throw error;
+
+      updateState({
+        players: state.players.filter(p => p.id !== playerId),
+        loading: false
+      });
+
       toast.success('Player deleted successfully');
     } catch (error) {
-      console.error('Delete player error:', error);
-      toast.error('Failed to delete player');
+      console.error('Error deleting player:', error);
+      updateState({ loading: false });
+      toast.error(error instanceof Error ? error.message : 'Failed to delete player');
     }
-  };
+  }, [state.players, updateState]);
 
-  const banPlayer = async (playerId: string, reason?: string) => {
-    try {
-      const { error } = await supabase
-        .from('players')
-        .update({ banned: true })
-        .eq('id', playerId);
-
-      if (error) throw error;
-      toast.success('Player banned successfully');
-    } catch (error) {
-      console.error('Ban player error:', error);
-      toast.error('Failed to ban player');
-    }
-  };
-
-  const generateTestData = async () => {
-    setIsGeneratingData(true);
-    try {
-      // Basic test data generation
-      for (let i = 1; i <= playerCount; i++) {
-        const playerData = {
-          ign: `TestPlayer${i}`,
-          java_username: `JavaPlayer${i}`,
-          region: ['NA', 'EU', 'ASIA'][Math.floor(Math.random() * 3)],
-          device: ['PC', 'Mobile', 'Console'][Math.floor(Math.random() * 3)],
-          global_points: Math.floor(Math.random() * 1000)
-        };
-
-        await supabase.from('players').insert(playerData);
-      }
-      toast.success(`Generated ${playerCount} test players`);
-    } catch (error) {
-      console.error('Generate test data error:', error);
-      toast.error('Failed to generate test data');
-    } finally {
-      setIsGeneratingData(false);
-    }
-  };
-
-  const handleTierChange = (gamemode: string, tier: string) => {
-    setTierSelections(prev => ({
-      ...prev,
-      [gamemode]: tier
-    }));
-  };
-
-  const handleSubmitAllSelectedTiers = async () => {
-    try {
-      for (const playerId of selectedPlayers) {
-        for (const [gamemode, tier] of Object.entries(tierSelections)) {
-          await updatePlayerTier(playerId, gamemode, tier as string);
-        }
-      }
-      toast.success('All tier assignments submitted successfully');
-      setSelectedPlayers([]);
-      setTierSelections({});
-    } catch (error) {
-      console.error('Submit tiers error:', error);
-      toast.error('Failed to submit tier assignments');
-    }
-  };
-
-  const addTierAssignment = (gamemode: string, tier: string) => {
-    setTierAssignments(prev => [
-      ...prev.filter(ta => ta.gamemode !== gamemode),
-      { gamemode, tier }
-    ]);
-  };
-
-  const removeTierAssignment = (gamemode: string) => {
-    setTierAssignments(prev => prev.filter(ta => ta.gamemode !== gamemode));
-  };
-
-  const resetTierSelections = () => {
-    setTierAssignments([]);
-    setTierSelections({});
-  };
-
-  const togglePlayerSelection = (playerId: string) => {
-    setSelectedPlayers(prev => 
-      prev.includes(playerId) 
-        ? prev.filter(id => id !== playerId)
-        : [...prev, playerId]
+  const addTierUpdate = useCallback((playerId: string, gamemode: GameMode, tier: TierLevel, points: number) => {
+    const existingIndex = state.tierUpdates.findIndex(
+      u => u.playerId === playerId && u.gamemode === gamemode
     );
-  };
+
+    let newUpdates;
+    if (existingIndex >= 0) {
+      newUpdates = [...state.tierUpdates];
+      newUpdates[existingIndex] = { playerId, gamemode, tier, points };
+    } else {
+      newUpdates = [...state.tierUpdates, { playerId, gamemode, tier, points }];
+    }
+
+    updateState({ tierUpdates: newUpdates });
+  }, [state.tierUpdates, updateState]);
+
+  const removeTierUpdate = useCallback((playerId: string, gamemode: GameMode) => {
+    updateState({
+      tierUpdates: state.tierUpdates.filter(
+        u => !(u.playerId === playerId && u.gamemode === gamemode)
+      )
+    });
+  }, [state.tierUpdates, updateState]);
 
   return {
-    isAdminMode,
-    pinInputValue,
-    setPinInputValue,
-    isSubmitting,
-    handlePinSubmit,
-    handleLogout,
-    selectedPlayers,
-    tierAssignments,
-    searchTerm,
-    setSearchTerm,
-    searchQuery,
-    setSearchQuery,
-    searchResults,
-    isSearching,
-    selectedPlayer,
-    loadPlayerDetails,
-    clearSelectedPlayer,
-    updatePlayer,
-    updatePlayerTier,
+    state,
+    updateState,
+    loadPlayers,
+    createPlayer,
+    updatePlayerTiers,
     deletePlayer,
-    banPlayer,
-    generateTestData,
-    isGeneratingData,
-    playerCount,
-    ign,
-    setIgn,
-    javaUsername,
-    setJavaUsername,
-    region,
-    setRegion,
-    device,
-    setDevice,
-    formErrors,
-    tierSelections,
-    setTierSelections,
-    handleTierChange,
-    handleSubmitAllSelectedTiers,
-    searchPlayers,
-    addTierAssignment,
-    removeTierAssignment,
-    resetTierSelections,
-    togglePlayerSelection,
+    addTierUpdate,
+    removeTierUpdate,
   };
 }
