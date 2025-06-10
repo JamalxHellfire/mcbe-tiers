@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, MapPin } from 'lucide-react';
 import { Player, GameMode } from '@/services/playerService';
 import { GameModeIcon } from './GameModeIcon';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MinecraftPlayerModalProps {
   player: Player;
@@ -16,24 +17,47 @@ export const MinecraftPlayerModal: React.FC<MinecraftPlayerModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  if (!isOpen || !player) return null;
+  const [playerTiers, setPlayerTiers] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
 
-  // Mock tier data to match the image exactly
-  const mockTiers = {
-    Crystal: 'HT1',
-    Sword: 'HT1', 
-    Mace: 'HT1',
-    Axe: 'LT1',
-    SMP: 'LT1',
-    UHC: 'LT1',
-    NethPot: 'LT2',
-    Bedwars: 'LT1'
+  useEffect(() => {
+    if (isOpen && player) {
+      loadPlayerTiers();
+    }
+  }, [isOpen, player]);
+
+  const loadPlayerTiers = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('gamemode_scores')
+        .select('*')
+        .eq('player_id', player.id);
+
+      if (error) {
+        console.error('Error loading player tiers:', error);
+        return;
+      }
+
+      const tiers: Record<string, any> = {};
+      data?.forEach(tier => {
+        tiers[tier.gamemode] = tier.internal_tier;
+      });
+
+      setPlayerTiers(tiers);
+    } catch (error) {
+      console.error('Error loading player tiers:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!isOpen || !player) return null;
 
   const gameModes: GameMode[] = ['Crystal', 'Sword', 'Mace', 'Axe', 'SMP', 'UHC', 'NethPot', 'Bedwars'];
 
   const getTierColor = (tier: string) => {
-    if (tier.startsWith('HT')) return 'bg-yellow-600 text-yellow-100';
+    if (tier?.startsWith('HT')) return 'bg-yellow-600 text-yellow-100';
     return 'bg-gray-600 text-gray-100';
   };
 
@@ -104,14 +128,14 @@ export const MinecraftPlayerModal: React.FC<MinecraftPlayerModalProps> = ({
             <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-md p-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="bg-yellow-600 text-white rounded-sm px-1 py-0.5 font-bold text-xs">
-                  1.
+                  {player.overall_rank || 1}.
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-white font-bold text-xs">OVERALL</span>
                 </div>
               </div>
               <span className="text-white/90 text-xs">
-                ({player.global_points || 380} points)
+                ({player.global_points || 0} points)
               </span>
             </div>
           </div>
@@ -121,25 +145,29 @@ export const MinecraftPlayerModal: React.FC<MinecraftPlayerModalProps> = ({
             <h4 className="text-slate-400 text-xs uppercase tracking-wider mb-2 font-medium">
               TIERS
             </h4>
-            <div className="grid grid-cols-4 gap-1">
-              {gameModes.map((mode) => {
-                const tier = mockTiers[mode as keyof typeof mockTiers];
-                
-                return (
-                  <div
-                    key={mode}
-                    className="flex flex-col items-center p-1 bg-slate-700/50 rounded-md"
-                  >
-                    <div className="mb-1">
-                      <GameModeIcon mode={mode.toLowerCase()} className="w-4 h-4" />
+            {loading ? (
+              <div className="text-slate-400 text-xs">Loading tiers...</div>
+            ) : (
+              <div className="grid grid-cols-4 gap-1">
+                {gameModes.map((mode) => {
+                  const tier = playerTiers[mode] || 'LT1';
+                  
+                  return (
+                    <div
+                      key={mode}
+                      className="flex flex-col items-center p-1 bg-slate-700/50 rounded-md"
+                    >
+                      <div className="mb-1">
+                        <GameModeIcon mode={mode.toLowerCase()} className="w-4 h-4" />
+                      </div>
+                      <div className={`text-xs px-1 py-0.5 rounded text-xs font-bold ${getTierColor(tier)}`}>
+                        {tier}
+                      </div>
                     </div>
-                    <div className={`text-xs px-1 py-0.5 rounded text-xs font-bold ${getTierColor(tier)}`}>
-                      {tier}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
