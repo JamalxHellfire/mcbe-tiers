@@ -14,7 +14,7 @@ interface MobileNavMenuProps {
   currentMode: string;
 }
 
-export function MobileNavMenu({ currentMode }: MobileNavMenuProps) {
+export function MobileNavMenu({ currentMode = 'overall' }: MobileNavMenuProps) {
   const navigate = useNavigate();
 
   const gameModes = [
@@ -38,7 +38,8 @@ export function MobileNavMenu({ currentMode }: MobileNavMenuProps) {
   };
 
   const getCurrentModeLabel = () => {
-    const found = gameModes.find(mode => mode.value === currentMode.toLowerCase());
+    const mode = currentMode?.toLowerCase() || 'overall';
+    const found = gameModes.find(gameMode => gameMode.value === mode);
     return found ? found.label : 'Select Mode';
   };
 
@@ -55,7 +56,7 @@ export function MobileNavMenu({ currentMode }: MobileNavMenuProps) {
           {gameModes.map((mode) => (
             <DropdownMenuItem 
               key={mode.value}
-              className={`${currentMode.toLowerCase() === mode.value ? "bg-accent" : ""} text-base py-3`}
+              className={`${(currentMode?.toLowerCase() || 'overall') === mode.value ? "bg-accent" : ""} text-base py-3`}
               onClick={() => handleModeChange(mode.value)}
             >
               {mode.label}

@@ -14,7 +14,7 @@ interface NavbarProps {
   activePage?: string;
 }
 
-export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: NavbarProps) {
+export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -71,10 +71,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link 
                   to="/" 
-                  className={cn(
-                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
-                    !activePage && "text-white font-medium"
-                  )}
+                  className="flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg"
                 >
                   <Home size={20} className="mr-2" />
                   <span>Rankings</span>
@@ -156,7 +153,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
 
           {/* Game Mode Selector */}
           <div className="py-2 border-t border-white/10 overflow-x-auto">
-            <GameModeSelector selectedMode={selectedMode} onSelectMode={onSelectMode} />
+            <GameModeSelector selectedMode={selectedMode || 'overall'} onSelectMode={onSelectMode} />
           </div>
           
           {/* Mobile Navigation Menu */}
@@ -171,10 +168,7 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
               <div className="flex flex-col space-y-2">
                 <Link 
                   to="/" 
-                  className={cn(
-                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
-                    !activePage && "text-white bg-white/5"
-                  )}
+                  className="flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg"
                 >
                   <Home size={22} className="mr-3" />
                   <span>Rankings</span>

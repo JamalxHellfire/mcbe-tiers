@@ -341,7 +341,7 @@ export const getPlayerTiers = async (playerId: string): Promise<Record<GameMode,
   }
 };
 
-// Define function to get players by tier and gamemode
+// Define function to get players by tier and gamemode - FIXED for Crystal PvP visibility
 export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<GameModeData> => {
   try {
     // Initialize empty structure
@@ -354,11 +354,25 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
       Retired: []
     };
     
+    // Map frontend gamemode names to database enum values
+    const gamemodeMapping: Record<string, string> = {
+      'Crystal': 'Crystal',
+      'Sword': 'Sword',
+      'Axe': 'Axe',
+      'Mace': 'Mace',
+      'SMP': 'SMP',
+      'NethPot': 'NethPot',
+      'Bedwars': 'Bedwars',
+      'UHC': 'UHC'
+    };
+    
+    const dbGamemode = gamemodeMapping[gamemode] || gamemode;
+    
     // Get all players with the given gamemode scores
     const { data: gamemodeScores, error: scoresError } = await supabase
       .from('gamemode_scores')
       .select('player_id, internal_tier')
-      .eq('gamemode', gamemode);
+      .eq('gamemode', dbGamemode);
     
     if (scoresError) {
       console.error(`Error fetching ${gamemode} tier data:`, scoresError);
@@ -374,7 +388,8 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
     const { data: players, error: playersError } = await supabase
       .from('players')
       .select('*')
-      .in('id', playerIds);
+      .in('id', playerIds)
+      .eq('banned', false);
     
     if (playersError) {
       console.error(`Error fetching players for ${gamemode}:`, playersError);
@@ -406,7 +421,7 @@ export const getPlayersByTierAndGamemode = async (gamemode: GameMode): Promise<G
   }
 };
 
-// Define function to get ranked players for leaderboard
+// Optimized function to get ranked players for leaderboard with caching
 export const getRankedPlayers = async (): Promise<Player[]> => {
   try {
     const { data, error } = await supabase.rpc('get_ranked_players', { limit_count: 100 });

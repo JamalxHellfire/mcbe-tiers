@@ -9,7 +9,7 @@ interface GameModeSelectorProps {
   onSelectMode: (mode: string) => void;
 }
 
-export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelectorProps) {
+export function GameModeSelector({ selectedMode = 'overall', onSelectMode }: GameModeSelectorProps) {
   // Define all game modes
   const gameModes = [
     { id: 'overall', label: 'Overall' },
@@ -23,6 +23,8 @@ export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelecto
     { id: 'uhc', label: 'UHC' }
   ];
   
+  const currentMode = selectedMode?.toLowerCase() || 'overall';
+  
   return (
     <div className="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
       {gameModes.map(mode => (
@@ -32,7 +34,7 @@ export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelecto
           className={cn(
             "flex items-center justify-center px-5 py-2.5 text-base font-medium rounded-full whitespace-nowrap",
             mode.id === 'overall' ? "text-lg px-6 py-3" : "text-base",
-            selectedMode === mode.id 
+            currentMode === mode.id 
               ? "bg-white/10 border-white/20 text-white" 
               : "bg-white/5 border-transparent text-white/60 hover:bg-white/10 hover:text-white/80"
           )}

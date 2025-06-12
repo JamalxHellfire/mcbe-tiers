@@ -6,8 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SubcategoryPage from "./pages/SubcategoryPage";
 import AdminPanel from "./pages/AdminPanel";
-import About from "./pages/About";
-import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 import { PopupProvider } from "./contexts/PopupContext";
 import { ResultPopup } from "./components/ResultPopup";
@@ -26,8 +24,6 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/news" element={<News />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/:category" element={<SubcategoryPage />} />
               <Route path="*" element={<NotFound />} />
