@@ -11,20 +11,16 @@ export function News() {
     {
       id: '1',
       title: 'New Tier System Updates',
-      content: 'We have implemented exciting new tier system updates that will enhance your gaming experience...',
+      description: 'We have implemented exciting new tier system updates that will enhance your gaming experience...',
       author: 'Admin Team',
-      created_at: new Date().toISOString(),
-      excerpt: 'Major updates to the tier ranking system',
-      image_url: undefined
+      created_at: new Date().toISOString()
     },
     {
       id: '2', 
       title: 'Leaderboard Improvements',
-      content: 'Our leaderboard system has been upgraded with better performance and new features...',
+      description: 'Our leaderboard system has been upgraded with better performance and new features...',
       author: 'Development Team',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      excerpt: 'Enhanced leaderboard functionality',
-      image_url: undefined
+      created_at: new Date(Date.now() - 86400000).toISOString()
     }
   ];
 
@@ -55,11 +51,7 @@ export function News() {
           {displayArticles.map((article) => (
             <NewsArticleCard
               key={article.id}
-              title={article.title}
-              excerpt={article.excerpt || article.content.substring(0, 150) + '...'}
-              author={article.author}
-              publishedAt={article.created_at}
-              imageUrl={article.image_url}
+              article={article}
             />
           ))}
         </div>
@@ -67,3 +59,6 @@ export function News() {
     </div>
   );
 }
+
+// Add default export for App.tsx compatibility
+export default News;
