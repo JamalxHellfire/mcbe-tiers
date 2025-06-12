@@ -43,7 +43,7 @@ const News = () => {
                     title: article.title,
                     description: article.description || article.content.substring(0, 150) + '...',
                     author: article.author,
-                    publishedAt: article.published_at
+                    published_at: article.published_at
                   }}
                 />
               ))}
