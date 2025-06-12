@@ -482,7 +482,7 @@ export function EnhancedResultPopup() {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
