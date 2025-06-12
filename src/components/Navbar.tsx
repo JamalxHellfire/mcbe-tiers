@@ -1,123 +1,207 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { GameModeSelector } from './GameModeSelector';
-import { MobileNavMenu } from './MobileNavMenu';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Home, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { motion } from 'framer-motion';
 
 interface NavbarProps {
   selectedMode: string;
   onSelectMode: (mode: string) => void;
   navigate: (path: string) => void;
+  activePage?: string;
 }
 
-export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isGameModeOpen, setIsGameModeOpen] = useState(false);
-
-  // Helper function to handle mode selection
-  const handleModeSelect = (mode: string) => {
-    onSelectMode(mode);
-    if (mode === 'overall') {
-      navigate('/');
-    } else {
-      navigate(`/${mode}`);
-    }
+export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: NavbarProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      setScrolled(offset > 50);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Searching for:', searchQuery);
+    // Future implementation will search for players
+  };
+  
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   return (
-    <nav className="bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-              <span className="text-white font-bold text-sm">MC</span>
+    <div className="pt-8 pb-2">
+      <motion.nav 
+        className={cn(
+          "navbar rounded-xl",
+          scrolled ? "shadow-xl" : "shadow-lg"
+        )}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/lovable-uploads/3bad17d6-7347-46e0-8f33-35534094962f.png" 
+                  alt="MCBE TIERS" 
+                  className="h-10 w-auto mr-2" 
+                />
+                <h1 className="logo-text">
+                  MCBE TIERS
+                </h1>
+              </Link>
             </div>
-            <span className="text-white font-bold text-xl group-hover:text-blue-400 transition-colors">
-              MCLeaderboards
-            </span>
-          </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors relative group"
-            >
-              Home
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
-            </Link>
+            {/* Center - Main Navigation */}
+            <div className="hidden lg:flex items-center space-x-8">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link 
+                  to="/" 
+                  className={cn(
+                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
+                    !activePage && "text-white font-medium"
+                  )}
+                >
+                  <Home size={20} className="mr-2" />
+                  <span>Rankings</span>
+                </Link>
+              </motion.div>
+            </div>
 
-            {/* Game Modes Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsGameModeOpen(!isGameModeOpen)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 group"
+            {/* Right - Search & External Links */}
+            <div className="hidden md:flex items-center space-x-6">
+              <motion.form 
+                onSubmit={handleSearch} 
+                className="relative"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
               >
-                Game Modes
-                <ChevronDown className={`w-4 h-4 transition-transform ${isGameModeOpen ? 'rotate-180' : ''}`} />
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
-              </button>
+                <Input
+                  type="text"
+                  placeholder="Search player..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-10"
+                />
+                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+              </motion.form>
               
-              <AnimatePresence>
-                {isGameModeOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 mt-2 w-48 shadow-xl border border-slate-700 z-50"
-                  >
-                    <GameModeSelector
-                      selectedMode={selectedMode}
-                      onSelectMode={(mode) => {
-                        handleModeSelect(mode);
-                        setIsGameModeOpen(false);
-                      }}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.a 
+                href="https://youtube.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Youtube size={24} />
+              </motion.a>
+              
+              <motion.a 
+                href="https://discord.gg" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <MessageCircle size={24} />
+              </motion.a>
             </div>
-
-            <Link
-              to="/admin"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors relative group"
-            >
-              Admin Panel
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
-            </Link>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <motion.button 
+                onClick={toggleMobileMenu} 
+                className="text-white/70 hover:text-white"
+                whileTap={{ scale: 0.9 }}
+              >
+                {mobileMenuOpen ? (
+                  <X size={28} />
+                ) : (
+                  <Menu size={28} />
+                )}
+              </motion.button>
+            </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-300 hover:text-white p-2 rounded-md transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+          {/* Search bar for mobile */}
+          <div className="md:hidden py-2 border-t border-white/10">
+            <form onSubmit={handleSearch} className="relative">
+              <Input
+                type="text"
+                placeholder="Search player..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-full h-10"
+              />
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+            </form>
           </div>
+
+          {/* Game Mode Selector */}
+          <div className="py-2 border-t border-white/10 overflow-x-auto">
+            <GameModeSelector selectedMode={selectedMode} onSelectMode={onSelectMode} />
+          </div>
+          
+          {/* Mobile Navigation Menu */}
+          {mobileMenuOpen && (
+            <motion.div 
+              className="md:hidden py-3 px-2 border-t border-white/10"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex flex-col space-y-2">
+                <Link 
+                  to="/" 
+                  className={cn(
+                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
+                    !activePage && "text-white bg-white/5"
+                  )}
+                >
+                  <Home size={22} className="mr-3" />
+                  <span>Rankings</span>
+                </Link>
+                <div className="flex space-x-4 p-3 mt-2">
+                  <a 
+                    href="https://youtube.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-red-500 transition-colors duration-200"
+                  >
+                    <Youtube size={26} />
+                  </a>
+                  <a 
+                    href="https://discord.gg" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-indigo-400 transition-colors duration-200"
+                  >
+                    <MessageCircle size={26} />
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
-      </div>
-
-      {/* Mobile Navigation Menu */}
-      <MobileNavMenu
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        selectedMode={selectedMode}
-        onSelectMode={onSelectMode}
-        navigate={navigate}
-      />
-
-      {/* Click outside to close dropdown */}
-      {isGameModeOpen && (
-        <div
-          className="fixed inset-0 z-30"
-          onClick={() => setIsGameModeOpen(false)}
-        />
-      )}
-    </nav>
+      </motion.nav>
+    </div>
   );
 }
