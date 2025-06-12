@@ -4,50 +4,50 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { NewsArticleCard } from '../components/NewsArticleCard';
 import { useNews } from '../hooks/useNews';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+
+interface NewsArticle {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const News = () => {
-  const navigate = useNavigate();
   const { articles, loading, error } = useNews();
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
-      <Navbar 
-        selectedMode="overall" 
-        onSelectMode={() => {}} 
-        navigate={navigate} 
-      />
+      <Navbar />
       
       <main className="flex-grow">
-        <div className="content-container py-6">
+        <div className="content-container py-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">Latest News</h1>
+            <p className="text-slate-400 text-lg">Stay updated with the latest announcements and updates</p>
+          </div>
+
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="text-white">Loading news...</div>
             </div>
           ) : error ? (
             <div className="text-red-500 text-center py-8">
-              Error: {error}
+              Error loading news: {error}
             </div>
           ) : (
-            <motion.div 
-              className="grid gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {articles.map((article) => (
-                <NewsArticleCard
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {articles.map((article: NewsArticle) => (
+                <NewsArticleCard 
                   key={article.id}
-                  article={{
-                    title: article.title,
-                    description: article.description || article.content.substring(0, 150) + '...',
-                    author: article.author,
-                    publishedAt: article.published_at
-                  }}
+                  title={article.title}
+                  content={article.content}
+                  author={article.author}
+                  createdAt={article.created_at}
                 />
               ))}
-            </motion.div>
+            </div>
           )}
         </div>
       </main>
