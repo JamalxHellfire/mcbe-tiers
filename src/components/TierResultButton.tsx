@@ -2,56 +2,88 @@
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChevronRight, Trophy, Star, Sword, Shield, Zap } from 'lucide-react';
+import { ChevronRight, Trophy, Star, Sword, Shield, Zap, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { usePopup } from '@/contexts/PopupContext';
+import { getPlayerRank } from '@/utils/rankUtils';
 
 interface TierResultButtonProps {
   player: Player;
-  onClick: (player: Player) => void;
+  onClick?: (player: Player) => void;
 }
 
 export function TierResultButton({ player, onClick }: TierResultButtonProps) {
+  const { openPopup } = usePopup();
+  
   const getRankInfo = (points: number) => {
-    if (points >= 300) return { 
-      title: 'Combat Master', 
-      color: 'text-yellow-300', 
-      bg: 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20', 
-      icon: Star,
-      borderColor: 'border-yellow-400/50',
-      glowColor: 'shadow-yellow-500/25'
-    };
-    if (points >= 200) return { 
-      title: 'Combat Marshal', 
-      color: 'text-purple-300', 
-      bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20', 
-      icon: Sword,
-      borderColor: 'border-purple-400/50',
-      glowColor: 'shadow-purple-500/25'
-    };
-    if (points >= 100) return { 
-      title: 'Combat Ace', 
-      color: 'text-blue-300', 
-      bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20', 
-      icon: Trophy,
-      borderColor: 'border-blue-400/50',
-      glowColor: 'shadow-blue-500/25'
-    };
-    return { 
-      title: 'Combat Cadet', 
-      color: 'text-gray-300', 
-      bg: 'bg-gradient-to-r from-gray-500/20 to-slate-500/20', 
-      icon: Shield,
-      borderColor: 'border-gray-400/50',
-      glowColor: 'shadow-gray-500/25'
-    };
+    const rank = getPlayerRank(points);
+    let icon = Shield;
+    let color = 'text-gray-300';
+    let bg = 'bg-gradient-to-r from-gray-500/20 to-slate-500/20';
+    let borderColor = 'border-gray-400/50';
+    let glowColor = 'shadow-gray-500/25';
+    
+    switch (rank.title) {
+      case 'Combat General':
+        icon = Crown;
+        color = 'text-yellow-300';
+        bg = 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20';
+        borderColor = 'border-yellow-400/50';
+        glowColor = 'shadow-yellow-500/25';
+        break;
+      case 'Combat Marshal':
+        icon = Sword;
+        color = 'text-red-300';
+        bg = 'bg-gradient-to-r from-red-500/20 to-pink-500/20';
+        borderColor = 'border-red-400/50';
+        glowColor = 'shadow-red-500/25';
+        break;
+      case 'Combat Ace':
+        icon = Star;
+        color = 'text-blue-300';
+        bg = 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20';
+        borderColor = 'border-blue-400/50';
+        glowColor = 'shadow-blue-500/25';
+        break;
+      case 'Combat Sargent':
+        icon = Trophy;
+        color = 'text-orange-300';
+        bg = 'bg-gradient-to-r from-orange-500/20 to-amber-500/20';
+        borderColor = 'border-orange-400/50';
+        glowColor = 'shadow-orange-500/25';
+        break;
+    }
+    
+    return { title: rank.title, color, bg, icon, borderColor, glowColor };
   };
 
   const rankInfo = getRankInfo(player.global_points || 0);
   const IconComponent = rankInfo.icon;
 
+  const handleClick = () => {
+    if (onClick) {
+      onClick(player);
+    }
+    
+    // Open enhanced popup
+    openPopup({
+      player,
+      tierAssignments: [], // Will be loaded from database
+      combatRank: {
+        title: rankInfo.title,
+        points: player.global_points || 0,
+        color: rankInfo.color,
+        effectType: 'default',
+        rankNumber: player.overall_rank || 1,
+        borderColor: rankInfo.borderColor
+      },
+      timestamp: new Date().toISOString()
+    });
+  };
+
   return (
     <motion.button
-      onClick={() => onClick(player)}
+      onClick={handleClick}
       className={`w-full group relative overflow-hidden bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 hover:from-slate-700/90 hover:via-slate-600/90 hover:to-slate-700/90 border-2 border-slate-600/50 hover:${rankInfo.borderColor} rounded-2xl px-6 py-4 transition-all duration-500 shadow-xl hover:shadow-2xl hover:${rankInfo.glowColor} hover:scale-[1.02] backdrop-blur-sm`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
