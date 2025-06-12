@@ -24,26 +24,23 @@ export function GameModeSelector({ selectedMode, onSelectMode }: GameModeSelecto
   ];
   
   return (
-    <div className="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
+    <div className="bg-slate-800 rounded-lg p-2 space-y-1">
       {gameModes.map(mode => (
-        <motion.button
+        <button
           key={mode.id}
           onClick={() => onSelectMode(mode.id)}
           className={cn(
-            "flex items-center justify-center px-5 py-2.5 text-base font-medium rounded-full whitespace-nowrap",
-            mode.id === 'overall' ? "text-lg px-6 py-3" : "text-base",
-            selectedMode === mode.id 
-              ? "bg-white/10 border-white/20 text-white" 
-              : "bg-white/5 border-transparent text-white/60 hover:bg-white/10 hover:text-white/80"
+            "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors",
+            (selectedMode || 'overall') === mode.id 
+              ? "bg-blue-600 text-white" 
+              : "text-gray-300 hover:text-white hover:bg-slate-700"
           )}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
         >
           {mode.id !== 'overall' && (
-            <GameModeIcon mode={mode.id} className="h-5 w-5 mr-2" />
+            <GameModeIcon mode={mode.id} className="h-4 w-4 mr-2" />
           )}
           {mode.label}
-        </motion.button>
+        </button>
       ))}
     </div>
   );

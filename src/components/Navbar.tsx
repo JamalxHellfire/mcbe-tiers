@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
@@ -18,12 +19,11 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
   // Helper function to handle mode selection
   const handleModeSelect = (mode: string) => {
     onSelectMode(mode);
-    navigate(`/${mode.toLowerCase()}`);
-  };
-
-  // Helper function to toggle mobile menu
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    if (mode === 'overall') {
+      navigate('/');
+    } else {
+      navigate(`/${mode}`);
+    }
   };
 
   return (
@@ -67,15 +67,14 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-50"
+                    className="absolute top-full left-0 mt-2 w-48 shadow-xl border border-slate-700 z-50"
                   >
                     <GameModeSelector
                       selectedMode={selectedMode}
                       onSelectMode={(mode) => {
-                        onSelectMode(mode);
+                        handleModeSelect(mode);
                         setIsGameModeOpen(false);
                       }}
-                      navigate={navigate}
                     />
                   </motion.div>
                 )}

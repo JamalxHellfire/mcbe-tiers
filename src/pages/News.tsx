@@ -1,60 +1,69 @@
 
 import React from 'react';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
-import { NewsArticleCard } from '../components/NewsArticleCard';
-import { useNews } from '../hooks/useNews';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useNews } from '@/hooks/useNews';
+import { NewsArticleCard } from '@/components/NewsArticleCard';
 
-const News = () => {
-  const navigate = useNavigate();
+export function News() {
   const { articles, loading, error } = useNews();
 
+  // Mock news articles for display
+  const mockArticles = [
+    {
+      id: '1',
+      title: 'New Tier System Updates',
+      content: 'We have implemented exciting new tier system updates that will enhance your gaming experience...',
+      author: 'Admin Team',
+      created_at: new Date().toISOString(),
+      excerpt: 'Major updates to the tier ranking system',
+      image_url: undefined
+    },
+    {
+      id: '2', 
+      title: 'Leaderboard Improvements',
+      content: 'Our leaderboard system has been upgraded with better performance and new features...',
+      author: 'Development Team',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      excerpt: 'Enhanced leaderboard functionality',
+      image_url: undefined
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary flex items-center justify-center">
+        <div className="text-white">Loading news...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary flex items-center justify-center">
+        <div className="text-red-400">Error loading news: {error}</div>
+      </div>
+    );
+  }
+
+  const displayArticles = articles.length > 0 ? articles : mockArticles;
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-dark">
-      <Navbar 
-        selectedMode="overall" 
-        onSelectMode={() => {}} 
-        navigate={navigate} 
-      />
-      
-      <main className="flex-grow">
-        <div className="content-container py-6">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="text-white">Loading news...</div>
-            </div>
-          ) : error ? (
-            <div className="text-red-500 text-center py-8">
-              Error: {error}
-            </div>
-          ) : (
-            <motion.div 
-              className="grid gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {articles.map((article) => (
-                <NewsArticleCard
-                  key={article.id}
-                  article={{
-                    title: article.title,
-                    description: article.description || article.content.substring(0, 150) + '...',
-                    author: article.author,
-                    published_at: article.published_at
-                  }}
-                />
-              ))}
-            </motion.div>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-dark-primary via-dark-secondary to-dark-primary py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <h1 className="text-4xl font-bold text-white mb-8 text-center">Latest News</h1>
+        
+        <div className="space-y-6">
+          {displayArticles.map((article) => (
+            <NewsArticleCard
+              key={article.id}
+              title={article.title}
+              excerpt={article.excerpt || article.content.substring(0, 150) + '...'}
+              author={article.author}
+              publishedAt={article.created_at}
+              imageUrl={article.image_url}
+            />
+          ))}
         </div>
-      </main>
-      
-      <Footer />
+      </div>
     </div>
   );
-};
-
-export default News;
+}
