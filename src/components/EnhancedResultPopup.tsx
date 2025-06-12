@@ -238,7 +238,7 @@ const PositionBadge = ({ position, points, rankEffects }: { position: number, po
   return (
     <motion.div 
       className={`relative flex items-center justify-between p-4 rounded-xl border-2 ${rankEffects.borderColor} ${rankEffects.glowEffect} backdrop-blur-sm bg-black/60`}
-      initial={{ scale: 0, rotate: -5 }}\
+      initial={{ scale: 0, rotate: -5 }}
       animate={{ scale: 1, rotate: 0 }}
       transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
     >
