@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GameModeSelector } from './GameModeSelector';
-import { Trophy, Home, Info, Newspaper, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
+import { Trophy, Home, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -78,32 +78,6 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 >
                   <Home size={20} className="mr-2" />
                   <span>Rankings</span>
-                </Link>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link 
-                  to="/about" 
-                  className={cn(
-                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
-                    activePage === "about" && "text-white font-medium"
-                  )}
-                >
-                  <Info size={20} className="mr-2" />
-                  <span>About Us</span>
-                </Link>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link 
-                  to="/news" 
-                  className={cn(
-                    "flex items-center text-white/80 hover:text-white transition-colors duration-200 text-lg",
-                    activePage === "news" && "text-white font-medium"
-                  )}
-                >
-                  <Newspaper size={20} className="mr-2" />
-                  <span>News</span>
                 </Link>
               </motion.div>
             </div>
@@ -204,26 +178,6 @@ export function Navbar({ selectedMode, onSelectMode, navigate, activePage }: Nav
                 >
                   <Home size={22} className="mr-3" />
                   <span>Rankings</span>
-                </Link>
-                <Link 
-                  to="/about" 
-                  className={cn(
-                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
-                    activePage === "about" && "text-white bg-white/5"
-                  )}
-                >
-                  <Info size={22} className="mr-3" />
-                  <span>About Us</span>
-                </Link>
-                <Link 
-                  to="/news" 
-                  className={cn(
-                    "flex items-center p-3 rounded-md hover:bg-white/10 text-white/80 hover:text-white text-lg",
-                    activePage === "news" && "text-white bg-white/5"
-                  )}
-                >
-                  <Newspaper size={22} className="mr-3" />
-                  <span>News</span>
                 </Link>
                 <div className="flex space-x-4 p-3 mt-2">
                   <a 

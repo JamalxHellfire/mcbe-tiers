@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Define the player's regions
@@ -18,6 +17,7 @@ export interface Player {
   id: string;
   ign: string;
   global_points?: number;
+  overall_rank?: number;
   badges?: string[];
   java_username?: string;
   avatar_url?: string;
@@ -489,6 +489,31 @@ export const banPlayer = async (player: Player): Promise<boolean> => {
   }
 };
 
+// Add missing functions
+export const verifyAdminPIN = async (pin: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('verify_admin_pin', { input_pin: pin });
+    if (error) {
+      console.error('Error verifying admin PIN:', error);
+      return false;
+    }
+    return data && data.length > 0;
+  } catch (error) {
+    console.error('Failed to verify admin PIN:', error);
+    return false;
+  }
+};
+
+export const updatePlayerGlobalPoints = async (playerId: string): Promise<boolean> => {
+  try {
+    await supabase.rpc('admin_update_global_points', { player_id: playerId });
+    return true;
+  } catch (error) {
+    console.error('Failed to update player global points:', error);
+    return false;
+  }
+};
+
 export const playerService = {
   getPlayerByIGN,
   getPlayerById,
@@ -498,6 +523,8 @@ export const playerService = {
   getPlayerTiers,
   deletePlayer,
   banPlayer,
+  verifyAdminPIN,
+  updatePlayerGlobalPoints,
   calculateTierPoints,
   getPlayersByTierAndGamemode,
   getRankedPlayers
