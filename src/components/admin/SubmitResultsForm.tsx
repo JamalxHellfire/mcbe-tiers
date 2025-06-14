@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GameMode, TierLevel, Player } from '@/services/playerService';
-import { Gem, Sword, Server, Heart, Axe, FlaskConical, BedDouble, Mace, Trophy } from 'lucide-react';
+import { Gem, Sword, Server, Heart, Axe, FlaskConical, BedDouble, Trophy } from 'lucide-react';
 
 const gamemodes: { name: GameMode; icon: React.ElementType }[] = [
   { name: 'Crystal', icon: Gem },
@@ -16,7 +16,7 @@ const gamemodes: { name: GameMode; icon: React.ElementType }[] = [
   { name: 'Axe', icon: Axe },
   { name: 'NethPot', icon: FlaskConical },
   { name: 'Bedwars', icon: BedDouble },
-  { name: 'Mace', icon: Mace },
+  { name: 'Mace', icon: Axe },
 ];
 
 const tierLevels: TierLevel[] = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5', 'Retired', 'Not Ranked'];

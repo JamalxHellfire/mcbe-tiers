@@ -304,7 +304,7 @@ export function useAdminPanel() {
       setLoading(true);
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
-        .upsert({ ign, region, device, java_username: java_username || null }, { onConflict: 'ign' })
+        .upsert([{ ign, region, device, java_username: java_username || null }], { onConflict: 'ign' })
         .select()
         .single();
 
@@ -312,13 +312,14 @@ export function useAdminPanel() {
       if (!playerData) throw new Error("Failed to get player data after upsert.");
 
       const playerId = playerData.id;
+      type DatabaseTier = "HT1" | "LT1" | "HT2" | "LT2" | "HT3" | "LT3" | "HT4" | "LT4" | "HT5" | "LT5" | "Retired";
       const scoresToUpsert = Object.entries(tiers)
         .filter(([, tier]) => tier !== 'Not Ranked')
         .map(([gamemode, tier]) => ({
           player_id: playerId,
           gamemode: gamemode as GameMode,
-          display_tier: tier as TierLevel,
-          internal_tier: tier as TierLevel,
+          display_tier: tier as DatabaseTier,
+          internal_tier: tier as DatabaseTier,
           points: 0, // Points are not in the form, default to 0
         }));
 
