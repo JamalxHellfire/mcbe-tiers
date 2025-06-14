@@ -82,42 +82,6 @@ export type Database = {
           },
         ]
       }
-      news_articles: {
-        Row: {
-          author: string
-          category: string
-          content: string
-          created_at: string
-          description: string | null
-          id: string
-          published_at: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          author?: string
-          category?: string
-          content: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          published_at?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          author?: string
-          category?: string
-          content?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          published_at?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       players: {
         Row: {
           avatar_url: string | null

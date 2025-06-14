@@ -6,7 +6,7 @@ import { ChevronRight, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getPlayerRank } from '@/utils/rankUtils';
-import { GameMode } from '@/services/playerService';
+import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 
 interface TierResultButtonProps {
   player: Player;
@@ -55,19 +55,12 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       onClick(player);
     }
     
-    // Open the modern popup with player data
+    // Use real tier assignments from database
+    const tierAssignments = player.tierAssignments || [];
+    
     openPopup({
       player,
-      tierAssignments: [
-        { gamemode: 'Crystal' as GameMode, tier: 'HT1', points: 100 },
-        { gamemode: 'Sword' as GameMode, tier: 'HT1', points: 95 },
-        { gamemode: 'Bedwars' as GameMode, tier: 'HT1', points: 90 },
-        { gamemode: 'Mace' as GameMode, tier: 'LT1', points: 85 },
-        { gamemode: 'SMP' as GameMode, tier: 'LT1', points: 80 },
-        { gamemode: 'UHC' as GameMode, tier: 'LT1', points: 75 },
-        { gamemode: 'NethPot' as GameMode, tier: 'HT2', points: 70 },
-        { gamemode: 'Axe' as GameMode, tier: 'LT1', points: 65 }
-      ],
+      tierAssignments,
       combatRank: {
         title: rankInfo.title,
         points: player.global_points || 0,
@@ -93,13 +86,14 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       <div className={`absolute inset-0 ${rankInfo.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
       <div className="relative flex items-center gap-4 z-10">
-        {/* Avatar */}
+        {/* Avatar with better error handling */}
         <div className="relative">
           <Avatar className={`w-12 h-12 border-2 border-slate-500/50 group-hover:${rankInfo.borderColor} transition-all duration-300 shadow-md`}>
             <AvatarImage 
-              src={`https://visage.surgeplay.com/bust/64/${player.ign}`}
+              src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
               alt={player.ign}
               className="object-cover object-center scale-110"
+              onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
             />
             <AvatarFallback className="bg-slate-700 text-white text-sm font-bold">
               {player.ign.charAt(0)}

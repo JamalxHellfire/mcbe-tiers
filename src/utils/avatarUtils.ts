@@ -1,52 +1,51 @@
 
 /**
- * Formats a Minecraft avatar URL using Visage Bust API as primary and Crafatar as fallback
+ * Formats a Minecraft avatar URL with multiple fallback options
  */
-export const getAvatarUrl = async (ign: string, javaUsername?: string | null): Promise<string> => {
+export const getAvatarUrl = (ign: string, javaUsername?: string | null): string => {
   // Use java username if provided, otherwise use IGN
   const username = javaUsername || ign;
   
-  // Primary: Visage Bust API (3D renders) - centered bust
-  try {
-    const visageUrl = `https://visage.surgeplay.com/bust/128/${username}`;
-    // Test if the image exists
-    const response = await fetch(visageUrl, { method: 'HEAD' });
-    if (response.ok) {
-      return visageUrl;
-    }
-  } catch (error) {
-    console.error('Visage API error:', error);
-  }
-  
-  // Fallback 1: Try Mojang API + Crafatar for Java usernames
-  if (javaUsername) {
-    try {
-      const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${javaUsername}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.id) {
-          return `https://crafatar.com/avatars/${data.id}?size=128&overlay=true`;
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching Java skin:', error);
-    }
-  }
-  
-  // Fallback 2: Crafatar with IGN
-  return `https://crafatar.com/avatars/${username}?size=128&overlay=true`;
+  // Primary: Visage Bust API (3D renders) - most reliable
+  return `https://visage.surgeplay.com/bust/128/${username}`;
 };
 
 /**
- * Silent error handling for avatar loading failures
+ * Get fallback avatar URLs in order of preference
  */
-export const handleAvatarError = (event: React.SyntheticEvent<HTMLImageElement>) => {
-  try {
-    event.currentTarget.src = '/default-avatar.png';
-    event.currentTarget.style.opacity = '0.8';
-  } catch (e) {
-    // Silent fail
+export const getAvatarFallbacks = (ign: string, javaUsername?: string | null): string[] => {
+  const username = javaUsername || ign;
+  
+  return [
+    `https://visage.surgeplay.com/bust/128/${username}`,
+    `https://crafatar.com/avatars/${username}?size=128&overlay=true`,
+    `https://mc-heads.net/avatar/${username}/128`,
+    `https://minotar.net/helm/${username}/128.png`,
+    '/default-avatar.png'
+  ];
+};
+
+/**
+ * Enhanced error handling for avatar loading failures with automatic fallback
+ */
+export const handleAvatarError = (event: React.SyntheticEvent<HTMLImageElement>, ign: string, javaUsername?: string | null) => {
+  const img = event.currentTarget;
+  const fallbacks = getAvatarFallbacks(ign, javaUsername);
+  const currentSrc = img.src;
+  
+  // Find current fallback index
+  const currentIndex = fallbacks.findIndex(url => currentSrc.includes(url.split('/').pop() || ''));
+  const nextIndex = currentIndex + 1;
+  
+  // Try next fallback
+  if (nextIndex < fallbacks.length) {
+    console.log(`Avatar failed for ${ign}, trying fallback ${nextIndex + 1}/${fallbacks.length}`);
+    img.src = fallbacks[nextIndex];
+  } else {
+    // All fallbacks failed, use default
+    console.log(`All avatar fallbacks failed for ${ign}, using default`);
+    img.src = '/default-avatar.png';
+    img.style.opacity = '0.8';
   }
 };
 
@@ -62,7 +61,7 @@ export const prefetchAvatar = async (ign: string, javaUsername?: string | null):
   try {
     if (avatarCache[ign]) return;
     
-    const url = await getAvatarUrl(ign, javaUsername);
+    const url = getAvatarUrl(ign, javaUsername);
     
     const img = new Image();
     img.src = url;
@@ -72,9 +71,16 @@ export const prefetchAvatar = async (ign: string, javaUsername?: string | null):
     };
     
     img.onerror = () => {
-      avatarCache[ign] = '/default-avatar.png';
+      // Try first fallback
+      const fallbacks = getAvatarFallbacks(ign, javaUsername);
+      if (fallbacks.length > 1) {
+        avatarCache[ign] = fallbacks[1];
+      } else {
+        avatarCache[ign] = '/default-avatar.png';
+      }
     };
   } catch (e) {
     // Silent failure
+    avatarCache[ign] = '/default-avatar.png';
   }
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -23,19 +22,12 @@ const Index = () => {
   const handlePlayerClick = (player: Player) => {
     const rankInfo = getPlayerRank(player.global_points || 0);
     
-    // Use the popup context for all player clicks
+    // Use real tier assignments from database instead of hardcoded data
+    const tierAssignments = player.tierAssignments || [];
+    
     openPopup({
       player,
-      tierAssignments: [
-        { gamemode: 'Crystal' as GameMode, tier: 'HT1', points: 100 },
-        { gamemode: 'Sword' as GameMode, tier: 'HT1', points: 95 },
-        { gamemode: 'Bedwars' as GameMode, tier: 'HT1', points: 90 },
-        { gamemode: 'Mace' as GameMode, tier: 'LT1', points: 85 },
-        { gamemode: 'SMP' as GameMode, tier: 'LT1', points: 80 },
-        { gamemode: 'UHC' as GameMode, tier: 'LT1', points: 75 },
-        { gamemode: 'NethPot' as GameMode, tier: 'HT2', points: 70 },
-        { gamemode: 'Axe' as GameMode, tier: 'LT1', points: 65 }
-      ],
+      tierAssignments,
       combatRank: {
         title: rankInfo.title,
         points: player.global_points || 0,
