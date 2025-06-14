@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useDebounce } from './useDebounce';
-import { playerService, Player } from '@/services/playerService';
+import { searchPlayers, Player } from '@/services/playerService';
 
 export function usePlayerSearch() {
   const [query, setQuery] = useState<string>('');
@@ -11,7 +11,7 @@ export function usePlayerSearch() {
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    const searchPlayers = async () => {
+    const performSearch = async () => {
       if (!debouncedQuery || debouncedQuery.length < 2) {
         setResults([]);
         return;
@@ -21,14 +21,7 @@ export function usePlayerSearch() {
       setError(null);
       
       try {
-        // Use direct try/catch query without supabase reference
-        const { data, error } = await fetch(`/api/players/search?query=${encodeURIComponent(debouncedQuery)}`)
-          .then(res => res.json());
-          
-        if (error) {
-          throw new Error(error.message || 'Error searching players');
-        }
-        
+        const data = await searchPlayers(debouncedQuery);
         setResults(data || []);
       } catch (err) {
         console.error('Player search error:', err);
@@ -39,7 +32,7 @@ export function usePlayerSearch() {
       }
     };
     
-    searchPlayers();
+    performSearch();
   }, [debouncedQuery]);
   
   return {
