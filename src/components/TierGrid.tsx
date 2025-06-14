@@ -6,7 +6,6 @@ import { useGamemodeTiers } from '@/hooks/useGamemodeTiers';
 import { GameMode } from '@/services/playerService';
 import { Button } from '@/components/ui/button';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
-import { RankBadge, getRankByPoints } from '@/components/RankBadge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 
@@ -149,7 +148,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               const playerPoints = typeof player.global_points === 'string' 
                                 ? Number(player.global_points) || 0 
                                 : player.global_points || 0;
-                              const playerRank = getRankByPoints(playerPoints);
                               
                               return (
                                 <motion.div
@@ -161,7 +159,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                 >
                                   <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
                                     <div className="flex items-center gap-3">
-                                      {/* Fixed skin rendering with proper avatar handling */}
                                       <div className="relative">
                                         <Avatar className="w-8 h-8 border border-white/20">
                                           <AvatarImage 
@@ -174,16 +171,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                             {player.ign?.charAt(0) || "?"}
                                           </AvatarFallback>
                                         </Avatar>
-                                        
-                                        {/* Rank badge overlay */}
-                                        <div className="absolute -bottom-1 -right-1">
-                                          <RankBadge 
-                                            rank={playerRank} 
-                                            size="sm" 
-                                            showGlow={false}
-                                            animated={false}
-                                          />
-                                        </div>
                                       </div>
                                       
                                       <div className="flex flex-col">
@@ -267,7 +254,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                           const playerPoints = typeof player.global_points === 'string' 
                             ? parseFloat(player.global_points) || 0 
                             : player.global_points || 0;
-                          const playerRank = getRankByPoints(playerPoints);
                           
                           return (
                             <motion.div
@@ -279,7 +265,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                             >
                               <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
                                 <div className="flex items-center gap-3">
-                                  {/* Fixed skin rendering for retired players */}
                                   <div className="relative">
                                     <Avatar className="w-8 h-8 border border-white/20">
                                       <AvatarImage 
@@ -292,16 +277,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                         {player.ign?.charAt(0) || "?"}
                                       </AvatarFallback>
                                     </Avatar>
-                                    
-                                    {/* Rank badge overlay */}
-                                    <div className="absolute -bottom-1 -right-1">
-                                      <RankBadge 
-                                        rank={playerRank} 
-                                        size="sm" 
-                                        showGlow={false}
-                                        animated={false}
-                                      />
-                                    </div>
                                   </div>
                                   
                                   <div className="flex flex-col">
