@@ -5,18 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Plus, X } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { GameMode, TierLevel } from '@/services/playerService';
-import { GAME_MODES, TIER_LEVELS, REGIONS, DEVICES } from '@/lib/constants';
+import { TIER_LEVELS, REGIONS, DEVICES } from '@/lib/constants';
 
-interface ResultEntry {
-  gamemode: GameMode;
-  tier: TierLevel;
-  points: number;
+interface TierRankings {
+  [key: string]: TierLevel;
 }
+
+const gameModes = [
+  { key: 'crystal', name: 'Crystal', icon: '🔮', color: 'text-purple-400' },
+  { key: 'sword', name: 'Sword', icon: '⚔️', color: 'text-blue-400' },
+  { key: 'smp', name: 'SMP', icon: '🏠', color: 'text-green-400' },
+  { key: 'uhc', name: 'UHC', icon: '❤️', color: 'text-red-400' },
+  { key: 'axe', name: 'Axe', icon: '🪓', color: 'text-cyan-400' },
+  { key: 'nethpot', name: 'NethPot', icon: '🧪', color: 'text-purple-400' },
+  { key: 'bedwars', name: 'Bedwars', icon: '🛏️', color: 'text-orange-400' },
+  { key: 'mace', name: 'Mace', icon: '🔨', color: 'text-gray-400' }
+];
 
 export function SubmitResultsForm() {
   const { submitPlayerResults, loading } = useAdminPanel();
@@ -28,12 +35,7 @@ export function SubmitResultsForm() {
     java_username: ''
   });
   
-  const [results, setResults] = useState<ResultEntry[]>([]);
-  const [currentResult, setCurrentResult] = useState<Partial<ResultEntry>>({
-    gamemode: undefined,
-    tier: undefined,
-    points: 0
-  });
+  const [tierRankings, setTierRankings] = useState<TierRankings>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,15 @@ export function SubmitResultsForm() {
       alert('IGN is required');
       return;
     }
+
+    // Convert tier rankings to results format
+    const results = Object.entries(tierRankings)
+      .filter(([_, tier]) => tier && tier !== 'Not Ranked')
+      .map(([gamemode, tier]) => ({
+        gamemode: gamemode as GameMode,
+        tier: tier as TierLevel,
+        points: 0 // Points will be calculated based on tier
+      }));
 
     const response = await submitPlayerResults(
       playerData.ign,
@@ -59,55 +70,24 @@ export function SubmitResultsForm() {
         device: 'PC',
         java_username: ''
       });
-      setResults([]);
-      setCurrentResult({
-        gamemode: undefined,
-        tier: undefined,
-        points: 0
-      });
+      setTierRankings({});
     }
   };
 
-  const addResult = () => {
-    if (currentResult.gamemode && currentResult.tier && currentResult.tier !== 'Not Ranked') {
-      const newResult: ResultEntry = {
-        gamemode: currentResult.gamemode,
-        tier: currentResult.tier,
-        points: currentResult.points || 0
-      };
-      
-      // Check if gamemode already exists
-      const existingIndex = results.findIndex(r => r.gamemode === newResult.gamemode);
-      if (existingIndex >= 0) {
-        // Update existing
-        const updatedResults = [...results];
-        updatedResults[existingIndex] = newResult;
-        setResults(updatedResults);
-      } else {
-        // Add new
-        setResults([...results, newResult]);
-      }
-      
-      // Reset current result
-      setCurrentResult({
-        gamemode: undefined,
-        tier: undefined,
-        points: 0
-      });
-    }
-  };
-
-  const removeResult = (index: number) => {
-    setResults(results.filter((_, i) => i !== index));
+  const handleTierChange = (gamemode: string, tier: string) => {
+    setTierRankings(prev => ({
+      ...prev,
+      [gamemode]: tier as TierLevel
+    }));
   };
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Submit Player Results</CardTitle>
-          <CardDescription>
-            Add new players or update existing player results and tier assignments
+      <Card className="bg-[#1A1B2A] border-gray-700">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl text-white">Submit Player Results</CardTitle>
+          <CardDescription className="text-gray-400">
+            Add or update player tier rankings
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -115,38 +95,40 @@ export function SubmitResultsForm() {
             {/* Player Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="ign">IGN (Required)</Label>
+                <Label htmlFor="ign" className="text-white">Player IGN *</Label>
                 <Input
                   id="ign"
                   value={playerData.ign}
                   onChange={(e) => setPlayerData({...playerData, ign: e.target.value})}
-                  placeholder="Enter player IGN"
+                  placeholder="Minecraft username"
+                  className="bg-[#0F111A] border-gray-600 text-white placeholder-gray-400"
                   required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="java_username">Java Username (Optional)</Label>
+                <Label htmlFor="java_username" className="text-white">Java Username</Label>
                 <Input
                   id="java_username"
                   value={playerData.java_username}
                   onChange={(e) => setPlayerData({...playerData, java_username: e.target.value})}
-                  placeholder="Enter Java username"
+                  placeholder="For avatar lookup"
+                  className="bg-[#0F111A] border-gray-600 text-white placeholder-gray-400"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="region">Region</Label>
+                <Label htmlFor="region" className="text-white">Region *</Label>
                 <Select
                   value={playerData.region}
                   onValueChange={(value) => setPlayerData({...playerData, region: value})}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className="bg-[#0F111A] border-gray-600 text-white">
+                    <SelectValue placeholder="Select region" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#1A1B2A] border-gray-600">
                     {REGIONS.map((region) => (
-                      <SelectItem key={region} value={region}>
+                      <SelectItem key={region} value={region} className="text-white hover:bg-gray-600">
                         {region}
                       </SelectItem>
                     ))}
@@ -155,17 +137,17 @@ export function SubmitResultsForm() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="device">Device</Label>
+                <Label htmlFor="device" className="text-white">Device</Label>
                 <Select
                   value={playerData.device}
                   onValueChange={(value) => setPlayerData({...playerData, device: value})}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <SelectTrigger className="bg-[#0F111A] border-gray-600 text-white">
+                    <SelectValue placeholder="Select device" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#1A1B2A] border-gray-600">
                     {DEVICES.map((device) => (
-                      <SelectItem key={device} value={device}>
+                      <SelectItem key={device} value={device} className="text-white hover:bg-gray-600">
                         {device}
                       </SelectItem>
                     ))}
@@ -174,104 +156,50 @@ export function SubmitResultsForm() {
               </div>
             </div>
 
-            <Separator />
-
-            {/* Gamemode Results */}
+            {/* Tier Rankings */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Gamemode Results</h3>
+              <h3 className="text-xl font-semibold text-white text-center">Tier Rankings</h3>
               
-              {/* Add Result Form */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-gray-50">
-                <div className="space-y-2">
-                  <Label>Gamemode</Label>
-                  <Select
-                    value={currentResult.gamemode || ''}
-                    onValueChange={(value) => setCurrentResult({...currentResult, gamemode: value as GameMode})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select gamemode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GAME_MODES.map((mode) => (
-                        <SelectItem key={mode} value={mode}>
-                          {mode}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Tier</Label>
-                  <Select
-                    value={currentResult.tier || ''}
-                    onValueChange={(value) => setCurrentResult({...currentResult, tier: value as TierLevel})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select tier" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIER_LEVELS.filter(tier => tier !== 'Not Ranked').map((tier) => (
-                        <SelectItem key={tier} value={tier}>
-                          {tier}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Points</Label>
-                  <Input
-                    type="number"
-                    value={currentResult.points || 0}
-                    onChange={(e) => setCurrentResult({...currentResult, points: parseInt(e.target.value) || 0})}
-                    placeholder="Points"
-                    min="0"
-                  />
-                </div>
-                
-                <div className="flex items-end">
-                  <Button
-                    type="button"
-                    onClick={addResult}
-                    disabled={!currentResult.gamemode || !currentResult.tier || currentResult.tier === 'Not Ranked'}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Result
-                  </Button>
-                </div>
-              </div>
-
-              {/* Current Results */}
-              {results.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Added Results:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {results.map((result, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-2">
-                        {result.gamemode} - {result.tier} ({result.points} pts)
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => removeResult(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {gameModes.map((mode) => (
+                  <div key={mode.key} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{mode.icon}</span>
+                      <Label className={`font-medium ${mode.color}`}>
+                        {mode.name}
+                      </Label>
+                    </div>
+                    <Select
+                      value={tierRankings[mode.key] || 'Not Ranked'}
+                      onValueChange={(value) => handleTierChange(mode.key, value)}
+                    >
+                      <SelectTrigger className="bg-[#0F111A] border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1A1B2A] border-gray-600">
+                        {TIER_LEVELS.map((tier) => (
+                          <SelectItem 
+                            key={tier} 
+                            value={tier} 
+                            className="text-white hover:bg-gray-600"
+                          >
+                            {tier}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
 
-            <Separator />
-
             {/* Submit Button */}
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full bg-white text-black hover:bg-gray-200 font-semibold py-3 flex items-center justify-center gap-2"
+            >
+              <Trophy className="h-4 w-4" />
               {loading ? 'Submitting...' : 'Submit Player Results'}
             </Button>
           </form>
