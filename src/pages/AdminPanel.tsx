@@ -5,6 +5,7 @@ import SubmitResultsForm from '@/components/admin/SubmitResultsForm';
 import ManagePlayersTab from '@/components/admin/ManagePlayersTab';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { UploadCloud, Users, Wrench } from 'lucide-react';
 
 type AdminTab = 'submit' | 'manage' | 'tools';
 
@@ -24,16 +25,17 @@ const AdminPanel = () => {
     }
   };
 
-  const TabButton = ({ tabName, label }: { tabName: AdminTab; label: string }) => (
+  const TabButton = ({ tabName, label, icon: Icon }: { tabName: AdminTab; label: string, icon: React.ElementType }) => (
     <button
       onClick={() => setActiveTab(tabName)}
       className={cn(
-        "py-2 px-4 rounded-md text-sm font-medium transition-colors",
+        "py-2 px-4 rounded-md text-sm font-medium transition-colors flex items-center justify-center",
         activeTab === tabName
-          ? "bg-gray-800 text-white"
+          ? "bg-gray-700 text-white"
           : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
       )}
     >
+      <Icon className="w-5 h-5 mr-2" />
       {label}
     </button>
   );
@@ -50,9 +52,9 @@ const AdminPanel = () => {
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-3">Admin Controls</h2>
             <div className="bg-[#1A1B2A] border border-gray-700 rounded-lg p-2 flex gap-2">
-              <TabButton tabName="submit" label="Submit Results" />
-              <TabButton tabName="manage" label="Manage Players" />
-              <TabButton tabName="tools" label="Admin Tools" />
+              <TabButton tabName="submit" label="Submit Results" icon={UploadCloud} />
+              <TabButton tabName="manage" label="Manage Players" icon={Users} />
+              <TabButton tabName="tools" label="Admin Tools" icon={Wrench} />
             </div>
           </div>
           

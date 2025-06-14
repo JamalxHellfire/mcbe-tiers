@@ -293,7 +293,7 @@ export function useAdminPanel() {
     }
   };
 
-  const submitPlayerResults = async (formData: { ign: string; java_username?: string; region: string; device?: string; tiers: Record<GameMode, TierLevel> }) => {
+  const submitPlayerResults = async (formData: { ign: string; java_username?: string; region: Player['region']; device?: Player['device']; tiers: Record<GameMode, TierLevel> }) => {
     const { ign, java_username, region, device, tiers } = formData;
     if (!ign) {
       toast({ title: "Error", description: "Player IGN is required.", variant: "destructive" });
