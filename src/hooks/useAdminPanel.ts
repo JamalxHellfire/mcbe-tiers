@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
@@ -111,15 +112,18 @@ export const useAdminPanel = () => {
   ) => {
     try {
       setLoading(true);
-      // FIX: Remove 'id' field (caused TS error: property 'id' does not exist on upsert object)
+
+      // Only provide fields that match the 'Insert' type for 'players'!
+      const playerInsertObj = {
+        ign,
+        region,
+        device,
+        java_username: java_username || null
+      };
+
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
-        .upsert({
-          ign, 
-          region, 
-          device, 
-          java_username: java_username || null 
-        })
+        .upsert(playerInsertObj)
         .select()
         .single();
 
