@@ -49,7 +49,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   return (
     <PopupContext.Provider value={{ showPopup, popupData, openPopup, closePopup }}>
       {children}
-      <ModernResultPopup />
+      {showPopup && <ModernResultPopup />}
     </PopupContext.Provider>
   );
 }
