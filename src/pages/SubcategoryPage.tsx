@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { TierGrid } from '../components/TierGrid';
@@ -43,7 +44,7 @@ const SubcategoryPage = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <TierGrid />
+              <TierGrid selectedMode={gameMode} onPlayerClick={handlePlayerClick} />
             </motion.div>
           </AnimatePresence>
         </div>

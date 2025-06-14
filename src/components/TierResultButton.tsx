@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 import { RankBadge, getRankByPoints } from '@/components/RankBadge';
-import { useRankBadgeSystem } from '@/hooks/useRankBadgeSystem';
 
 interface TierResultButtonProps {
   player: Player;
@@ -16,7 +15,6 @@ interface TierResultButtonProps {
 
 export function TierResultButton({ player, onClick }: TierResultButtonProps) {
   const { openPopup } = usePopup();
-  const { showRankPopup } = useRankBadgeSystem();
   const playerPoints = player.global_points || 0;
   const playerRank = getRankByPoints(playerPoints);
 
@@ -47,11 +45,6 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
     });
   };
 
-  const handleRankBadgeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    showRankPopup(player.ign, playerPoints);
-  };
-
   return (
     <motion.button
       onClick={handleClick}
@@ -68,7 +61,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       {/* Animated background gradient */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
            style={{
-             background: `${playerRank.gradient}20`
+             background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})20`
            }} />
       
       <div className="relative flex items-center gap-4 z-10">
@@ -86,14 +79,13 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
             </AvatarFallback>
           </Avatar>
           
-          {/* Rank badge overlay with click handler */}
+          {/* Rank badge overlay */}
           <div className="absolute -bottom-1 -right-1">
             <RankBadge 
               rank={playerRank} 
               size="sm" 
               showGlow={false}
-              animated={true}
-              onClick={() => handleRankBadgeClick({} as React.MouseEvent)}
+              animated={false}
             />
           </div>
         </div>
@@ -107,7 +99,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
             <motion.span 
               className="text-xs px-2 py-1 rounded-full font-medium backdrop-blur-sm text-white border border-white/30"
               style={{
-                background: `${playerRank.gradient}50`
+                background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})50`
               }}
               whileHover={{ scale: 1.05 }}
             >

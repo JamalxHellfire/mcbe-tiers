@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -23,24 +24,24 @@ const Index = () => {
   // Enable automatic points calculation
   usePointsCalculation();
 
-  const handlePlayerClick = (Player: Player) => {
-    const rankInfo = getPlayerRank(Player.global_points || 0);
+  const handlePlayerClick = (player: Player) => {
+    const rankInfo = getPlayerRank(player.global_points || 0);
     
-    const tierAssignments = (Player.tierAssignments || []).map(assignment => ({
+    const tierAssignments = (player.tierAssignments || []).map(assignment => ({
       gamemode: assignment.gamemode,
       tier: assignment.tier,
       score: assignment.score
     }));
     
     openPopup({
-      player: Player,
+      player,
       tierAssignments,
       combatRank: {
         title: rankInfo.title,
-        points: Player.global_points || 0,
+        points: player.global_points || 0,
         color: rankInfo.color,
         effectType: 'general',
-        rankNumber: Player.overall_rank || 1,
+        rankNumber: player.overall_rank || 1,
         borderColor: rankInfo.borderColor
       },
       timestamp: new Date().toISOString()
@@ -89,7 +90,10 @@ const Index = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <TierGrid />
+              <TierGrid 
+                selectedMode={toDatabaseGameMode(selectedMode)}
+                onPlayerClick={handlePlayerClick} 
+              />
             </motion.div>
           )}
         </div>

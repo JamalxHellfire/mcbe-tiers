@@ -18,7 +18,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Combat Grandmaster",
     minPoints: 400,
     icon: Gem,
-    gradient: "linear-gradient(135deg, #9333ea 0%, #8b5cf6 50%, #c026d3 100%)",
+    gradient: "from-purple-600 via-violet-500 to-fuchsia-600",
     shadowColor: "rgba(147, 51, 234, 0.8)",
     glowColor: "rgba(168, 85, 247, 0.6)",
     particleColor: "#a855f7"
@@ -27,7 +27,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Combat Master", 
     minPoints: 250,
     icon: Crown,
-    gradient: "linear-gradient(135deg, #ca8a04 0%, #f59e0b 50%, #ea580c 100%)",
+    gradient: "from-yellow-600 via-amber-500 to-orange-600",
     shadowColor: "rgba(251, 191, 36, 0.8)",
     glowColor: "rgba(245, 158, 11, 0.6)",
     particleColor: "#fbbf24"
@@ -36,7 +36,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Combat Ace",
     minPoints: 100,
     icon: Star,
-    gradient: "linear-gradient(135deg, #2563eb 0%, #06b6d4 50%, #6366f1 100%)",
+    gradient: "from-blue-600 via-cyan-500 to-indigo-600",
     shadowColor: "rgba(59, 130, 246, 0.8)",
     glowColor: "rgba(56, 189, 248, 0.6)",
     particleColor: "#3b82f6"
@@ -45,7 +45,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Combat Specialist",
     minPoints: 50,
     icon: Shield,
-    gradient: "linear-gradient(135deg, #16a34a 0%, #10b981 50%, #059669 100%)",
+    gradient: "from-green-600 via-emerald-500 to-teal-600",
     shadowColor: "rgba(34, 197, 94, 0.8)",
     glowColor: "rgba(16, 185, 129, 0.6)",
     particleColor: "#22c55e"
@@ -54,7 +54,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Combat Cadet",
     minPoints: 20,
     icon: Sword,
-    gradient: "linear-gradient(135deg, #ea580c 0%, #f59e0b 50%, #eab308 100%)",
+    gradient: "from-orange-600 via-amber-500 to-yellow-600",
     shadowColor: "rgba(249, 115, 22, 0.8)",
     glowColor: "rgba(245, 158, 11, 0.6)",
     particleColor: "#f97316"
@@ -63,7 +63,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Combat Novice",
     minPoints: 10,
     icon: Award,
-    gradient: "linear-gradient(135deg, #64748b 0%, #6b7280 50%, #64748b 100%)",
+    gradient: "from-slate-600 via-gray-500 to-slate-700",
     shadowColor: "rgba(100, 116, 139, 0.8)",
     glowColor: "rgba(148, 163, 184, 0.6)",
     particleColor: "#64748b"
@@ -72,7 +72,7 @@ export const RANK_TIERS: RankInfo[] = [
     title: "Rookie",
     minPoints: 0,
     icon: Trophy,
-    gradient: "linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #6b7280 100%)",
+    gradient: "from-gray-600 via-slate-500 to-gray-700",
     shadowColor: "rgba(107, 114, 128, 0.8)",
     glowColor: "rgba(156, 163, 175, 0.6)",
     particleColor: "#6b7280"
@@ -94,7 +94,6 @@ interface RankBadgeProps {
   showGlow?: boolean;
   animated?: boolean;
   className?: string;
-  onClick?: () => void;
 }
 
 export function RankBadge({ 
@@ -102,8 +101,7 @@ export function RankBadge({
   size = 'md', 
   showGlow = true, 
   animated = true,
-  className = '',
-  onClick
+  className = '' 
 }: RankBadgeProps) {
   const sizes = {
     sm: { container: 'w-8 h-8', icon: 'w-4 h-4' },
@@ -117,20 +115,18 @@ export function RankBadge({
 
   return (
     <motion.div
-      className={`relative ${sizeConfig.container} ${className} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`relative ${sizeConfig.container} ${className}`}
       initial={animated ? { scale: 0.8, opacity: 0 } : undefined}
       animate={animated ? { scale: 1, opacity: 1 } : undefined}
       whileHover={animated ? { scale: 1.1 } : undefined}
-      whileTap={onClick ? { scale: 0.95 } : undefined}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      onClick={onClick}
     >
       {/* Glow effect */}
       {showGlow && (
         <div 
           className="absolute inset-0 rounded-full blur-lg opacity-75"
           style={{
-            background: rank.gradient,
+            background: `linear-gradient(135deg, ${rank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})`,
             boxShadow: `0 0 30px ${rank.shadowColor}`
           }}
         />
@@ -140,7 +136,7 @@ export function RankBadge({
       <div 
         className={`relative ${sizeConfig.container} rounded-full border-2 border-white/30 flex items-center justify-center overflow-hidden backdrop-blur-sm`}
         style={{
-          background: rank.gradient
+          background: `linear-gradient(135deg, ${rank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})`
         }}
       >
         {/* Shimmer effect */}
