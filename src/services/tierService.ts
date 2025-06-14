@@ -6,10 +6,7 @@ export async function getPlayersForTier(gameMode: GameMode): Promise<Record<stri
   try {
     const { data: players, error } = await supabase
       .from('players')
-      .select(`
-        *,
-        tierAssignments:tier_assignments(*)
-      `);
+      .select('*');
 
     if (error) throw error;
 
@@ -24,22 +21,9 @@ export async function getPlayersForTier(gameMode: GameMode): Promise<Record<stri
       'retired': []
     };
 
-    // Group players by their tier assignment for the specific game mode
+    // For now, put all players in unassigned since we don't have tier assignment logic yet
     players?.forEach(player => {
-      const tierAssignment = player.tierAssignments?.find(
-        (assignment: any) => assignment.gamemode === gameMode
-      );
-      
-      if (tierAssignment) {
-        const tierKey = `tier-${tierAssignment.tier.toLowerCase()}`;
-        if (tierGroups[tierKey]) {
-          tierGroups[tierKey].push(player);
-        } else {
-          tierGroups['unassigned'].push(player);
-        }
-      } else {
-        tierGroups['unassigned'].push(player);
-      }
+      tierGroups['unassigned'].push(player);
     });
 
     return tierGroups;

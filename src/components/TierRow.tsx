@@ -26,7 +26,7 @@ export function TierRow({ tier, tierId, players }: TierRowProps) {
             {players.map((player, index) => (
               <Draggable
                 key={player.id}
-                draggableId={player.id.toString()}
+                draggableId={player.id}  // Now using string ID
                 index={index}
               >
                 {(provided, snapshot) => (

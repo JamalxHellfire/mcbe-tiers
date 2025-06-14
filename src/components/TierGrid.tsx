@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { TierRow } from './TierRow';
 import { GameModeButton } from './GameModeButton';
@@ -8,7 +9,6 @@ import { updatePlayerTierAssignment } from '@/services/playerService';
 import { useToast } from "@/hooks/use-toast"
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
-import { ResultPopup } from './ResultPopup';
 import { RankPopup } from '@/components/RankPopupSystem';
 import { useRankBadgeSystem } from '@/hooks/useRankBadgeSystem';
 
@@ -74,7 +74,7 @@ export function TierGrid() {
       return;
     }
 
-    const playerId = parseInt(draggableId);
+    const playerId = draggableId; // Keep as string now
     const newTier = destination.droppableId.replace('tier-', '').toUpperCase();
 
     try {
