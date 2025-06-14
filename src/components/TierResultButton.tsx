@@ -6,7 +6,8 @@ import { ChevronRight, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
-import { RankBadge, getRankByPoints } from '@/components/RankBadge';
+import { RankBadge, getRankByPoints } from '@/components/RankBadgeSystem';
+import { useRankBadgeSystem } from '@/hooks/useRankBadgeSystem';
 
 interface TierResultButtonProps {
   player: Player;
@@ -15,6 +16,7 @@ interface TierResultButtonProps {
 
 export function TierResultButton({ player, onClick }: TierResultButtonProps) {
   const { openPopup } = usePopup();
+  const { showRankPopup } = useRankBadgeSystem();
   const playerPoints = player.global_points || 0;
   const playerRank = getRankByPoints(playerPoints);
 
@@ -23,6 +25,9 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       onClick(player);
     }
     
+    // Show rank popup effect
+    showRankPopup(player.ign, playerPoints);
+    
     // Convert tierAssignments to match expected interface
     const tierAssignments = (player.tierAssignments || []).map(assignment => ({
       gamemode: assignment.gamemode,
@@ -30,19 +35,22 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       score: assignment.score
     }));
     
-    openPopup({
-      player,
-      tierAssignments,
-      combatRank: {
-        title: playerRank.title,
-        points: playerPoints,
-        color: 'text-white',
-        effectType: 'general',
-        rankNumber: player.overall_rank || 1,
-        borderColor: 'border-white'
-      },
-      timestamp: new Date().toISOString()
-    });
+    // Small delay before showing main popup to let rank popup show first
+    setTimeout(() => {
+      openPopup({
+        player,
+        tierAssignments,
+        combatRank: {
+          title: playerRank.title,
+          points: playerPoints,
+          color: 'text-white',
+          effectType: 'general',
+          rankNumber: player.overall_rank || 1,
+          borderColor: 'border-white'
+        },
+        timestamp: new Date().toISOString()
+      });
+    }, 1500);
   };
 
   return (
@@ -61,7 +69,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       {/* Animated background gradient */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
            style={{
-             background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})20`
+             background: `linear-gradient(135deg, ${playerRank.gradient})20`
            }} />
       
       <div className="relative flex items-center gap-4 z-10">
@@ -99,7 +107,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
             <motion.span 
               className="text-xs px-2 py-1 rounded-full font-medium backdrop-blur-sm text-white border border-white/30"
               style={{
-                background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})50`
+                background: `linear-gradient(135deg, ${playerRank.gradient})50`
               }}
               whileHover={{ scale: 1.05 }}
             >

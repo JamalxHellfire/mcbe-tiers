@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { RankInfo, getRankByPoints } from '@/components/RankBadge';
+import { RankInfo, getRankByPoints } from '@/components/RankBadgeSystem';
 
 interface RankBadgeState {
   showPopup: boolean;
