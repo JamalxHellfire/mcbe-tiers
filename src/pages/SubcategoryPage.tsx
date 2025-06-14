@@ -7,10 +7,11 @@ import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
+import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 
 const SubcategoryPage = () => {
   const { gameMode: gameModeParam } = useParams<{ gameMode: string }>();
-  const gameMode = (gameModeParam as GameMode) || 'Crystal';
+  const gameMode = toDatabaseGameMode(gameModeParam || 'Crystal');
 
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
@@ -32,7 +33,7 @@ const SubcategoryPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
       <Navbar 
-        selectedMode={gameMode.toLowerCase()} 
+        selectedMode={gameModeParam?.toLowerCase() || 'crystal'} 
         onSelectMode={handleModeChange} 
         navigate={navigate}
       />
@@ -47,7 +48,7 @@ const SubcategoryPage = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <TierGrid selectedMode={gameMode.toLowerCase()} onPlayerClick={handlePlayerClick} />
+              <TierGrid selectedMode={gameMode} onPlayerClick={handlePlayerClick} />
             </motion.div>
           </AnimatePresence>
         </div>

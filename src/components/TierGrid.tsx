@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Trophy, Shield, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +5,7 @@ import { useGamemodeTiers } from '@/hooks/useGamemodeTiers';
 import { GameMode } from '@/services/playerService';
 import { Button } from '@/components/ui/button';
 import { TierResultButton } from './TierResultButton';
+import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 
 interface TierGridProps {
   selectedMode: string;
@@ -13,7 +13,9 @@ interface TierGridProps {
 }
 
 export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
-  const { tierData, loading, error } = useGamemodeTiers(selectedMode as GameMode);
+  // Convert the selectedMode to the correct database format
+  const databaseGameMode = toDatabaseGameMode(selectedMode);
+  const { tierData, loading, error } = useGamemodeTiers(databaseGameMode);
   
   // Pagination state
   const [tierVisibility, setTierVisibility] = useState({

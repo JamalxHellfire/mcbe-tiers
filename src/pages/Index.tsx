@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { GameMode, Player } from '../services/playerService';
 import { motion } from 'framer-motion';
+import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ const Index = () => {
               transition={{ duration: 0.5 }}
             >
               <TierGrid 
-                selectedMode={selectedMode as GameMode}
+                selectedMode={toDatabaseGameMode(selectedMode)}
                 onPlayerClick={handlePlayerClick} 
               />
             </motion.div>
