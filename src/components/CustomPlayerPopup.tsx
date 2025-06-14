@@ -23,17 +23,17 @@ export function CustomPlayerPopup() {
     <AnimatePresence>
       {showPopup && (
         <motion.div
-          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleOverlayClick}
         >
           <motion.div
-            className="relative w-[320px] h-auto rounded-2xl overflow-hidden shadow-2xl"
+            className="relative w-[400px] rounded-xl overflow-hidden shadow-2xl"
             style={{
-              background: '#1A1A2E',
-              border: '1px solid #2D2D42'
+              background: '#2C3E50',
+              minHeight: '500px'
             }}
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -44,19 +44,19 @@ export function CustomPlayerPopup() {
             {/* Close Button */}
             <button
               onClick={closePopup}
-              className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-white transition-colors z-10 rounded-full hover:bg-white/10"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white transition-colors z-10 rounded-full hover:bg-white/10"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
 
             {/* Content */}
-            <div className="p-6 text-center">
+            <div className="p-8 text-center">
               {/* Avatar Section */}
               <div className="mb-6">
-                <div className="relative w-20 h-20 mx-auto mb-4">
+                <div className="relative w-24 h-24 mx-auto mb-4">
                   <div 
                     className="w-full h-full rounded-full border-4 overflow-hidden"
-                    style={{ borderColor: '#FFFFFF' }}
+                    style={{ borderColor: '#F39C12' }}
                   >
                     <Avatar className="w-full h-full">
                       <AvatarImage 
@@ -64,7 +64,7 @@ export function CustomPlayerPopup() {
                         alt={popupData.player.ign}
                         className="object-cover object-center scale-110"
                       />
-                      <AvatarFallback className="bg-slate-700 text-white font-bold text-lg">
+                      <AvatarFallback className="bg-slate-700 text-white font-bold text-xl">
                         {popupData.player.ign.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -72,59 +72,62 @@ export function CustomPlayerPopup() {
                 </div>
 
                 {/* Player Name */}
-                <h3 className="text-xl font-bold mb-3 text-white" style={{ fontFamily: 'Roboto, Arial, sans-serif' }}>
+                <h3 className="text-2xl font-bold mb-4 text-white" style={{ fontFamily: 'Arial, sans-serif' }}>
                   {popupData.player.ign}
                 </h3>
 
                 {/* Combat Master Badge */}
                 <div 
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-3 text-sm font-bold"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-bold"
                   style={{ 
-                    background: '#FFD700',
-                    color: '#1A1A2E',
-                    boxShadow: '0 0 10px rgba(255, 215, 0, 0.4)'
+                    background: 'linear-gradient(135deg, #8B4513 0%, #D2691E 100%)',
+                    color: '#FFD700',
+                    border: '1px solid #D2691E'
                   }}
                 >
-                  <span className="text-sm">♦</span>
+                  <span className="text-base">⚔</span>
                   <span>Combat Master</span>
                 </div>
 
                 {/* Region */}
-                <div className="text-gray-400 text-xs mb-3" style={{ color: '#A0A0A0' }}>
+                <div className="text-gray-400 text-sm mb-4" style={{ color: '#7F8C8D' }}>
                   North America
                 </div>
 
                 {/* NameMC Link */}
-                <div className="flex items-center justify-center gap-1.5 mb-6">
-                  <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">n</span>
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <div 
+                    className="w-5 h-5 rounded flex items-center justify-center text-white text-xs font-bold"
+                    style={{ background: '#3498DB' }}
+                  >
+                    n
                   </div>
-                  <span className="text-gray-400 text-xs cursor-pointer hover:text-blue-400 transition-colors">NameMC ↗</span>
+                  <span className="text-gray-400 text-sm cursor-pointer hover:text-blue-400 transition-colors">
+                    NameMC ↗
+                  </span>
                 </div>
               </div>
 
               {/* Position Section */}
-              <div className="mb-6">
-                <h4 className="text-white text-sm font-medium mb-3 text-left uppercase tracking-wider">
+              <div className="mb-8">
+                <h4 className="text-white text-sm font-medium mb-4 text-left uppercase tracking-wider" style={{ color: '#95A5A6' }}>
                   POSITION
                 </h4>
                 <div 
-                  className="rounded-lg p-3 flex items-center justify-between"
-                  style={{ background: '#FFC107' }}
+                  className="rounded-lg p-4 flex items-center"
+                  style={{ background: '#34495E' }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-lg"
-                      style={{ background: '#FF8F00' }}
-                    >
-                      {position}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Trophy className="w-4 h-4 text-white" />
-                      <span className="text-white font-bold text-sm">OVERALL</span>
-                    </div>
+                  <div 
+                    className="w-12 h-8 rounded-l flex items-center justify-center text-white font-bold text-lg mr-4"
+                    style={{ background: '#F39C12' }}
+                  >
+                    {position}.
                   </div>
-                  <span className="text-white text-sm">
+                  <div className="flex items-center gap-2 flex-1">
+                    <Trophy className="w-5 h-5" style={{ color: '#F39C12' }} />
+                    <span className="text-white font-bold text-base">OVERALL</span>
+                  </div>
+                  <span className="text-gray-300 text-sm">
                     ({playerPoints} points)
                   </span>
                 </div>
@@ -132,76 +135,76 @@ export function CustomPlayerPopup() {
 
               {/* Tiers Section */}
               <div>
-                <h4 className="text-white text-sm font-medium mb-3 text-left uppercase tracking-wider">
+                <h4 className="text-white text-sm font-medium mb-4 text-left uppercase tracking-wider" style={{ color: '#95A5A6' }}>
                   TIERS
                 </h4>
                 <div 
-                  className="rounded-lg p-3"
-                  style={{ background: 'rgba(45, 45, 66, 0.6)' }}
+                  className="rounded-lg p-4"
+                  style={{ background: '#34495E' }}
                 >
-                  <div className="flex justify-center gap-2 flex-wrap">
-                    {/* HT1 - Purple */}
+                  <div className="flex justify-center gap-3 flex-wrap">
+                    {/* HT1 - Purple with Diamond */}
                     <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#800080', backgroundColor: '#800080' }}>
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#9B59B6', backgroundColor: '#9B59B6' }}>
                         ◆
                       </div>
-                      <span className="text-xs font-bold" style={{ color: '#800080' }}>HT1</span>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>HT1</span>
                     </div>
 
-                    {/* HT1 - Purple */}
+                    {/* HT1 - Green with Check */}
                     <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#800080', backgroundColor: '#800080' }}>
-                        ◆
-                      </div>
-                      <span className="text-xs font-bold" style={{ color: '#800080' }}>HT1</span>
-                    </div>
-
-                    {/* HT1 - Purple */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#800080', backgroundColor: '#800080' }}>
-                        ◆
-                      </div>
-                      <span className="text-xs font-bold" style={{ color: '#800080' }}>HT1</span>
-                    </div>
-
-                    {/* LT1 - Blue */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#0000FF', backgroundColor: '#0000FF' }}>
-                        🔫
-                      </div>
-                      <span className="text-xs font-bold" style={{ color: '#0000FF' }}>LT1</span>
-                    </div>
-
-                    {/* LT1 - Blue */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#0000FF', backgroundColor: '#0000FF' }}>
-                        🔫
-                      </div>
-                      <span className="text-xs font-bold" style={{ color: '#0000FF' }}>LT1</span>
-                    </div>
-
-                    {/* LT1 - Blue */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#0000FF', backgroundColor: '#0000FF' }}>
-                        🔫
-                      </div>
-                      <span className="text-xs font-bold" style={{ color: '#0000FF' }}>LT1</span>
-                    </div>
-
-                    {/* HT2 - Red */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#FF0000', backgroundColor: '#FF0000' }}>
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#27AE60', backgroundColor: '#27AE60' }}>
                         ✓
                       </div>
-                      <span className="text-xs font-bold" style={{ color: '#FF0000' }}>HT2</span>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>HT1</span>
                     </div>
 
-                    {/* LT1 - Pink */}
+                    {/* HT1 - Brown with Sword */}
                     <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#FF69B4', backgroundColor: '#FF69B4' }}>
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#8B4513', backgroundColor: '#8B4513' }}>
+                        ⚔
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>HT1</span>
+                    </div>
+
+                    {/* LT1 - Blue with Potion */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#3498DB', backgroundColor: '#3498DB' }}>
+                        🧪
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>LT1</span>
+                    </div>
+
+                    {/* LT1 - Gray with Flame */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#7F8C8D', backgroundColor: '#7F8C8D' }}>
+                        🔥
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>LT1</span>
+                    </div>
+
+                    {/* LT1 - Dark Blue with Star */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#2C3E50', backgroundColor: '#2C3E50' }}>
+                        ★
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>LT1</span>
+                    </div>
+
+                    {/* HT2 - Purple with Eye */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#8E44AD', backgroundColor: '#8E44AD' }}>
+                        👁
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>HT2</span>
+                    </div>
+
+                    {/* LT1 - Pink with Heart */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold text-white mb-1" style={{ borderColor: '#E91E63', backgroundColor: '#E91E63' }}>
                         ♥
                       </div>
-                      <span className="text-xs font-bold" style={{ color: '#FF69B4' }}>LT1</span>
+                      <span className="text-xs font-bold" style={{ color: '#F39C12' }}>LT1</span>
                     </div>
                   </div>
                 </div>
