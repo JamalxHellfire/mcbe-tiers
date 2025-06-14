@@ -70,7 +70,17 @@ export function useAdminPanel() {
 
       if (error) throw error;
 
-      setNews(data || []);
+      // Map database fields to NewsArticle interface
+      const mappedNews = (data || []).map(item => ({
+        id: item.id,
+        headline: item.title,
+        excerpt: item.description,
+        content: item.content,
+        author: item.author,
+        published_at: item.published_at
+      }));
+
+      setNews(mappedNews);
     } catch (error) {
       console.error('Error fetching news:', error);
       setError('Failed to fetch news');
@@ -171,8 +181,8 @@ export function useAdminPanel() {
         .from('players')
         .update({
           ign: updatedPlayer.ign,
-          region: updatedPlayer.region,
-          device: updatedPlayer.device,
+          region: updatedPlayer.region as any,
+          device: updatedPlayer.device as any,
           global_points: updatedPlayer.global_points
         })
         .eq('id', updatedPlayer.id);
@@ -201,7 +211,12 @@ export function useAdminPanel() {
     try {
       const { error } = await supabase
         .from('players')
-        .insert([newPlayer]);
+        .insert([{
+          ign: newPlayer.ign,
+          region: newPlayer.region as any,
+          device: newPlayer.device as any,
+          global_points: newPlayer.global_points
+        }]);
 
       if (error) throw error;
 
@@ -249,6 +264,7 @@ export function useAdminPanel() {
       const assignments = playerIds.map(playerId => ({
         player_id: playerId,
         gamemode,
+        display_tier: tier,
         internal_tier: tier,
         points
       }));
