@@ -14,8 +14,8 @@ const News = () => {
   const newsArticles = [
     {
       id: '1',
-      title: 'New Tournament Announced',
-      description: 'Exciting tournament coming soon...',
+      headline: 'New Tournament Announced',
+      excerpt: 'Exciting tournament coming soon...',
       author: 'Admin',
       published_at: '2024-01-15',
       content: 'Full article content here...'
@@ -33,8 +33,8 @@ const News = () => {
           {newsArticles.map((article) => (
             <NewsArticleCard
               key={article.id}
-              title={article.title}
-              description={article.description}
+              headline={article.headline}
+              excerpt={article.excerpt}
               author={article.author}
               publishedAt={article.published_at}
             />

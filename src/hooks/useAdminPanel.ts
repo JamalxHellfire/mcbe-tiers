@@ -64,13 +64,12 @@ export function useAdminPanel() {
   const fetchNews = async () => {
     try {
       const { data, error } = await supabase
-        .from('news_articles')
+        .from('news')
         .select('*')
         .order('published_at', { ascending: false });
 
       if (error) throw error;
 
-      // Map database fields to NewsArticle interface
       const mappedNews = (data || []).map(item => ({
         id: item.id,
         headline: item.title,
@@ -95,7 +94,7 @@ export function useAdminPanel() {
   const createNewsArticle = async (article: Omit<NewsArticle, 'id'>) => {
     try {
       const { error } = await supabase
-        .from('news_articles')
+        .from('news')
         .insert([{
           title: article.headline,
           content: article.content,
@@ -124,7 +123,7 @@ export function useAdminPanel() {
   const updateNewsArticle = async (id: string, updates: Partial<NewsArticle>) => {
     try {
       const { error } = await supabase
-        .from('news_articles')
+        .from('news')
         .update({
           title: updates.headline,
           content: updates.content,
@@ -154,7 +153,7 @@ export function useAdminPanel() {
   const deleteNewsArticle = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('news_articles')
+        .from('news')
         .delete()
         .eq('id', id);
 
@@ -261,11 +260,17 @@ export function useAdminPanel() {
 
   const assignTiersBulk = async (playerIds: string[], gamemode: GameMode, tier: TierLevel, points: number) => {
     try {
+      // Filter out invalid tiers for the database
+      const validTiers = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5', 'Retired'];
+      if (!validTiers.includes(tier)) {
+        throw new Error(`Invalid tier: ${tier}. Must be one of ${validTiers.join(', ')}`);
+      }
+
       const assignments = playerIds.map(playerId => ({
         player_id: playerId,
         gamemode,
-        display_tier: tier,
-        internal_tier: tier,
+        display_tier: tier as "HT1" | "LT1" | "HT2" | "LT2" | "HT3" | "LT3" | "HT4" | "LT4" | "HT5" | "LT5" | "Retired",
+        internal_tier: tier as "HT1" | "LT1" | "HT2" | "LT2" | "HT3" | "LT3" | "HT4" | "LT4" | "HT5" | "LT5" | "Retired",
         points
       }));
 
