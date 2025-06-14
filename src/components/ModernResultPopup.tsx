@@ -6,7 +6,6 @@ import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
-import { RankBadgeIcon } from './RankBadgeIcon';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 
 export function ModernResultPopup() {
@@ -117,7 +116,6 @@ export function ModernResultPopup() {
                   {popupData.player.ign}
                 </div>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-yellow-300 to-yellow-400 border border-yellow-200/60 shadow-lg">
-                  <RankBadgeIcon rank={popupData.combatRank?.title || "Combat Master"} className="w-4 h-4 text-yellow-800" />
                   <span className="font-semibold text-yellow-800 text-sm tracking-wide">{popupData.combatRank?.title || "Combat Master"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-yellow-100/90 mt-2">

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trophy, Star, Crown, Shield, Sword, Award, Gem } from 'lucide-react';
@@ -7,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
-import { RankBadge, getRankByPoints } from '@/components/RankBadge';
 
 // Helper to get region full name and colors
 const getRegionInfo = (regionCode: string = 'NA') => {
@@ -422,7 +422,7 @@ export function EnhancedResultPopup() {
   if (!showPopup || !popupData) return null;
 
   const playerPoints = popupData.player.global_points || 0;
-  const playerRank = getRankByPoints(playerPoints);
+  const rankEffects = getRankEffects(playerPoints);
   const position = popupData.player.overall_rank || 1;
   const region = popupData.player.region || 'NA';
   const regionInfo = getRegionInfo(region);
@@ -454,8 +454,8 @@ export function EnhancedResultPopup() {
             className={`relative rounded-3xl w-full max-w-sm border-3 overflow-hidden`}
             style={{ 
               background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%)',
-              borderColor: playerRank.glowColor,
-              boxShadow: `0 25px 50px -12px ${playerRank.shadowColor}, 0 0 30px ${playerRank.glowColor}`
+              borderColor: rankEffects.borderColor.replace('border-', ''),
+              boxShadow: `0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px ${rankEffects.borderColor.replace('border-', '')}`
             }}
             initial={{ scale: 0.7, opacity: 0, y: 100, rotateX: -20 }}
             animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
@@ -476,7 +476,7 @@ export function EnhancedResultPopup() {
 
             {/* Content */}
             <div className="relative z-20 p-6 text-center">
-              {/* Avatar Section with Rank Badge */}
+              {/* Avatar Section */}
               <motion.div 
                 className="mb-6"
                 initial={{ scale: 0, rotate: -20 }}
@@ -494,11 +494,6 @@ export function EnhancedResultPopup() {
                       {popupData.player.ign.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  
-                  {/* Rank badge overlay */}
-                  <div className="absolute -bottom-2 -right-2">
-                    <RankBadge rank={playerRank} size="lg" />
-                  </div>
                 </div>
 
                 {/* Player Name */}
@@ -515,14 +510,14 @@ export function EnhancedResultPopup() {
                 <motion.div 
                   className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl border border-white/30 backdrop-blur-md mb-3"
                   style={{
-                    background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})`
+                    background: `linear-gradient(135deg, ${rankEffects.bgGradient.replace('from-', '').replace('via-', '').replace('to-', '')})`
                   }}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <span className="text-white font-black text-sm uppercase tracking-wider">{playerRank.title}</span>
+                  <span className="text-white font-black text-sm uppercase tracking-wider">{rankEffects.rank}</span>
                 </motion.div>
 
                 {/* Region */}
@@ -546,7 +541,7 @@ export function EnhancedResultPopup() {
                 <h4 className="text-slate-400 text-xs uppercase tracking-widest mb-4 font-bold">
                   🏆 COMBAT POSITION
                 </h4>
-                <UltraPositionSection position={position} points={playerPoints} rankEffects={playerRank} />
+                <UltraPositionSection position={position} points={playerPoints} rankEffects={rankEffects} />
               </motion.div>
 
               {/* Tiers Section */}
