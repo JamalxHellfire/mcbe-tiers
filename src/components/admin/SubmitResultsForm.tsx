@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy } from 'lucide-react';
+import { Trophy, User, Globe, Smartphone, Sparkles } from 'lucide-react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { GameMode, TierLevel } from '@/services/playerService';
 import { TIER_LEVELS, REGIONS, DEVICES } from '@/lib/constants';
@@ -15,14 +14,14 @@ interface TierRankings {
 }
 
 const gameModes = [
-  { key: 'crystal', name: 'Crystal', icon: '🔮', color: 'text-purple-400' },
-  { key: 'sword', name: 'Sword', icon: '⚔️', color: 'text-blue-400' },
-  { key: 'smp', name: 'SMP', icon: '🏠', color: 'text-green-400' },
-  { key: 'uhc', name: 'UHC', icon: '❤️', color: 'text-red-400' },
-  { key: 'axe', name: 'Axe', icon: '🪓', color: 'text-cyan-400' },
-  { key: 'nethpot', name: 'NethPot', icon: '🧪', color: 'text-purple-400' },
-  { key: 'bedwars', name: 'Bedwars', icon: '🛏️', color: 'text-orange-400' },
-  { key: 'mace', name: 'Mace', icon: '🔨', color: 'text-gray-400' }
+  { key: 'crystal', name: 'Crystal', icon: '🔮', color: 'from-purple-500 to-purple-600', textColor: 'text-purple-400' },
+  { key: 'sword', name: 'Sword', icon: '⚔️', color: 'from-blue-500 to-blue-600', textColor: 'text-blue-400' },
+  { key: 'smp', name: 'SMP', icon: '🏠', color: 'from-green-500 to-green-600', textColor: 'text-green-400' },
+  { key: 'uhc', name: 'UHC', icon: '❤️', color: 'from-red-500 to-red-600', textColor: 'text-red-400' },
+  { key: 'axe', name: 'Axe', icon: '🪓', color: 'from-cyan-500 to-cyan-600', textColor: 'text-cyan-400' },
+  { key: 'nethpot', name: 'NethPot', icon: '🧪', color: 'from-orange-500 to-orange-600', textColor: 'text-orange-400' },
+  { key: 'bedwars', name: 'Bedwars', icon: '🛏️', color: 'from-yellow-500 to-yellow-600', textColor: 'text-yellow-400' },
+  { key: 'mace', name: 'Mace', icon: '🔨', color: 'from-gray-500 to-gray-600', textColor: 'text-gray-400' }
 ];
 
 export function SubmitResultsForm() {
@@ -45,13 +44,12 @@ export function SubmitResultsForm() {
       return;
     }
 
-    // Convert tier rankings to results format
     const results = Object.entries(tierRankings)
       .filter(([_, tier]) => tier && tier !== 'Not Ranked')
       .map(([gamemode, tier]) => ({
         gamemode: gamemode as GameMode,
         tier: tier as TierLevel,
-        points: 0 // Points will be calculated based on tier
+        points: 0
       }));
 
     const response = await submitPlayerResults(
@@ -63,7 +61,6 @@ export function SubmitResultsForm() {
     );
 
     if (response.success) {
-      // Reset form
       setPlayerData({
         ign: '',
         region: 'NA',
@@ -82,126 +79,175 @@ export function SubmitResultsForm() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-[#1A1B2A] border-gray-700">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-white">Submit Player Results</CardTitle>
-          <CardDescription className="text-gray-400">
-            Add or update player tier rankings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Player Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="ign" className="text-white">Player IGN *</Label>
-                <Input
-                  id="ign"
-                  value={playerData.ign}
-                  onChange={(e) => setPlayerData({...playerData, ign: e.target.value})}
-                  placeholder="Minecraft username"
-                  className="bg-[#0F111A] border-gray-600 text-white placeholder-gray-400"
-                  required
-                />
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <div className="flex items-center justify-center space-x-3">
+          <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl">
+            <Trophy className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            Submit Player Results
+          </h2>
+        </div>
+        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          Add or update player tier rankings with our streamlined submission system
+        </p>
+      </div>
+
+      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+        <CardContent className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-10">
+            {/* Player Information Section */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-blue-600/20 rounded-lg">
+                  <User className="h-5 w-5 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">Player Information</h3>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="java_username" className="text-white">Java Username</Label>
-                <Input
-                  id="java_username"
-                  value={playerData.java_username}
-                  onChange={(e) => setPlayerData({...playerData, java_username: e.target.value})}
-                  placeholder="For avatar lookup"
-                  className="bg-[#0F111A] border-gray-600 text-white placeholder-gray-400"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="region" className="text-white">Region *</Label>
-                <Select
-                  value={playerData.region}
-                  onValueChange={(value) => setPlayerData({...playerData, region: value})}
-                >
-                  <SelectTrigger className="bg-[#0F111A] border-gray-600 text-white">
-                    <SelectValue placeholder="Select region" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1A1B2A] border-gray-600">
-                    {REGIONS.map((region) => (
-                      <SelectItem key={region} value={region} className="text-white hover:bg-gray-600">
-                        {region}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="device" className="text-white">Device</Label>
-                <Select
-                  value={playerData.device}
-                  onValueChange={(value) => setPlayerData({...playerData, device: value})}
-                >
-                  <SelectTrigger className="bg-[#0F111A] border-gray-600 text-white">
-                    <SelectValue placeholder="Select device" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1A1B2A] border-gray-600">
-                    {DEVICES.map((device) => (
-                      <SelectItem key={device} value={device} className="text-white hover:bg-gray-600">
-                        {device}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="ign" className="text-white font-medium flex items-center space-x-2">
+                    <span>Player IGN</span>
+                    <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="ign"
+                    value={playerData.ign}
+                    onChange={(e) => setPlayerData({...playerData, ign: e.target.value})}
+                    placeholder="Enter Minecraft username"
+                    className="bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500/20 rounded-xl h-12 transition-all duration-300"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <Label htmlFor="java_username" className="text-white font-medium">Java Username</Label>
+                  <Input
+                    id="java_username"
+                    value={playerData.java_username}
+                    onChange={(e) => setPlayerData({...playerData, java_username: e.target.value})}
+                    placeholder="For avatar lookup (optional)"
+                    className="bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl h-12 transition-all duration-300"
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <Label htmlFor="region" className="text-white font-medium flex items-center space-x-2">
+                    <Globe className="h-4 w-4" />
+                    <span>Region</span>
+                    <span className="text-red-400">*</span>
+                  </Label>
+                  <Select
+                    value={playerData.region}
+                    onValueChange={(value) => setPlayerData({...playerData, region: value})}
+                  >
+                    <SelectTrigger className="bg-gray-800/50 border-gray-600/50 text-white h-12 rounded-xl focus:border-green-500 focus:ring-green-500/20">
+                      <SelectValue placeholder="Select region" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-600 rounded-xl">
+                      {REGIONS.map((region) => (
+                        <SelectItem key={region} value={region} className="text-white hover:bg-gray-700 focus:bg-gray-700">
+                          {region}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-3">
+                  <Label htmlFor="device" className="text-white font-medium flex items-center space-x-2">
+                    <Smartphone className="h-4 w-4" />
+                    <span>Device</span>
+                  </Label>
+                  <Select
+                    value={playerData.device}
+                    onValueChange={(value) => setPlayerData({...playerData, device: value})}
+                  >
+                    <SelectTrigger className="bg-gray-800/50 border-gray-600/50 text-white h-12 rounded-xl focus:border-cyan-500 focus:ring-cyan-500/20">
+                      <SelectValue placeholder="Select device" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-600 rounded-xl">
+                      {DEVICES.map((device) => (
+                        <SelectItem key={device} value={device} className="text-white hover:bg-gray-700 focus:bg-gray-700">
+                          {device}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            {/* Tier Rankings */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white text-center">Tier Rankings</h3>
+            {/* Tier Rankings Section */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-purple-600/20 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-purple-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">Tier Rankings</h3>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {gameModes.map((mode) => (
-                  <div key={mode.key} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{mode.icon}</span>
-                      <Label className={`font-medium ${mode.color}`}>
-                        {mode.name}
-                      </Label>
+                  <div key={mode.key} className="group">
+                    <div className="space-y-4 p-6 bg-gray-800/30 rounded-2xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:transform hover:scale-105">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-3 bg-gradient-to-br ${mode.color} rounded-xl shadow-lg`}>
+                          <span className="text-xl">{mode.icon}</span>
+                        </div>
+                        <div>
+                          <h4 className={`font-bold text-lg ${mode.textColor}`}>
+                            {mode.name}
+                          </h4>
+                          <p className="text-gray-400 text-sm">Set tier ranking</p>
+                        </div>
+                      </div>
+                      
+                      <Select
+                        value={tierRankings[mode.key] || 'Not Ranked'}
+                        onValueChange={(value) => handleTierChange(mode.key, value)}
+                      >
+                        <SelectTrigger className="bg-gray-700/50 border-gray-600/50 text-white h-12 rounded-xl hover:bg-gray-700/70 transition-all duration-300">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-800 border-gray-600 rounded-xl">
+                          {TIER_LEVELS.map((tier) => (
+                            <SelectItem 
+                              key={tier} 
+                              value={tier} 
+                              className="text-white hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              {tier}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Select
-                      value={tierRankings[mode.key] || 'Not Ranked'}
-                      onValueChange={(value) => handleTierChange(mode.key, value)}
-                    >
-                      <SelectTrigger className="bg-[#0F111A] border-gray-600 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1A1B2A] border-gray-600">
-                        {TIER_LEVELS.map((tier) => (
-                          <SelectItem 
-                            key={tier} 
-                            value={tier} 
-                            className="text-white hover:bg-gray-600"
-                          >
-                            {tier}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
-              disabled={loading} 
-              className="w-full bg-white text-black hover:bg-gray-200 font-semibold py-3 flex items-center justify-center gap-2"
-            >
-              <Trophy className="h-4 w-4" />
-              {loading ? 'Submitting...' : 'Submit Player Results'}
-            </Button>
+            <div className="pt-6">
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-2xl shadow-2xl transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                <Trophy className="h-6 w-6 mr-3" />
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Submitting Results...</span>
+                  </div>
+                ) : (
+                  'Submit Player Results'
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
