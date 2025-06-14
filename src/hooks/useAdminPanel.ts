@@ -114,15 +114,12 @@ export const useAdminPanel = () => {
       setLoading(true);
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
-        .upsert(
-          { 
-            ign, 
-            region, 
-            device, 
-            java_username: java_username || null 
-          },
-          { onConflict: 'ign' }
-        )
+        .upsert({
+          ign, 
+          region, 
+          device, 
+          java_username: java_username || null 
+        })
         .select()
         .single();
 
