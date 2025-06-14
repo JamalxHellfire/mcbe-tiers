@@ -5,7 +5,7 @@ declare global {
   interface TierAssignment {
     gamemode: GameMode;
     tier: TierLevel;
-    points: number;
+    score: number;
   }
   
   interface ResultPopupData {
@@ -15,7 +15,9 @@ declare global {
       title: string;
       points: number;
       color: string;
-      effectType: 'gold-sparkle' | 'silver-sparkle' | 'bronze-sparkle' | 'blue-glow' | 'grey-glow';
+      effectType: 'general';
+      rankNumber: number;
+      borderColor: string;
     };
     timestamp: string;
   }

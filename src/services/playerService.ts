@@ -25,7 +25,7 @@ export interface Player {
   }[];
 }
 
-// Tier points mapping for automatic calculation
+// Updated tier points mapping for HT1-LT5 range
 const TIER_POINTS: Record<TierLevel, number> = {
   'HT1': 50,
   'LT1': 45,
@@ -47,6 +47,8 @@ export function calculateTierPoints(tier: TierLevel): number {
 
 export async function updatePlayerGlobalPoints(playerId: string): Promise<void> {
   try {
+    console.log(`Updating global points for player: ${playerId}`);
+    
     // Get all tier assignments for the player
     const { data: tierAssignments, error } = await supabase
       .from('gamemode_scores')
@@ -58,10 +60,19 @@ export async function updatePlayerGlobalPoints(playerId: string): Promise<void> 
       return;
     }
 
+    if (!tierAssignments) {
+      console.log('No tier assignments found for player:', playerId);
+      return;
+    }
+
     // Calculate total points from all tiers
-    const totalPoints = tierAssignments?.reduce((sum, assignment) => {
-      return sum + calculateTierPoints(assignment.internal_tier as TierLevel);
-    }, 0) || 0;
+    const totalPoints = tierAssignments.reduce((sum, assignment) => {
+      const points = calculateTierPoints(assignment.internal_tier as TierLevel);
+      console.log(`Tier ${assignment.internal_tier} = ${points} points`);
+      return sum + points;
+    }, 0);
+
+    console.log(`Total calculated points for player ${playerId}: ${totalPoints}`);
 
     // Update player's global points
     const { error: updateError } = await supabase
@@ -77,7 +88,7 @@ export async function updatePlayerGlobalPoints(playerId: string): Promise<void> 
       return;
     }
 
-    console.log(`Updated player ${playerId} global points to ${totalPoints}`);
+    console.log(`Successfully updated player ${playerId} global points to ${totalPoints}`);
   } catch (error) {
     console.error('Error in updatePlayerGlobalPoints:', error);
   }
