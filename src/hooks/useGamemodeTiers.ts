@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { playerService, GameMode, Player, TierLevel } from '@/services/playerService';
+import { getPlayersByTierAndGamemode, GameMode, Player, TierLevel } from '@/services/playerService';
 import { useQuery } from '@tanstack/react-query';
 
 export function useGamemodeTiers(gamemode: GameMode) {
@@ -19,7 +19,7 @@ export function useGamemodeTiers(gamemode: GameMode) {
     queryKey: ['tierData', gamemode],
     queryFn: async () => {
       try {
-        const data = await playerService.getPlayersByTierAndGamemode(gamemode);
+        const data = await getPlayersByTierAndGamemode(gamemode);
         return data;
       } catch (err: any) {
         console.error(`Error fetching ${gamemode} tier data:`, err);
