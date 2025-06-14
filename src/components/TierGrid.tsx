@@ -6,6 +6,9 @@ import { useGamemodeTiers } from '@/hooks/useGamemodeTiers';
 import { GameMode } from '@/services/playerService';
 import { Button } from '@/components/ui/button';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
+import { RankBadge, getRankByPoints } from '@/components/RankBadge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 
 interface TierGridProps {
   selectedMode: string;
@@ -142,39 +145,64 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                       <div className="space-y-0">
                         <div className="grid grid-cols-1 divide-y divide-white/5">
                           <AnimatePresence>
-                            {visiblePlayers.map((player, playerIndex) => (
-                              <motion.div
-                                key={player.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
-                              >
-                                <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
-                                  <div className="flex items-center gap-3">
-                                    <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center text-xs">
-                                      {player.ign?.charAt(0) || "?"}
+                            {visiblePlayers.map((player, playerIndex) => {
+                              const playerPoints = typeof player.global_points === 'string' 
+                                ? Number(player.global_points) || 0 
+                                : player.global_points || 0;
+                              const playerRank = getRankByPoints(playerPoints);
+                              
+                              return (
+                                <motion.div
+                                  key={player.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
+                                >
+                                  <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
+                                    <div className="flex items-center gap-3">
+                                      {/* Fixed skin rendering with proper avatar handling */}
+                                      <div className="relative">
+                                        <Avatar className="w-8 h-8 border border-white/20">
+                                          <AvatarImage 
+                                            src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
+                                            alt={player.ign}
+                                            className="object-cover object-center scale-110"
+                                            onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
+                                          />
+                                          <AvatarFallback className="bg-gray-700 text-white text-xs font-bold">
+                                            {player.ign?.charAt(0) || "?"}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        
+                                        {/* Rank badge overlay */}
+                                        <div className="absolute -bottom-1 -right-1">
+                                          <RankBadge 
+                                            rank={playerRank} 
+                                            size="sm" 
+                                            showGlow={false}
+                                            animated={false}
+                                          />
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-medium">{player.ign}</span>
+                                        <span className={`text-xs ${
+                                          player.subtier === 'High' ? `text-tier-${tier}` : 'text-white/50'
+                                        }`}>
+                                          {player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-sm font-medium">{player.ign}</span>
-                                      <span className={`text-xs ${
-                                        player.subtier === 'High' ? `text-tier-${tier}` : 'text-white/50'
-                                      }`}>
-                                        {player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`}
-                                      </span>
+                                    <div className="flex items-center text-xs">
+                                      <Trophy size={12} className="mr-1 text-yellow-400" />
+                                      <span>{playerPoints}</span>
                                     </div>
                                   </div>
-                                  <div className="flex items-center text-xs">
-                                    <Trophy size={12} className="mr-1 text-yellow-400" />
-                                    <span>
-                                      {typeof player.global_points === 'string' 
-                                        ? Number(player.global_points) || 0 
-                                        : player.global_points || 0}
-                                    </span>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            ))}
+                                </motion.div>
+                              );
+                            })}
                           </AnimatePresence>
                           
                           {hasMore && (
@@ -235,35 +263,60 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                     <AnimatePresence>
                       {tierData["Retired"]
                         .slice(0, tierVisibility.retired.count)
-                        .map((player, playerIndex) => (
-                          <motion.div
-                            key={player.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
-                          >
-                            <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
-                              <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center text-xs">
-                                  {player.ign?.charAt(0) || "?"}
+                        .map((player, playerIndex) => {
+                          const playerPoints = typeof player.global_points === 'string' 
+                            ? parseFloat(player.global_points) || 0 
+                            : player.global_points || 0;
+                          const playerRank = getRankByPoints(playerPoints);
+                          
+                          return (
+                            <motion.div
+                              key={player.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
+                            >
+                              <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
+                                <div className="flex items-center gap-3">
+                                  {/* Fixed skin rendering for retired players */}
+                                  <div className="relative">
+                                    <Avatar className="w-8 h-8 border border-white/20">
+                                      <AvatarImage 
+                                        src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
+                                        alt={player.ign}
+                                        className="object-cover object-center scale-110"
+                                        onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
+                                      />
+                                      <AvatarFallback className="bg-gray-700 text-white text-xs font-bold">
+                                        {player.ign?.charAt(0) || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    
+                                    {/* Rank badge overlay */}
+                                    <div className="absolute -bottom-1 -right-1">
+                                      <RankBadge 
+                                        rank={playerRank} 
+                                        size="sm" 
+                                        showGlow={false}
+                                        animated={false}
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">{player.ign}</span>
+                                    <span className="text-xs text-gray-400">Retired Player</span>
+                                  </div>
                                 </div>
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-medium">{player.ign}</span>
-                                  <span className="text-xs text-gray-400">Retired Player</span>
+                                <div className="flex items-center text-xs">
+                                  <Trophy size={12} className="mr-1 text-yellow-400" />
+                                  <span>{playerPoints}</span>
                                 </div>
                               </div>
-                              <div className="flex items-center text-xs">
-                                <Trophy size={12} className="mr-1 text-yellow-400" />
-                                <span>
-                                  {typeof player.global_points === 'string' 
-                                    ? parseFloat(player.global_points) || 0 
-                                    : player.global_points || 0}
-                                </span>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
+                            </motion.div>
+                          );
+                        })}
                     </AnimatePresence>
                     
                     {tierData["Retired"] && 

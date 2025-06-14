@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
+import { RankBadge, getRankByPoints } from '@/components/RankBadge';
 
 // Helper to get region full name and colors
 const getRegionInfo = (regionCode: string = 'NA') => {
@@ -421,11 +422,10 @@ export function EnhancedResultPopup() {
   if (!showPopup || !popupData) return null;
 
   const playerPoints = popupData.player.global_points || 0;
-  const rankEffects = getRankEffects(playerPoints);
-  const RankIcon = rankEffects.icon;
+  const playerRank = getRankByPoints(playerPoints);
+  const position = popupData.player.overall_rank || 1;
   const region = popupData.player.region || 'NA';
   const regionInfo = getRegionInfo(region);
-  const position = popupData.player.overall_rank || 1;
 
   // Ordered gamemode layout matching reference
   const orderedGamemodes: GameMode[] = [
@@ -451,9 +451,11 @@ export function EnhancedResultPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div
-            className={`relative rounded-3xl w-full max-w-sm border-3 ${rankEffects.borderColor} ${rankEffects.shadowEffect} overflow-hidden`}
+            className={`relative rounded-3xl w-full max-w-sm border-3 overflow-hidden`}
             style={{ 
               background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%)',
+              borderColor: playerRank.glowColor,
+              boxShadow: `0 25px 50px -12px ${playerRank.shadowColor}, 0 0 30px ${playerRank.glowColor}`
             }}
             initial={{ scale: 0.7, opacity: 0, y: 100, rotateX: -20 }}
             animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
@@ -461,16 +463,7 @@ export function EnhancedResultPopup() {
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Ultra Floating Particles */}
-            <UltraFloatingParticles type={rankEffects.particles} isVisible={showPopup} special={rankEffects.special} />
-
-            {/* Ultra Animated Background Overlay */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${rankEffects.bgGradient} ${rankEffects.animation} opacity-70`} />
-            
-            {/* Ultra glow border effect */}
-            <div className={`absolute inset-0 rounded-3xl border-2 ${rankEffects.borderColor} ${rankEffects.animation}`} />
-
-            {/* Ultra Close Button */}
+            {/* Close Button */}
             <motion.button
               onClick={closePopup}
               className="absolute top-4 right-4 p-2.5 bg-black/60 hover:bg-black/80 rounded-xl transition-all z-30 backdrop-blur-md border border-white/20"
@@ -483,15 +476,15 @@ export function EnhancedResultPopup() {
 
             {/* Content */}
             <div className="relative z-20 p-6 text-center">
-              {/* Ultra Avatar Section */}
+              {/* Avatar Section with Rank Badge */}
               <motion.div 
                 className="mb-6"
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               >
-                <div className={`relative w-24 h-24 mx-auto mb-4 rounded-full border-4 ${rankEffects.borderColor} ${rankEffects.avatarGlow} ${rankEffects.animation} overflow-hidden`}>
-                  <Avatar className="w-full h-full">
+                <div className="relative w-24 h-24 mx-auto mb-4">
+                  <Avatar className="w-full h-full rounded-full border-4 border-white/30 overflow-hidden">
                     <AvatarImage 
                       src={`https://visage.surgeplay.com/bust/128/${popupData.player.ign}`}
                       alt={popupData.player.ign}
@@ -502,30 +495,15 @@ export function EnhancedResultPopup() {
                     </AvatarFallback>
                   </Avatar>
                   
-                  {/* Ultra rank icon overlay with special effects */}
-                  <motion.div
-                    className={`absolute -bottom-2 -right-2 w-10 h-10 ${rankEffects.badgeStyle} rounded-full border-3 ${rankEffects.borderColor} flex items-center justify-center ${rankEffects.shadowEffect}`}
-                    initial={{ rotate: -180, scale: 0 }}
-                    animate={{ rotate: 0, scale: 1 }}
-                    transition={{ delay: 0.6, type: "spring" }}
-                    whileHover={{ scale: 1.2, rotate: 360 }}
-                  >
-                    <RankIcon className="w-5 h-5 text-white drop-shadow-lg" />
-                  </motion.div>
-                  
-                  {/* Ultra special aura for high ranks */}
-                  {rankEffects.special === 'legendary-aura' && (
-                    <motion.div
-                      className="absolute inset-0 rounded-full border-2 border-purple-300/50"
-                      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  )}
+                  {/* Rank badge overlay */}
+                  <div className="absolute -bottom-2 -right-2">
+                    <RankBadge rank={playerRank} size="lg" />
+                  </div>
                 </div>
 
-                {/* Ultra Player Name */}
+                {/* Player Name */}
                 <motion.h3 
-                  className={`text-2xl font-black mb-3 ${rankEffects.textGlow} uppercase tracking-wider`}
+                  className="text-2xl font-black mb-3 text-white uppercase tracking-wider"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
@@ -533,19 +511,21 @@ export function EnhancedResultPopup() {
                   {popupData.player.ign}
                 </motion.h3>
 
-                {/* Ultra Rank Badge */}
+                {/* Rank Title */}
                 <motion.div 
-                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-2xl ${rankEffects.badgeStyle} border border-white/30 backdrop-blur-md mb-3`}
+                  className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl border border-white/30 backdrop-blur-md mb-3"
+                  style={{
+                    background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})`
+                  }}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <RankIcon className="w-4 h-4 text-white drop-shadow-lg" />
-                  <span className="text-white font-black text-sm uppercase tracking-wider">{rankEffects.rank}</span>
+                  <span className="text-white font-black text-sm uppercase tracking-wider">{playerRank.title}</span>
                 </motion.div>
 
-                {/* Ultra Region */}
+                {/* Region */}
                 <motion.div 
                   className="text-slate-300 text-sm font-medium"
                   initial={{ opacity: 0 }}
@@ -556,7 +536,7 @@ export function EnhancedResultPopup() {
                 </motion.div>
               </motion.div>
 
-              {/* Ultra Position Section */}
+              {/* Position Section */}
               <motion.div 
                 className="mb-6"
                 initial={{ opacity: 0, y: 20 }}
@@ -566,10 +546,10 @@ export function EnhancedResultPopup() {
                 <h4 className="text-slate-400 text-xs uppercase tracking-widest mb-4 font-bold">
                   🏆 COMBAT POSITION
                 </h4>
-                <UltraPositionSection position={position} points={playerPoints} rankEffects={rankEffects} />
+                <UltraPositionSection position={position} points={playerPoints} rankEffects={playerRank} />
               </motion.div>
 
-              {/* Ultra Tiers Section */}
+              {/* Tiers Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
