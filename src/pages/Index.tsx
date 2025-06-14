@@ -13,8 +13,6 @@ import { motion } from 'framer-motion';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { usePointsCalculation } from '@/hooks/usePointsCalculation';
-import { useRankBadgeSystem } from '@/hooks/useRankBadgeSystem';
-import { RankPopup } from '@/components/RankBadgeSystem';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -22,7 +20,6 @@ const Index = () => {
   
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
   const { openPopup } = usePopup();
-  const { showPopup: showRankPopup, hideRankPopup, currentRank, playerName, points } = useRankBadgeSystem();
   
   // Enable automatic points calculation
   usePointsCalculation();
@@ -103,17 +100,6 @@ const Index = () => {
       </main>
       
       <Footer />
-      
-      {/* Rank Popup System */}
-      {currentRank && (
-        <RankPopup
-          rank={currentRank}
-          playerName={playerName}
-          points={points}
-          isOpen={showRankPopup}
-          onClose={hideRankPopup}
-        />
-      )}
     </div>
   );
 };

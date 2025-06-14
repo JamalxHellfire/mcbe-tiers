@@ -6,8 +6,6 @@ import { GameModeIcon } from './GameModeIcon';
 import { motion } from 'framer-motion';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
-import { RankBadge, getRankByPoints } from '@/components/RankBadgeSystem';
-import { useRankBadgeSystem } from '@/hooks/useRankBadgeSystem';
 
 interface MinecraftLeaderboardTableProps {
   players: Player[];
@@ -18,8 +16,6 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
   players,
   onPlayerClick,
 }) => {
-  const { showRankPopup } = useRankBadgeSystem();
-
   const getTierBadgeColor = (tier: string) => {
     if (tier.includes('HT1')) return 'bg-yellow-600 text-black';
     if (tier.includes('HT2')) return 'bg-orange-600 text-white';
@@ -41,15 +37,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
   };
 
   const handlePlayerRowClick = (player: Player) => {
-    const playerPoints = player.global_points || 0;
-    
-    // Show rank popup effect first
-    showRankPopup(player.ign, playerPoints);
-    
-    // Then trigger the main popup after a delay
-    setTimeout(() => {
-      onPlayerClick(player);
-    }, 1500);
+    onPlayerClick(player);
   };
 
   return (
@@ -66,7 +54,6 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
       <div className="divide-y divide-white/5">
         {players.map((player, index) => {
           const playerPoints = player.global_points || 0;
-          const rankBadgeInfo = getRankByPoints(playerPoints);
           const rankInfo = getPlayerRank(playerPoints);
           
           return (
@@ -88,23 +75,6 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                     'bg-gray-700/80 text-white border border-gray-600'}
                 `}>
                   {index + 1}
-                  {index < 3 && (
-                    <motion.div
-                      className="absolute inset-0 rounded-lg"
-                      style={{
-                        background: `linear-gradient(135deg, ${rankBadgeInfo.gradient})`,
-                        opacity: 0.3
-                      }}
-                      animate={{
-                        opacity: [0.3, 0.6, 0.3]
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -121,16 +91,6 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                       {player.ign.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  
-                  {/* Rank badge overlay */}
-                  <div className="absolute -bottom-1 -right-1">
-                    <RankBadge 
-                      rank={rankBadgeInfo} 
-                      size="sm" 
-                      showGlow={false}
-                      animated={true}
-                    />
-                  </div>
                 </div>
                 
                 <div className="flex flex-col">

@@ -7,14 +7,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
-import { useRankBadgeSystem } from '@/hooks/useRankBadgeSystem';
-import { RankPopup } from '@/components/RankBadgeSystem';
 
 const SubcategoryPage = () => {
   const { gameMode: gameModeParam } = useParams<{ gameMode: string }>();
   const gameMode = toDatabaseGameMode(gameModeParam || 'Crystal');
   const navigate = useNavigate();
-  const { showPopup: showRankPopup, hideRankPopup, currentRank, playerName, points } = useRankBadgeSystem();
   
   const handleModeChange = (mode: string) => {
     if (mode === 'overall') {
@@ -54,17 +51,6 @@ const SubcategoryPage = () => {
       </main>
       
       <Footer />
-      
-      {/* Rank Popup System */}
-      {currentRank && (
-        <RankPopup
-          rank={currentRank}
-          playerName={playerName}
-          points={points}
-          isOpen={showRankPopup}
-          onClose={hideRankPopup}
-        />
-      )}
     </div>
   );
 };
