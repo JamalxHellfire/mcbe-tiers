@@ -293,6 +293,60 @@ export function useAdminPanel() {
     }
   };
 
+  const submitPlayerResults = async (formData: { ign: string; java_username?: string; region: string; device?: string; tiers: Record<GameMode, TierLevel> }) => {
+    const { ign, java_username, region, device, tiers } = formData;
+    if (!ign) {
+      toast({ title: "Error", description: "Player IGN is required.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data: playerData, error: playerUpsertError } = await supabase
+        .from('players')
+        .upsert({ ign, region, device, java_username: java_username || null }, { onConflict: 'ign' })
+        .select()
+        .single();
+
+      if (playerUpsertError) throw playerUpsertError;
+      if (!playerData) throw new Error("Failed to get player data after upsert.");
+
+      const playerId = playerData.id;
+      const scoresToUpsert = Object.entries(tiers)
+        .filter(([, tier]) => tier !== 'Not Ranked')
+        .map(([gamemode, tier]) => ({
+          player_id: playerId,
+          gamemode: gamemode as GameMode,
+          display_tier: tier as TierLevel,
+          internal_tier: tier as TierLevel,
+          points: 0, // Points are not in the form, default to 0
+        }));
+
+      if (scoresToUpsert.length > 0) {
+        const { error: scoresError } = await supabase
+          .from('gamemode_scores')
+          .upsert(scoresToUpsert, { onConflict: 'player_id, gamemode' });
+
+        if (scoresError) throw scoresError;
+      }
+
+      toast({
+        title: "Success",
+        description: `Results for ${ign} submitted successfully.`,
+      });
+      fetchPlayers();
+    } catch (error) {
+      console.error('Error submitting player results:', error);
+      toast({
+        title: "Error",
+        description: `Failed to submit results. ${error instanceof Error ? error.message : ''}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     players,
     news,
@@ -307,6 +361,7 @@ export function useAdminPanel() {
     createPlayer,
     deletePlayer,
     assignTiersBulk,
+    submitPlayerResults,
     showEditDialog,
     setShowEditDialog,
     editingPlayer,
