@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -6,6 +5,7 @@ import { GameModeIcon } from './GameModeIcon';
 import { motion } from 'framer-motion';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MinecraftLeaderboardTableProps {
   players: Player[];
@@ -16,6 +16,8 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
   players,
   onPlayerClick,
 }) => {
+  const isMobile = useIsMobile();
+
   const getTierBadgeColor = (tier: string) => {
     if (tier.includes('HT1')) return 'bg-yellow-600 text-black';
     if (tier.includes('HT2')) return 'bg-orange-600 text-white';
@@ -40,6 +42,107 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
     onPlayerClick(player);
   };
 
+  if (isMobile) {
+    // Mobile card layout
+    return (
+      <div className="space-y-3 px-4">
+        {players.map((player, index) => {
+          const playerPoints = player.global_points || 0;
+          const rankInfo = getPlayerRank(playerPoints);
+          
+          return (
+            <motion.div
+              key={player.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-dark-surface/60 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+              onClick={() => handlePlayerRowClick(player)}
+            >
+              {/* Top row: Rank, Avatar, Name, Points */}
+              <div className="flex items-center gap-3 mb-3">
+                {/* Rank Badge */}
+                <div className={`
+                  w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold
+                  ${index === 0 ? 'bg-gradient-to-br from-yellow-500 to-orange-500 text-black' :
+                    index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black' :
+                    index === 2 ? 'bg-gradient-to-br from-amber-600 to-yellow-700 text-black' :
+                    'bg-gray-700/80 text-white border border-gray-600'}
+                `}>
+                  {index + 1}
+                </div>
+
+                {/* Avatar */}
+                <Avatar className="w-10 h-10 border-2 border-white/20">
+                  <AvatarImage 
+                    src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
+                    alt={player.ign}
+                    onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
+                  />
+                  <AvatarFallback className="bg-gray-700 text-white text-sm">
+                    {player.ign.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* Name and info */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-white text-base truncate">
+                    {player.ign}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={`font-medium ${rankInfo.color}`}>
+                      ◆ {rankInfo.title}
+                    </span>
+                    <span className="text-white/60">({playerPoints} pts)</span>
+                  </div>
+                </div>
+
+                {/* Region */}
+                <span className={`
+                  px-2 py-1 rounded-full text-xs font-bold
+                  ${player.region === 'NA' ? 'bg-red-600/80 text-white' :
+                    player.region === 'EU' ? 'bg-green-600/80 text-white' :
+                    player.region === 'ASIA' ? 'bg-blue-600/80 text-white' :
+                    'bg-gray-600/80 text-white'}
+                `}>
+                  {player.region || 'NA'}
+                </span>
+              </div>
+
+              {/* Tier icons row */}
+              <div className="flex items-center justify-center gap-2 pt-2 border-t border-white/10">
+                {[
+                  { mode: 'mace', gamemode: 'Mace' },
+                  { mode: 'sword', gamemode: 'Sword' },
+                  { mode: 'crystal', gamemode: 'Crystal' },
+                  { mode: 'axe', gamemode: 'Axe' },
+                  { mode: 'uhc', gamemode: 'UHC' },
+                  { mode: 'smp', gamemode: 'SMP' },
+                  { mode: 'nethpot', gamemode: 'NethPot' },
+                  { mode: 'bedwars', gamemode: 'Bedwars' }
+                ].map(({ mode, gamemode }) => {
+                  const tier = getPlayerTierForGamemode(player, gamemode);
+                  
+                  return (
+                    <div key={mode} className="flex flex-col items-center">
+                      <div className="w-6 h-6 rounded-full bg-gray-800/80 border border-gray-600/50 flex items-center justify-center mb-1">
+                        <GameModeIcon mode={mode} className="w-3 h-3" />
+                      </div>
+                      <div className={`px-1 py-0.5 rounded text-xs font-bold ${getTierBadgeColor(tier)} min-w-[20px] text-center`}>
+                        {tier === 'Not Ranked' ? 'NR' : tier}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Desktop table layout (existing code)
   return (
     <div className="w-full bg-dark-surface/40 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
       {/* Header */}

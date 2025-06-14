@@ -66,30 +66,30 @@
   }
 
   .tier-row {
-    @apply p-6 lg:p-8 rounded-2xl backdrop-blur-sm border
+    @apply p-4 md:p-6 lg:p-8 rounded-2xl backdrop-blur-sm border
            transition-all duration-300 glass;
   }
 
   .tier-header {
-    @apply font-bold mb-4 pb-4 relative;
+    @apply font-bold mb-3 md:mb-4 pb-3 md:pb-4 relative;
   }
 
   .tier-section-container {
-    @apply mb-4;
+    @apply mb-3 md:mb-4;
   }
 
   .tier-section {
-    @apply p-5 rounded-xl bg-dark-surface/80 flex-1 min-h-[140px] border border-white/5 
+    @apply p-3 md:p-5 rounded-xl bg-dark-surface/80 flex-1 min-h-[120px] md:min-h-[140px] border border-white/5 
            backdrop-blur-sm transition-all duration-300 hover:border-white/10;
   }
 
   .tier-placeholder {
-    @apply text-white/20 text-center py-8 italic text-sm;
+    @apply text-white/20 text-center py-6 md:py-8 italic text-xs md:text-sm;
   }
 
   .game-mode-button {
-    @apply px-3 py-1.5 rounded-md transition-all duration-300 hover:bg-white/10 
-           hover:scale-[1.03] relative text-sm md:text-base;
+    @apply px-2 md:px-3 py-1 md:py-1.5 rounded-md transition-all duration-300 hover:bg-white/10 
+           hover:scale-[1.03] relative text-xs md:text-sm lg:text-base;
   }
 
   .game-mode-button.active {
@@ -97,11 +97,11 @@
   }
 
   .mode-icon {
-    @apply mr-1.5 text-sm inline-block;
+    @apply mr-1 md:mr-1.5 text-xs md:text-sm inline-block;
   }
 
   .logo-text {
-    @apply text-xl md:text-2xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
+    @apply text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
            bg-clip-text text-transparent hover:from-white hover:to-white/80 transition-all;
   }
 
@@ -110,11 +110,11 @@
   }
 
   .content-container {
-    @apply container mx-auto px-4 lg:px-8 max-w-7xl py-6;
+    @apply container mx-auto px-2 md:px-4 lg:px-8 max-w-7xl py-3 md:py-6;
   }
   
   .section-heading {
-    @apply text-2xl lg:text-3xl font-bold text-center mb-10 bg-gradient-to-r 
+    @apply text-xl md:text-2xl lg:text-3xl font-bold text-center mb-6 md:mb-10 bg-gradient-to-r 
            from-white to-white/70 bg-clip-text text-transparent;
   }
   
@@ -130,7 +130,7 @@
   
   .player-badge {
     @apply absolute -bottom-1 -right-1 bg-yellow-500 text-dark-background
-           rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold;
+           rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center text-xs font-bold;
   }
   
   .tier-tab {
@@ -139,6 +139,44 @@
   
   .tier-column {
     @apply transition-all duration-300;
+  }
+
+  /* Mobile-specific improvements */
+  @media (max-width: 768px) {
+    .tier-row {
+      @apply p-3 rounded-xl;
+    }
+    
+    .tier-header {
+      @apply text-sm mb-2 pb-2;
+    }
+    
+    .tier-section {
+      @apply p-2 min-h-[100px];
+    }
+    
+    .game-mode-button {
+      @apply px-2 py-1 text-xs;
+    }
+    
+    .content-container {
+      @apply px-1 py-2;
+    }
+  }
+
+  /* Small mobile devices */
+  @media (max-width: 480px) {
+    .content-container {
+      @apply px-1;
+    }
+    
+    .tier-row {
+      @apply p-2;
+    }
+    
+    .tier-section {
+      @apply p-2 min-h-[80px];
+    }
   }
 }
 
@@ -210,9 +248,16 @@
 
 /* Table enhancements for leaderboard */
 .leaderboard-table th {
-  @apply py-4 px-4 text-gray-400 font-semibold text-sm;
+  @apply py-3 md:py-4 px-2 md:px-4 text-gray-400 font-semibold text-xs md:text-sm;
 }
 
 .leaderboard-table td {
-  @apply py-3 px-4 border-t border-white/5;
+  @apply py-2 md:py-3 px-2 md:px-4 border-t border-white/5;
+}
+
+/* Mobile dropdown improvements */
+@media (max-width: 768px) {
+  .dropdown-content {
+    @apply max-h-60 overflow-y-auto;
+  }
 }
