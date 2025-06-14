@@ -6,26 +6,38 @@ export function useErrorHandler() {
   useEffect(() => {
     // Global error handler
     const handleError = (event: ErrorEvent) => {
-      deepSeekService.logError({
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        stack: event.error?.stack
-      });
+      try {
+        deepSeekService.logError({
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          stack: event.error?.stack
+        });
+      } catch (error) {
+        console.error('Failed to log error:', error);
+      }
     };
 
     // Unhandled promise rejection handler
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      deepSeekService.logError({
-        message: 'Unhandled Promise Rejection',
-        reason: event.reason
-      });
+      try {
+        deepSeekService.logError({
+          message: 'Unhandled Promise Rejection',
+          reason: event.reason
+        });
+      } catch (error) {
+        console.error('Failed to log promise rejection:', error);
+      }
     };
 
     // Log page visits
     const logPageVisit = () => {
-      deepSeekService.logPageVisit(window.location.pathname);
+      try {
+        deepSeekService.logPageVisit(window.location.pathname);
+      } catch (error) {
+        console.error('Failed to log page visit:', error);
+      }
     };
 
     window.addEventListener('error', handleError);

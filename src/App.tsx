@@ -13,23 +13,31 @@ import { useErrorHandler } from "./hooks/useErrorHandler";
 
 const queryClient = new QueryClient();
 
-function App() {
-  useErrorHandler(); // Initialize global error handling
+function AppContent() {
+  useErrorHandler(); // Move the hook call inside a proper React component
 
+  return (
+    <>
+      <Toaster />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/:category" element={<SubcategoryPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+      <ModernResultPopup />
+    </>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <PopupProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="/:category" element={<SubcategoryPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <ModernResultPopup />
+          <AppContent />
         </PopupProvider>
       </TooltipProvider>
     </QueryClientProvider>
