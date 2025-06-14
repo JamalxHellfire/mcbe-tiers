@@ -85,12 +85,12 @@ export const useAdminPanel = () => {
       const { error } = await supabase
         .from('players')
         .delete()
-        .eq('id', playerId);
+        .eq('id', playerId.toString());
 
       if (error) {
         setError(error.message);
       } else {
-        setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId));
+        setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId.toString()));
         toast({
           title: "Success",
           description: `Player ID ${playerId} deleted successfully.`,
