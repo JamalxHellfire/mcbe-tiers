@@ -1,93 +1,38 @@
+import { supabase } from '@/integrations/supabase/client';
+import { Player, GameMode, TierLevel, searchPlayers } from './playerService';
 
-import { playerService, Player, GameMode, TierLevel, PlayerRegion, DeviceType } from './playerService';
-import { deepSeekService } from './deepSeekService';
+export async function getEnhancedPlayers(): Promise<Player[]> {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .limit(50);
 
-class EnhancedPlayerService {
-  async createPlayer(params: {
-    ign: string;
-    java_username?: string;
-    region?: PlayerRegion;
-    device?: DeviceType;
-  }): Promise<Player | null> {
-    try {
-      deepSeekService.logApiCall('POST', 'players', params);
-      const result = await playerService.createPlayer(params);
-      deepSeekService.logApiCall('POST', 'players', params, result);
-      return result;
-    } catch (error) {
-      deepSeekService.logError(error, { operation: 'createPlayer', params });
+    if (error) {
+      console.error('Error fetching players:', error);
       throw error;
     }
-  }
 
-  async getPlayerByIGN(ign: string): Promise<Player | null> {
-    try {
-      deepSeekService.logApiCall('GET', `players/ign/${ign}`);
-      const result = await playerService.getPlayerByIGN(ign);
-      deepSeekService.logApiCall('GET', `players/ign/${ign}`, undefined, result);
-      return result;
-    } catch (error) {
-      deepSeekService.logError(error, { operation: 'getPlayerByIGN', ign });
-      throw error;
-    }
+    return data.map(player => ({
+      id: player.id,
+      ign: player.ign,
+      region: player.region,
+      device: player.device,
+      global_points: player.global_points,
+      overall_rank: 0, // Set a default value or fetch it if needed
+    }));
+  } catch (error) {
+    console.error('Error in getEnhancedPlayers:', error);
+    return [];
   }
-
-  async assignTier(tierData: {
-    playerId: string;
-    gamemode: GameMode;
-    tier: TierLevel;
-  }): Promise<boolean> {
-    try {
-      deepSeekService.logApiCall('POST', 'gamemode_scores', tierData);
-      const result = await playerService.assignTier(tierData);
-      deepSeekService.logApiCall('POST', 'gamemode_scores', tierData, result);
-      return result;
-    } catch (error) {
-      deepSeekService.logError(error, { operation: 'assignTier', tierData });
-      throw error;
-    }
-  }
-
-  async updatePlayer(
-    playerId: string,
-    params: {
-      java_username?: string;
-      region?: PlayerRegion;
-      device?: DeviceType;
-    }
-  ): Promise<boolean> {
-    try {
-      deepSeekService.logApiCall('PUT', `players/${playerId}`, params);
-      const result = await playerService.updatePlayer(playerId, params);
-      deepSeekService.logApiCall('PUT', `players/${playerId}`, params, result);
-      return result;
-    } catch (error) {
-      deepSeekService.logError(error, { operation: 'updatePlayer', playerId, params });
-      throw error;
-    }
-  }
-
-  async getRankedPlayers(): Promise<Player[]> {
-    try {
-      deepSeekService.logApiCall('GET', 'players/ranked');
-      const result = await playerService.getRankedPlayers();
-      deepSeekService.logApiCall('GET', 'players/ranked', undefined, { count: result.length });
-      return result;
-    } catch (error) {
-      deepSeekService.logError(error, { operation: 'getRankedPlayers' });
-      throw error;
-    }
-  }
-
-  // Delegate all other methods to the original service
-  getPlayerById = playerService.getPlayerById;
-  getPlayerTiers = playerService.getPlayerTiers;
-  deletePlayer = playerService.deletePlayer;
-  banPlayer = playerService.banPlayer;
-  verifyAdminPIN = playerService.verifyAdminPIN;
-  updatePlayerGlobalPoints = playerService.updatePlayerGlobalPoints;
-  calculateTierPoints = playerService.calculateTierPoints;
-  getPlayersByTierAndGamemode = playerService.getPlayersByTierAndGamemode;
 }
 
-export const enhancedPlayerService = new EnhancedPlayerService();
+export async function getEnhancedPlayerData(playerId: string): Promise<Player | null> {
+  try {
+    const players = await searchPlayers(playerId);
+    return players.length > 0 ? players[0] : null;
+  } catch (error) {
+    console.error('Error fetching enhanced player data:', error);
+    return null;
+  }
+}

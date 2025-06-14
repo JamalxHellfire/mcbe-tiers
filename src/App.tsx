@@ -8,7 +8,7 @@ import SubcategoryPage from "./pages/SubcategoryPage";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import { PopupProvider } from "./contexts/PopupContext";
-import { ResultPopup } from "./components/ResultPopup";
+import { ImageMatchedPopup } from "./components/ImageMatchedPopup";
 import { useErrorHandler } from "./hooks/useErrorHandler";
 
 const queryClient = new QueryClient();
@@ -29,7 +29,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          <ResultPopup />
+          <ImageMatchedPopup />
         </PopupProvider>
       </TooltipProvider>
     </QueryClientProvider>
