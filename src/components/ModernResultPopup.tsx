@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -5,18 +6,18 @@ import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
+import { RankBadgeIcon } from './RankBadgeIcon';
 
 export function ModernResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
-  
+
   if (!showPopup || !popupData) return null;
 
   const playerPoints = popupData.player.global_points || 390;
   const position = popupData.player.overall_rank || 1;
 
-  // "Overall" style: fixed ordering
   const orderedGamemodes: GameMode[] = [
-    'Mace', 'Sword', 'Crystal', 'Axe', 
+    'Mace', 'Sword', 'Crystal', 'Axe',
     'SMP', 'UHC', 'NethPot', 'Bedwars'
   ];
 
@@ -26,22 +27,20 @@ export function ModernResultPopup() {
     }
   };
 
-  // Detailing: modern glass/tier design
   const getTierData = (mode: GameMode) => {
     const tierMap: Record<string, { code: string, color: string, gradient: string, iconOutline: string }> = {
-      'Mace': { code: 'HT1', color: '#fde047', gradient: 'linear-gradient(135deg, #fef9c3 0%, #fde047 90%)', iconOutline: '0 2px 10px 0 #fde04733' },
-      'Sword': { code: 'HT1', color: '#f472b6', gradient: 'linear-gradient(135deg, #fff1fa 0%, #f472b6 90%)', iconOutline: '0 2px 10px 0 #f472b644' },
-      'Crystal': { code: 'HT1', color: '#38bdf8', gradient: 'linear-gradient(135deg, #f0faff 0%, #38bdf8 90%)', iconOutline: '0 2px 10px 0 #38bdf844' },
-      'Axe': { code: 'LT1', color: '#7cffad', gradient: 'linear-gradient(135deg, #e6fff6 0%, #7cffad 90%)', iconOutline: '0 2px 10px 0 #7cffad33' },
-      'SMP': { code: 'LT1', color: '#fde68a', gradient: 'linear-gradient(135deg, #fffbe7 0%, #fde68a 90%)', iconOutline: '0 2px 10px 0 #fde68a22' },
-      'UHC': { code: 'LT1', color: '#fda4af', gradient: 'linear-gradient(135deg, #fff1fc 0%, #fda4af 100%)', iconOutline: '0 2px 10px 0 #fda4af33' },
-      'NethPot': { code: 'HT2', color: '#a78bfa', gradient: 'linear-gradient(135deg, #f5f3ff 0%, #a78bfa 90%)', iconOutline: '0 2px 10px 0 #a78bfa33' },
-      'Bedwars': { code: 'LT1', color: '#fbbf24', gradient: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 90%)', iconOutline: '0 2px 10px 0 #fbbf2444' },
+      'Mace': { code: 'HT1', color: '#fde047', gradient: 'linear-gradient(135deg, #fef9c3 0%, #fde047 90%)', iconOutline: '' },
+      'Sword': { code: 'HT1', color: '#f472b6', gradient: 'linear-gradient(135deg, #fff1fa 0%, #f472b6 90%)', iconOutline: '' },
+      'Crystal': { code: 'HT1', color: '#38bdf8', gradient: 'linear-gradient(135deg, #f0faff 0%, #38bdf8 90%)', iconOutline: '' },
+      'Axe': { code: 'LT1', color: '#7cffad', gradient: 'linear-gradient(135deg, #e6fff6 0%, #7cffad 90%)', iconOutline: '' },
+      'SMP': { code: 'LT1', color: '#fde68a', gradient: 'linear-gradient(135deg, #fffbe7 0%, #fde68a 90%)', iconOutline: '' },
+      'UHC': { code: 'LT1', color: '#fda4af', gradient: 'linear-gradient(135deg, #fff1fc 0%, #fda4af 100%)', iconOutline: '' },
+      'NethPot': { code: 'HT2', color: '#a78bfa', gradient: 'linear-gradient(135deg, #f5f3ff 0%, #a78bfa 90%)', iconOutline: '' },
+      'Bedwars': { code: 'LT1', color: '#fbbf24', gradient: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 90%)', iconOutline: '' },
     };
     return tierMap[mode] || { code: 'LT1', color: '#e5e7eb', gradient: 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)', iconOutline: '' };
   };
 
-  // Overall: compact and polished glass style
   return (
     <AnimatePresence>
       {showPopup && (
@@ -57,12 +56,11 @@ export function ModernResultPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div
-            className="relative w-full max-w-[355px] sm:max-w-[370px] rounded-2xl bg-white/10 shadow-[0_4px_40px_rgba(245,222,77,0.13)] border border-white/20 overflow-hidden"
+            className="relative w-full max-w-[355px] sm:max-w-[370px] rounded-2xl bg-white/10 border border-white/20 overflow-hidden"
             style={{
               background: 'rgba(26,26,46,0.86)',
               border: '1.8px solid #ffe066',
-              boxShadow: '0 2px 12px #fde04722, 0 6px 32px #fff8',
-              backdropFilter: 'blur(7px)'
+              // Removed all boxShadow/glow from container
             }}
             initial={{ scale: 0.92, opacity: 0, y: 16 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -73,11 +71,8 @@ export function ModernResultPopup() {
             {/* Close Button */}
             <button
               onClick={closePopup}
-              className="absolute top-3 right-3 bg-white/80 text-yellow-700 hover:bg-yellow-300 shadow-md p-2 rounded-full z-10 transition-all duration-150"
+              className="absolute top-3 right-3 bg-white/80 text-yellow-700 hover:bg-yellow-300 p-2 rounded-full z-10 transition-all duration-150"
               aria-label="Close"
-              style={{
-                boxShadow: '0 2px 8px #fde04744'
-              }}
             >
               <X className="w-5 h-5" />
             </button>
@@ -85,8 +80,9 @@ export function ModernResultPopup() {
             <div className="flex flex-col items-center px-5 pb-6 pt-7">
               {/* Avatar */}
               <div className="relative mb-2">
+                {/* Removed yellow glow, no span/box-shadow/glow */}
                 <div
-                  className="w-20 h-20 rounded-full border-[4px] border-yellow-200/80 overflow-hidden flex items-center justify-center shadow-xl"
+                  className="w-20 h-20 rounded-full border-[4px] border-yellow-200/80 overflow-hidden flex items-center justify-center"
                   style={{
                     background: 'linear-gradient(130deg, #ffe066 10%, #fffbe7 100%)',
                   }}
@@ -109,7 +105,7 @@ export function ModernResultPopup() {
                   {popupData.player.ign}
                 </div>
                 <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-gradient-to-br from-yellow-200 to-yellow-400/70 border border-yellow-100/40 shadow-sm mb-1 mt-1">
-                  <span className="text-[1rem] font-bold text-yellow-700 drop-shadow">⚜</span>
+                  <RankBadgeIcon rank="Combat Master" className="w-5 h-5 text-yellow-700" />
                   <span className="font-semibold text-yellow-600 tracking-wider">Combat Master</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-xs text-yellow-100/80 mt-0.5">
@@ -137,16 +133,15 @@ export function ModernResultPopup() {
                         transition={{ delay: index * 0.045 }}
                       >
                         <div
-                          className={`flex items-center justify-center rounded-full border shadow-xl`}
+                          className={`flex items-center justify-center rounded-full border`}
                           style={{
                             width: 48,
                             height: 48,
                             border: `2px solid ${tier.color}`,
                             background: `rgba(255,255,255,0.12)`,
-                            boxShadow: `${tier.iconOutline}, 0 2px 8px #fff4`
                           }}
                         >
-                          <GameModeIcon mode={mode.toLowerCase()} className="h-7 w-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] hover:scale-105 duration-200" />
+                          <GameModeIcon mode={mode.toLowerCase()} className="h-7 w-7" />
                         </div>
                         <div
                           className="text-xs font-extrabold rounded py-0.5 px-2 bg-white/10 border border-yellow-50/10 shadow-sm"
