@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { EnhancedResultPopup } from '../components/EnhancedResultPopup';
+import { CustomPlayerPopup } from '../components/CustomPlayerPopup';
 import { GameMode, TierLevel, Player } from '@/services/playerService';
 
 interface TierAssignment {
@@ -49,7 +49,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   return (
     <PopupContext.Provider value={{ showPopup, popupData, openPopup, closePopup }}>
       {children}
-      <EnhancedResultPopup />
+      <CustomPlayerPopup />
     </PopupContext.Provider>
   );
 }

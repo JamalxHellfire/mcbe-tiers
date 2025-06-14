@@ -5,46 +5,6 @@ import { X, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 
-// Tier icon components
-const TierIcon = ({ type, color }: { type: string; color: string }) => {
-  const getIcon = () => {
-    switch (type) {
-      case 'HT1':
-        return (
-          <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white" style={{ borderColor: color, backgroundColor: color }}>
-            ◆
-          </div>
-        );
-      case 'HT2':
-        return (
-          <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white" style={{ borderColor: color, backgroundColor: color }}>
-            ✓
-          </div>
-        );
-      case 'LT1':
-        return (
-          <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white" style={{ borderColor: color, backgroundColor: color }}>
-            🔫
-          </div>
-        );
-      case 'LT2':
-        return (
-          <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white" style={{ borderColor: color, backgroundColor: color }}>
-            ⚡
-          </div>
-        );
-      default:
-        return (
-          <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white" style={{ borderColor: color, backgroundColor: color }}>
-            ♥
-          </div>
-        );
-    }
-  };
-
-  return getIcon();
-};
-
 export function CustomPlayerPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
   
@@ -52,18 +12,6 @@ export function CustomPlayerPopup() {
 
   const playerPoints = popupData.player.global_points || 390;
   const position = popupData.player.overall_rank || 1;
-
-  // Mock tier data exactly as shown in image
-  const tiers = [
-    { type: 'HT1', color: '#800080' }, // Purple
-    { type: 'HT1', color: '#800080' }, // Purple  
-    { type: 'HT1', color: '#800080' }, // Purple
-    { type: 'LT1', color: '#0000FF' }, // Blue
-    { type: 'LT1', color: '#0000FF' }, // Blue
-    { type: 'LT1', color: '#0000FF' }, // Blue
-    { type: 'HT2', color: '#FF0000' }, // Red
-    { type: 'LT1', color: '#FF69B4' }  // Pink
-  ];
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -82,7 +30,7 @@ export function CustomPlayerPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div
-            className="relative w-full max-w-[320px] rounded-2xl overflow-hidden shadow-2xl"
+            className="relative w-[320px] h-auto rounded-2xl overflow-hidden shadow-2xl"
             style={{
               background: '#1A1A2E',
               border: '1px solid #2D2D42'
@@ -107,8 +55,8 @@ export function CustomPlayerPopup() {
               <div className="mb-6">
                 <div className="relative w-20 h-20 mx-auto mb-4">
                   <div 
-                    className="w-full h-full rounded-full border-3 overflow-hidden"
-                    style={{ borderColor: '#FFD700' }}
+                    className="w-full h-full rounded-full border-4 overflow-hidden"
+                    style={{ borderColor: '#FFFFFF' }}
                   >
                     <Avatar className="w-full h-full">
                       <AvatarImage 
@@ -130,15 +78,15 @@ export function CustomPlayerPopup() {
 
                 {/* Combat Master Badge */}
                 <div 
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-3 text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-3 text-sm font-bold"
                   style={{ 
                     background: '#FFD700',
                     color: '#1A1A2E',
-                    boxShadow: '0 0 10px rgba(255, 215, 0, 0.3)'
+                    boxShadow: '0 0 10px rgba(255, 215, 0, 0.4)'
                   }}
                 >
                   <span className="text-sm">♦</span>
-                  <span className="font-bold">Combat Master</span>
+                  <span>Combat Master</span>
                 </div>
 
                 {/* Region */}
@@ -192,14 +140,69 @@ export function CustomPlayerPopup() {
                   style={{ background: 'rgba(45, 45, 66, 0.6)' }}
                 >
                   <div className="flex justify-center gap-2 flex-wrap">
-                    {tiers.map((tier, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <TierIcon type={tier.type} color={tier.color} />
-                        <span className="text-xs mt-1 font-bold" style={{ color: tier.color }}>
-                          {tier.type}
-                        </span>
+                    {/* HT1 - Purple */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#800080', backgroundColor: '#800080' }}>
+                        ◆
                       </div>
-                    ))}
+                      <span className="text-xs font-bold" style={{ color: '#800080' }}>HT1</span>
+                    </div>
+
+                    {/* HT1 - Purple */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#800080', backgroundColor: '#800080' }}>
+                        ◆
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#800080' }}>HT1</span>
+                    </div>
+
+                    {/* HT1 - Purple */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#800080', backgroundColor: '#800080' }}>
+                        ◆
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#800080' }}>HT1</span>
+                    </div>
+
+                    {/* LT1 - Blue */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#0000FF', backgroundColor: '#0000FF' }}>
+                        🔫
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#0000FF' }}>LT1</span>
+                    </div>
+
+                    {/* LT1 - Blue */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#0000FF', backgroundColor: '#0000FF' }}>
+                        🔫
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#0000FF' }}>LT1</span>
+                    </div>
+
+                    {/* LT1 - Blue */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#0000FF', backgroundColor: '#0000FF' }}>
+                        🔫
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#0000FF' }}>LT1</span>
+                    </div>
+
+                    {/* HT2 - Red */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#FF0000', backgroundColor: '#FF0000' }}>
+                        ✓
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#FF0000' }}>HT2</span>
+                    </div>
+
+                    {/* LT1 - Pink */}
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white mb-1" style={{ borderColor: '#FF69B4', backgroundColor: '#FF69B4' }}>
+                        ♥
+                      </div>
+                      <span className="text-xs font-bold" style={{ color: '#FF69B4' }}>LT1</span>
+                    </div>
                   </div>
                 </div>
               </div>

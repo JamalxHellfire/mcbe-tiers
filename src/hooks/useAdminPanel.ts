@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
@@ -64,19 +63,19 @@ export function useAdminPanel() {
   const fetchNews = async () => {
     try {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .select('*')
-        .order('published_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       const mappedNews = (data || []).map(item => ({
         id: item.id,
         headline: item.title,
-        excerpt: item.description,
+        excerpt: item.excerpt || '',
         content: item.content,
         author: item.author,
-        published_at: item.published_at
+        published_at: item.created_at
       }));
 
       setNews(mappedNews);
@@ -94,13 +93,12 @@ export function useAdminPanel() {
   const createNewsArticle = async (article: Omit<NewsArticle, 'id'>) => {
     try {
       const { error } = await supabase
-        .from('news')
+        .from('news_articles')
         .insert([{
           title: article.headline,
           content: article.content,
-          description: article.excerpt,
-          author: article.author,
-          published_at: article.published_at
+          excerpt: article.excerpt,
+          author: article.author
         }]);
 
       if (error) throw error;
@@ -123,13 +121,12 @@ export function useAdminPanel() {
   const updateNewsArticle = async (id: string, updates: Partial<NewsArticle>) => {
     try {
       const { error } = await supabase
-        .from('news')
+        .from('news_articles')
         .update({
           title: updates.headline,
           content: updates.content,
-          description: updates.excerpt,
-          author: updates.author,
-          published_at: updates.published_at
+          excerpt: updates.excerpt,
+          author: updates.author
         })
         .eq('id', id);
 
@@ -153,7 +150,7 @@ export function useAdminPanel() {
   const deleteNewsArticle = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('news')
+        .from('news_articles')
         .delete()
         .eq('id', id);
 
