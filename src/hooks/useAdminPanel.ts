@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Player, GameMode, TierLevel } from '@/services/playerService';
+import { Player, GameMode, TierLevel, updatePlayerGlobalPoints } from '@/services/playerService';
 import { useToast } from '@/hooks/use-toast';
 
 interface PlayerResult {
@@ -65,9 +66,12 @@ export const useAdminPanel = () => {
       if (error) {
         setError(error.message);
       } else {
+        // Automatically update global points
+        await updatePlayerGlobalPoints(playerId.toString());
+        
         toast({
           title: "Success",
-          description: `Tier updated successfully for player ID ${playerId} in ${gamemode}.`,
+          description: `Tier updated successfully for player ID ${playerId} in ${gamemode}. Global points recalculated.`,
         });
       }
     } catch (err: any) {
@@ -112,7 +116,6 @@ export const useAdminPanel = () => {
     try {
       setLoading(true);
 
-      // Ensure device and region are of proper enum type per database
       const deviceAllowed = ['PC', 'Mobile', 'Console'] as const;
       const regionAllowed = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'] as const;
 
@@ -124,7 +127,6 @@ export const useAdminPanel = () => {
         ? (region as typeof regionAllowed[number])
         : undefined;
 
-      // Only provide fields that match the 'Insert' type for 'players'!
       const playerInsertObj = {
         ign,
         region: safeRegion,
@@ -172,11 +174,14 @@ export const useAdminPanel = () => {
             }
           }
         }
+        
+        // Automatically calculate and update global points
+        await updatePlayerGlobalPoints(playerId);
       }
 
       toast({
         title: "Success",
-        description: `Player ${ign} results submitted successfully.`,
+        description: `Player ${ign} results submitted successfully. Global points calculated automatically.`,
       });
 
       return { success: true, player: playerData };

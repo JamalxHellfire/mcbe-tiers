@@ -12,6 +12,7 @@ import { GameMode, Player } from '../services/playerService';
 import { motion } from 'framer-motion';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 import { getPlayerRank } from '@/utils/rankUtils';
+import { usePointsCalculation } from '@/hooks/usePointsCalculation';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,11 +20,13 @@ const Index = () => {
   
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
   const { openPopup } = usePopup();
+  
+  // Enable automatic points calculation
+  usePointsCalculation();
 
   const handlePlayerClick = (player: Player) => {
     const rankInfo = getPlayerRank(player.global_points || 0);
     
-    // Convert tierAssignments to match expected interface
     const tierAssignments = (player.tierAssignments || []).map(assignment => ({
       gamemode: assignment.gamemode,
       tier: assignment.tier,

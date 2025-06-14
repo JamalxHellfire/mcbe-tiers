@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export type GameMode = 'Crystal' | 'Sword' | 'Mace' | 'Axe' | 'SMP' | 'UHC' | 'NethPot' | 'Bedwars';
@@ -24,6 +23,64 @@ export interface Player {
     tier: TierLevel;
     score: number;
   }[];
+}
+
+// Tier points mapping for automatic calculation
+const TIER_POINTS: Record<TierLevel, number> = {
+  'HT1': 50,
+  'LT1': 45,
+  'HT2': 40,
+  'LT2': 35,
+  'HT3': 30,
+  'LT3': 25,
+  'HT4': 20,
+  'LT4': 15,
+  'HT5': 10,
+  'LT5': 5,
+  'Retired': 0,
+  'Not Ranked': 0
+};
+
+export function calculateTierPoints(tier: TierLevel): number {
+  return TIER_POINTS[tier] || 0;
+}
+
+export async function updatePlayerGlobalPoints(playerId: string): Promise<void> {
+  try {
+    // Get all tier assignments for the player
+    const { data: tierAssignments, error } = await supabase
+      .from('gamemode_scores')
+      .select('internal_tier')
+      .eq('player_id', playerId);
+
+    if (error) {
+      console.error('Error fetching tier assignments:', error);
+      return;
+    }
+
+    // Calculate total points from all tiers
+    const totalPoints = tierAssignments?.reduce((sum, assignment) => {
+      return sum + calculateTierPoints(assignment.internal_tier as TierLevel);
+    }, 0) || 0;
+
+    // Update player's global points
+    const { error: updateError } = await supabase
+      .from('players')
+      .update({ 
+        global_points: totalPoints,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', playerId);
+
+    if (updateError) {
+      console.error('Error updating global points:', updateError);
+      return;
+    }
+
+    console.log(`Updated player ${playerId} global points to ${totalPoints}`);
+  } catch (error) {
+    console.error('Error in updatePlayerGlobalPoints:', error);
+  }
 }
 
 export async function getLeaderboard(): Promise<Player[]> {
