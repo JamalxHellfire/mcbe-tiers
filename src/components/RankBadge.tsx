@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { RankBadge as RankBadgeComponent, getRankByPoints, RankInfo, RANK_TIERS } from './RankBadgeSystem';
+import { RankBadge as RankBadgeComponent, getRankByPoints, RANK_TIERS } from './RankBadgeSystem';
+import type { RankInfo } from './RankBadgeSystem';
 
 // Re-export everything from RankBadgeSystem for backward compatibility
-export { getRankByPoints, RankInfo, RANK_TIERS };
+export { getRankByPoints, RANK_TIERS };
 export type { RankInfo };
 
 interface RankBadgeProps {
