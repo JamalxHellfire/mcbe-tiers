@@ -268,7 +268,7 @@ export function useAdminPanel() {
         gamemode,
         display_tier: tier as "HT1" | "LT1" | "HT2" | "LT2" | "HT3" | "LT3" | "HT4" | "LT4" | "HT5" | "LT5" | "Retired",
         internal_tier: tier as "HT1" | "LT1" | "HT2" | "LT2" | "HT3" | "LT3" | "HT4" | "LT4" | "HT5" | "LT5" | "Retired",
-        points
+        score: points
       }));
 
       const { error } = await supabase
@@ -304,7 +304,7 @@ export function useAdminPanel() {
       setLoading(true);
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
-        .upsert({ ign, region, device, java_username: java_username || null }, { onConflict: 'ign' })
+        .upsert([{ ign, region, device, java_username: java_username || null }], { onConflict: 'ign' })
         .select()
         .single();
 
@@ -320,7 +320,7 @@ export function useAdminPanel() {
           gamemode: gamemode as GameMode,
           display_tier: tier as DatabaseTier,
           internal_tier: tier as DatabaseTier,
-          points: 0, // Points are not in the form, default to 0
+          score: 0, // Points are not in the form, default to 0
         }));
 
       if (scoresToUpsert.length > 0) {
@@ -348,6 +348,79 @@ export function useAdminPanel() {
     }
   };
 
+  const fetchPlayerScores = async (playerId: string): Promise<Record<GameMode, TierLevel>> => {
+    const { data, error } = await supabase
+        .from('gamemode_scores')
+        .select('gamemode, display_tier')
+        .eq('player_id', playerId);
+
+    if (error) {
+        console.error('Error fetching player scores:', error);
+        toast({
+            title: "Error",
+            description: "Failed to fetch player tiers",
+            variant: "destructive",
+        });
+        return {} as Record<GameMode, TierLevel>;
+    }
+    
+    const scores = (data || []).reduce((acc, score) => {
+        acc[score.gamemode] = score.display_tier;
+        return acc;
+    }, {} as Record<GameMode, TierLevel>);
+
+    return scores;
+  }
+
+  const updatePlayerScores = async (playerId: string, tiers: Record<GameMode, TierLevel>) => {
+    try {
+      type DatabaseTier = "HT1" | "LT1" | "HT2" | "LT2" | "HT3" | "LT3" | "HT4" | "LT4" | "HT5" | "LT5" | "Retired";
+      const scoresToUpsert = Object.entries(tiers)
+        .filter(([, tier]) => tier !== 'Not Ranked')
+        .map(([gamemode, tier]) => ({
+          player_id: playerId,
+          gamemode: gamemode as GameMode,
+          display_tier: tier as DatabaseTier,
+          internal_tier: tier as DatabaseTier,
+        }));
+
+      if (scoresToUpsert.length > 0) {
+        const { error: scoresError } = await supabase
+          .from('gamemode_scores')
+          .upsert(scoresToUpsert, { onConflict: 'player_id, gamemode' });
+
+        if (scoresError) throw scoresError;
+      }
+      
+      const scoresToDelete = Object.entries(tiers)
+        .filter(([, tier]) => tier === 'Not Ranked')
+        .map(([gamemode]) => gamemode as GameMode);
+
+      if (scoresToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('gamemode_scores')
+            .delete()
+            .eq('player_id', playerId)
+            .in('gamemode', scoresToDelete);
+        
+          if (deleteError) throw deleteError;
+      }
+
+      toast({
+        title: "Success",
+        description: `Player tiers updated successfully.`,
+      });
+      fetchPlayers();
+    } catch (error) {
+       console.error('Error updating player scores:', error);
+       toast({
+        title: "Error",
+        description: `Failed to update tiers. ${error instanceof Error ? error.message : ''}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     players,
     news,
@@ -363,6 +436,8 @@ export function useAdminPanel() {
     deletePlayer,
     assignTiersBulk,
     submitPlayerResults,
+    fetchPlayerScores,
+    updatePlayerScores,
     showEditDialog,
     setShowEditDialog,
     editingPlayer,

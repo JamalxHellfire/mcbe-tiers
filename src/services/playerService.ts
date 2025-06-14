@@ -1,5 +1,3 @@
-
-
 import { supabase } from '@/integrations/supabase/client';
 
 export type GameMode = 'Crystal' | 'Sword' | 'Mace' | 'Axe' | 'SMP' | 'UHC' | 'NethPot' | 'Bedwars';
@@ -58,7 +56,7 @@ export async function getGamemodeTiers(gamemode: GameMode): Promise<Player[]> {
     const { data, error } = await supabase
       .from('gamemode_scores')
       .select(`
-        points,
+        score,
         internal_tier,
         player_id,
         players!inner (
@@ -69,7 +67,7 @@ export async function getGamemodeTiers(gamemode: GameMode): Promise<Player[]> {
         )
       `)
       .eq('gamemode', gamemode)
-      .order('points', { ascending: false })
+      .order('score', { ascending: false })
       .limit(50);
 
     if (error) {
@@ -89,11 +87,11 @@ export async function getGamemodeTiers(gamemode: GameMode): Promise<Player[]> {
       ign: item.players.ign,
       region: item.players.region,
       device: item.players.device,
-      global_points: item.points,
+      global_points: item.score,
       overall_rank: index + 1,
       tier: item.internal_tier,
       gamemode_points: {
-        [gamemode]: item.points
+        [gamemode]: item.score
       }
     }));
 
@@ -141,7 +139,7 @@ export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
     const { data, error } = await supabase
       .from('gamemode_scores')
       .select(`
-        points,
+        score,
         internal_tier,
         player_id,
         players!inner (
@@ -152,7 +150,7 @@ export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
         )
       `)
       .eq('gamemode', gamemode)
-      .order('points', { ascending: false });
+      .order('score', { ascending: false });
 
     if (error) {
       console.error('Error fetching gamemode tier data:', error);
@@ -187,11 +185,11 @@ export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
         ign: item.players.ign,
         region: item.players.region,
         device: item.players.device,
-        global_points: item.points,
+        global_points: item.score,
         overall_rank: 0, // Will be set later if needed
         tier: item.internal_tier,
         gamemode_points: {
-          [gamemode]: item.points
+          [gamemode]: item.score
         }
       };
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { Input } from "@/components/ui/input";
@@ -6,20 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GameMode, TierLevel, Player } from '@/services/playerService';
-import { Gem, Sword, Server, Heart, Axe, FlaskConical, BedDouble, Trophy } from 'lucide-react';
-
-const gamemodes: { name: GameMode; icon: React.ElementType }[] = [
-  { name: 'Crystal', icon: Gem },
-  { name: 'Sword', icon: Sword },
-  { name: 'SMP', icon: Server },
-  { name: 'UHC', icon: Heart },
-  { name: 'Axe', icon: Axe },
-  { name: 'NethPot', icon: FlaskConical },
-  { name: 'Bedwars', icon: BedDouble },
-  { name: 'Mace', icon: Axe },
-];
-
-const tierLevels: TierLevel[] = ['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5', 'Retired', 'Not Ranked'];
+import { Trophy } from 'lucide-react';
+import { GAMEMODES, TIER_LEVELS } from '@/lib/constants';
 
 const SubmitResultsForm = () => {
   const { submitPlayerResults } = useAdminPanel();
@@ -28,7 +15,7 @@ const SubmitResultsForm = () => {
     java_username: '',
     region: 'NA' as Player['region'],
     device: 'PC' as Player['device'],
-    tiers: gamemodes.reduce((acc, gm) => ({ ...acc, [gm.name]: 'Not Ranked' }), {} as Record<GameMode, TierLevel>),
+    tiers: GAMEMODES.reduce((acc, gm) => ({ ...acc, [gm.name]: 'Not Ranked' }), {} as Record<GameMode, TierLevel>),
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -93,7 +80,7 @@ const SubmitResultsForm = () => {
       <div>
         <h3 className="text-xl font-bold text-center text-white mb-6">Tier Rankings</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {gamemodes.map(({ name, icon: Icon }) => (
+          {GAMEMODES.map(({ name, icon: Icon }) => (
             <div key={name}>
               <div className="flex items-center gap-2 mb-2">
                 <Icon className="w-5 h-5 text-gray-400" />
@@ -102,7 +89,7 @@ const SubmitResultsForm = () => {
               <Select value={formData.tiers[name]} onValueChange={value => handleTierChange(name, value as TierLevel)}>
                 <SelectTrigger className="bg-gray-900 border-gray-700 text-white"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {tierLevels.map(tier => <SelectItem key={tier} value={tier}>{tier}</SelectItem>)}
+                  {TIER_LEVELS.map(tier => <SelectItem key={tier} value={tier}>{tier}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
