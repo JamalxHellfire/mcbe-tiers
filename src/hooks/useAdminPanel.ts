@@ -72,7 +72,7 @@ export function useAdminPanel() {
       const mappedNews = (data || []).map(item => ({
         id: item.id,
         headline: item.title,
-        excerpt: item.excerpt || '',
+        excerpt: item.description || item.content.substring(0, 150) + '...',
         content: item.content,
         author: item.author,
         published_at: item.created_at
