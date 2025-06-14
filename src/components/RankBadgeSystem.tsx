@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Star, Award, Trophy, Gem } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export interface RankInfo {
   title: string;
@@ -13,7 +13,6 @@ export interface RankInfo {
   shadowColor: string;
   borderColor: string;
   textColor: string;
-  icon: React.ComponentType<any>;
   effectType: 'legendary' | 'epic' | 'rare' | 'uncommon' | 'common' | 'basic';
 }
 
@@ -28,7 +27,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(168, 85, 247, 0.5)',
     borderColor: 'border-purple-400',
     textColor: 'text-purple-100',
-    icon: Gem,
     effectType: 'legendary'
   },
   {
@@ -41,7 +39,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(245, 158, 11, 0.5)',
     borderColor: 'border-yellow-400',
     textColor: 'text-yellow-100',
-    icon: Crown,
     effectType: 'epic'
   },
   {
@@ -54,7 +51,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(59, 130, 246, 0.5)',
     borderColor: 'border-blue-400',
     textColor: 'text-blue-100',
-    icon: Star,
     effectType: 'rare'
   },
   {
@@ -67,7 +63,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(16, 185, 129, 0.5)',
     borderColor: 'border-green-400',
     textColor: 'text-green-100',
-    icon: Award,
     effectType: 'uncommon'
   },
   {
@@ -80,7 +75,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(249, 115, 22, 0.5)',
     borderColor: 'border-orange-400',
     textColor: 'text-orange-100',
-    icon: Trophy,
     effectType: 'common'
   },
   {
@@ -93,7 +87,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(100, 116, 139, 0.5)',
     borderColor: 'border-slate-400',
     textColor: 'text-slate-200',
-    icon: Award,
     effectType: 'basic'
   },
   {
@@ -106,7 +99,6 @@ export const RANK_TIERS: RankInfo[] = [
     shadowColor: 'rgba(107, 114, 128, 0.5)',
     borderColor: 'border-gray-400',
     textColor: 'text-gray-200',
-    icon: Trophy,
     effectType: 'basic'
   }
 ];
@@ -120,7 +112,7 @@ export function getRankByPoints(points: number): RankInfo {
   return RANK_TIERS[RANK_TIERS.length - 1]; // Default to Rookie
 }
 
-// Particle system for popup effects
+// Enhanced particle system for inner popup effects
 const ParticleSystem: React.FC<{ effectType: string; isActive: boolean }> = ({ effectType, isActive }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -144,33 +136,42 @@ const ParticleSystem: React.FC<{ effectType: string; isActive: boolean }> = ({ e
       size: number;
       color: string;
       opacity: number;
+      rotation: number;
+      rotationSpeed: number;
     }> = [];
 
     const colors = {
-      legendary: ['#a855f7', '#ec4899', '#f59e0b', '#ef4444'],
-      epic: ['#f59e0b', '#f97316', '#ef4444', '#eab308'],
-      rare: ['#3b82f6', '#06b6d4', '#8b5cf6', '#0ea5e9'],
-      uncommon: ['#10b981', '#059669', '#16a34a', '#15803d'],
-      common: ['#f97316', '#eab308', '#f59e0b', '#d97706'],
-      basic: ['#6b7280', '#9ca3af', '#d1d5db', '#e5e7eb']
+      legendary: ['#a855f7', '#ec4899', '#f59e0b', '#ef4444', '#8b5cf6'],
+      epic: ['#f59e0b', '#f97316', '#ef4444', '#eab308', '#fb923c'],
+      rare: ['#3b82f6', '#06b6d4', '#8b5cf6', '#0ea5e9', '#60a5fa'],
+      uncommon: ['#10b981', '#059669', '#16a34a', '#15803d', '#34d399'],
+      common: ['#f97316', '#eab308', '#f59e0b', '#d97706', '#fbbf24'],
+      basic: ['#6b7280', '#9ca3af', '#d1d5db', '#e5e7eb', '#f3f4f6']
     };
 
     const particleColors = colors[effectType as keyof typeof colors] || colors.basic;
-    const particleCount = effectType === 'legendary' ? 60 : effectType === 'epic' ? 45 : 30;
+    const particleCount = effectType === 'legendary' ? 80 : effectType === 'epic' ? 60 : 40;
 
     const createParticle = () => {
       if (particles.length > particleCount) return;
       
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * 50 + 20;
+      
       particles.push({
-        x: Math.random() * canvas.width,
-        y: canvas.height + 10,
-        vx: (Math.random() - 0.5) * 2,
-        vy: -Math.random() * 3 - 1,
+        x: centerX + Math.cos(angle) * distance,
+        y: centerY + Math.sin(angle) * distance,
+        vx: (Math.random() - 0.5) * 3,
+        vy: (Math.random() - 0.5) * 3,
         life: 0,
-        maxLife: 120 + Math.random() * 60,
-        size: Math.random() * 3 + 1,
+        maxLife: 100 + Math.random() * 80,
+        size: Math.random() * 4 + 2,
         color: particleColors[Math.floor(Math.random() * particleColors.length)],
-        opacity: 0.8 + Math.random() * 0.2
+        opacity: 0.8 + Math.random() * 0.2,
+        rotation: 0,
+        rotationSpeed: (Math.random() - 0.5) * 0.1
       });
     };
 
@@ -178,7 +179,7 @@ const ParticleSystem: React.FC<{ effectType: string; isActive: boolean }> = ({ e
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (Math.random() < 0.1) {
+      if (Math.random() < 0.15) {
         createParticle();
       }
 
@@ -188,20 +189,34 @@ const ParticleSystem: React.FC<{ effectType: string; isActive: boolean }> = ({ e
         p.x += p.vx;
         p.y += p.vy;
         p.life++;
+        p.rotation += p.rotationSpeed;
 
         const alpha = p.opacity * (1 - (p.life / p.maxLife));
         
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.color;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 15;
         ctx.shadowColor = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
+        
+        // Create inner glow effect
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        
+        // Draw multiple layers for depth
+        for (let layer = 0; layer < 3; layer++) {
+          const layerSize = p.size * (1 - layer * 0.3);
+          const layerAlpha = alpha * (1 - layer * 0.3);
+          
+          ctx.globalAlpha = layerAlpha;
+          ctx.beginPath();
+          ctx.arc(0, 0, layerSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
         ctx.restore();
 
-        if (p.life >= p.maxLife || p.y < -10) {
+        if (p.life >= p.maxLife || p.y < -10 || p.y > canvas.height + 10) {
           particles.splice(i, 1);
         }
       }
@@ -247,8 +262,6 @@ export const RankBadge: React.FC<{
     xl: 'w-20 h-20 text-lg'
   };
 
-  const IconComponent = rank.icon;
-
   return (
     <motion.div
       className={`
@@ -266,7 +279,21 @@ export const RankBadge: React.FC<{
       whileHover={animated ? { scale: 1.1 } : undefined}
       whileTap={animated ? { scale: 0.95 } : undefined}
     >
-      <IconComponent className="w-3/4 h-3/4" />
+      {/* Inner geometric pattern instead of icon */}
+      <div className="relative w-full h-full flex items-center justify-center">
+        <div 
+          className="w-6 h-6 rounded-full border-2 border-current opacity-60"
+          style={{ 
+            background: `radial-gradient(circle, ${rank.glowColor}40 0%, transparent 70%)`
+          }}
+        />
+        <div 
+          className="absolute w-4 h-4 rotate-45 border border-current opacity-80"
+          style={{ 
+            background: `linear-gradient(45deg, ${rank.glowColor}20, transparent)`
+          }}
+        />
+      </div>
       
       {showGlow && (
         <div 
@@ -333,8 +360,31 @@ export const RankPopup: React.FC<{
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Particle System */}
+            {/* Enhanced Particle System */}
             <ParticleSystem effectType={rank.effectType} isActive={showParticles} />
+            
+            {/* Inner Energy Rings */}
+            <div className="absolute inset-0 pointer-events-none">
+              {[1, 2, 3].map((ring) => (
+                <motion.div
+                  key={ring}
+                  className="absolute inset-0 rounded-2xl border opacity-20"
+                  style={{ 
+                    borderColor: rank.glowColor,
+                    borderWidth: '1px'
+                  }}
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.2, 0.5, 0.2]
+                  }}
+                  transition={{
+                    duration: 2 + ring,
+                    repeat: Infinity,
+                    delay: ring * 0.5
+                  }}
+                />
+              ))}
+            </div>
             
             {/* Close Button */}
             <motion.button
@@ -359,7 +409,7 @@ export const RankPopup: React.FC<{
                 <div className="h-1 w-20 bg-gradient-to-r from-transparent via-white to-transparent mx-auto opacity-60" />
               </motion.div>
 
-              {/* Rank Badge */}
+              {/* Enhanced Rank Badge with Inner Effects */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -369,24 +419,54 @@ export const RankPopup: React.FC<{
                   stiffness: 200,
                   duration: 0.8
                 }}
-                className="mb-6 flex justify-center"
+                className="mb-6 flex justify-center relative"
               >
-                <RankBadge 
-                  rank={rank} 
-                  size="xl" 
-                  showGlow={true}
-                  animated={true}
-                />
+                <div className="relative">
+                  <RankBadge 
+                    rank={rank} 
+                    size="xl" 
+                    showGlow={true}
+                    animated={true}
+                  />
+                  
+                  {/* Inner rotating elements */}
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  >
+                    <div 
+                      className="w-16 h-16 rounded-full border border-dashed opacity-30"
+                      style={{ borderColor: rank.glowColor }}
+                    />
+                  </motion.div>
+                  
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                  >
+                    <div 
+                      className="w-12 h-12 rounded-full border border-dotted opacity-20"
+                      style={{ borderColor: rank.glowColor }}
+                    />
+                  </motion.div>
+                </div>
               </motion.div>
 
-              {/* Rank Title */}
+              {/* Rank Title with Glow Effect */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
                 className="mb-4"
               >
-                <h2 className={`text-3xl font-black ${rank.textColor} mb-2 tracking-wider`}>
+                <h2 
+                  className={`text-3xl font-black ${rank.textColor} mb-2 tracking-wider`}
+                  style={{ 
+                    textShadow: `0 0 10px ${rank.glowColor}, 0 0 20px ${rank.glowColor}40`
+                  }}
+                >
                   {rank.title.toUpperCase()}
                 </h2>
                 <div className="text-white/80 text-lg font-semibold">
@@ -394,18 +474,26 @@ export const RankPopup: React.FC<{
                 </div>
               </motion.div>
 
-              {/* Points Display */}
+              {/* Points Display with Inner Glow */}
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                className="bg-black/30 rounded-lg p-4 backdrop-blur-sm border border-white/20"
+                className="bg-black/30 rounded-lg p-4 backdrop-blur-sm border border-white/20 relative overflow-hidden"
               >
-                <div className="text-white/70 text-sm mb-1">Combat Points</div>
-                <div className="text-2xl font-bold text-white">{points.toLocaleString()}</div>
+                <div 
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    background: `radial-gradient(circle at center, ${rank.glowColor} 0%, transparent 70%)`
+                  }}
+                />
+                <div className="relative">
+                  <div className="text-white/70 text-sm mb-1">Combat Points</div>
+                  <div className="text-2xl font-bold text-white">{points.toLocaleString()}</div>
+                </div>
               </motion.div>
 
-              {/* Rank Progress */}
+              {/* Enhanced Rank Progress */}
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: '100%' }}
@@ -413,21 +501,30 @@ export const RankPopup: React.FC<{
                 className="mt-6"
               >
                 <div className="text-white/70 text-sm mb-2">Rank Progress</div>
-                <div className="w-full bg-black/30 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-black/30 rounded-full h-3 overflow-hidden relative">
                   <motion.div
-                    className={`h-full ${rank.color} rounded-full`}
+                    className={`h-full ${rank.color} rounded-full relative overflow-hidden`}
                     initial={{ width: '0%' }}
                     animate={{ width: '100%' }}
                     transition={{ delay: 1.2, duration: 1 }}
-                  />
+                  >
+                    <motion.div
+                      className="absolute inset-0 opacity-50"
+                      style={{
+                        background: `linear-gradient(90deg, transparent 0%, ${rank.glowColor} 50%, transparent 100%)`
+                      }}
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    />
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
 
-            {/* Background Effects */}
+            {/* Enhanced Background Effects */}
             <div className={`absolute inset-0 bg-gradient-to-br ${rank.gradient} opacity-20 blur-3xl`} />
             <motion.div
-              className="absolute inset-0 rounded-2xl"
+              className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{
                 background: `radial-gradient(circle at 50% 50%, ${rank.glowColor}20 0%, transparent 70%)`
               }}
