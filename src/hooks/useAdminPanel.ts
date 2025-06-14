@@ -111,11 +111,10 @@ export const useAdminPanel = () => {
   ) => {
     try {
       setLoading(true);
-      // Add id: undefined for upsert, to avoid TS error about extraneous keys (Supabase expects id, even if not defined)
+      // FIX: Remove 'id' field (caused TS error: property 'id' does not exist on upsert object)
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
         .upsert({
-          id: undefined,
           ign, 
           region, 
           device, 
