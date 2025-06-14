@@ -45,10 +45,11 @@ export function ModernResultPopup() {
     <AnimatePresence>
       {showPopup && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
           style={{
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)'
+            background: 'rgba(0, 0, 0, 0.90)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)'
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -56,36 +57,36 @@ export function ModernResultPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div
-            className="relative w-full max-w-[380px] rounded-2xl overflow-hidden shadow-2xl"
+            className="relative w-full max-w-[360px] rounded-2xl overflow-hidden shadow-2xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(16,16,32,0.95) 100%)',
-              border: '2px solid rgba(255, 224, 102, 0.8)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 224, 102, 0.1)'
+              background: 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%)',
+              border: '2px solid rgba(255, 224, 102, 0.6)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 224, 102, 0.3)'
             }}
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            initial={{ scale: 0.8, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            exit={{ scale: 0.8, opacity: 0, y: 30 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             onClick={e => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={closePopup}
-              className="absolute top-4 right-4 w-8 h-8 bg-white/90 hover:bg-white text-gray-800 hover:text-gray-900 rounded-full z-20 transition-all duration-200 flex items-center justify-center shadow-lg hover:scale-110"
+              className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-gray-800 hover:text-gray-900 rounded-full z-30 transition-all duration-200 flex items-center justify-center shadow-lg hover:scale-110"
               aria-label="Close"
             >
               <X className="w-4 h-4" />
             </button>
             
             {/* Main Content */}
-            <div className="flex flex-col items-center px-6 pb-6 pt-8">
+            <div className="flex flex-col items-center px-5 pb-5 pt-6">
               {/* Avatar */}
               <div className="relative mb-3">
                 <div
-                  className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center shadow-xl"
+                  className="w-18 h-18 rounded-full overflow-hidden flex items-center justify-center shadow-xl"
                   style={{
                     background: 'linear-gradient(135deg, #ffe066 0%, #fff4a3 100%)',
-                    border: '3px solid rgba(255, 224, 102, 0.6)'
+                    border: '3px solid rgba(255, 224, 102, 0.8)'
                   }}
                 >
                   <Avatar className="w-full h-full">
@@ -94,7 +95,7 @@ export function ModernResultPopup() {
                       alt={popupData.player.ign}
                       className="object-cover object-center scale-110"
                     />
-                    <AvatarFallback className="bg-yellow-200 text-yellow-800 font-bold text-xl">
+                    <AvatarFallback className="bg-yellow-200 text-yellow-800 font-bold text-lg">
                       {popupData.player.ign.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
@@ -103,7 +104,7 @@ export function ModernResultPopup() {
               
               {/* Username and badge */}
               <div className="flex flex-col items-center gap-1 mb-4 w-full">
-                <div className="font-bold text-2xl text-white drop-shadow-lg text-center">
+                <div className="font-bold text-xl text-white drop-shadow-lg text-center">
                   {popupData.player.ign}
                 </div>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-yellow-300 to-yellow-400 border border-yellow-200/60 shadow-lg">
@@ -122,12 +123,12 @@ export function ModernResultPopup() {
               </div>
               
               {/* Divider */}
-              <div className="w-full my-4 h-px bg-gradient-to-r from-transparent via-yellow-200/50 to-transparent" />
+              <div className="w-full my-3 h-px bg-gradient-to-r from-transparent via-yellow-200/50 to-transparent" />
               
               {/* Tiers */}
               <div className="w-full">
                 <div className="uppercase text-xs mb-3 text-yellow-300 tracking-widest font-bold text-center">Gamemode Tiers</div>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2.5">
                   {orderedGamemodes.map((mode, index) => {
                     const tier = getTierData(mode);
                     return (
@@ -141,20 +142,20 @@ export function ModernResultPopup() {
                         <div
                           className="flex items-center justify-center rounded-full shadow-lg"
                           style={{
-                            width: 50,
-                            height: 50,
+                            width: 44,
+                            height: 44,
                             border: `2px solid ${tier.color}`,
                             background: `rgba(255,255,255,0.1)`,
                             backdropFilter: 'blur(4px)'
                           }}
                         >
-                          <GameModeIcon mode={mode.toLowerCase()} className="h-7 w-7" />
+                          <GameModeIcon mode={mode.toLowerCase()} className="h-6 w-6" />
                         </div>
                         <div
                           className="text-xs font-bold rounded-md py-1 px-2 bg-white/10 border border-white/20 shadow-sm backdrop-blur-sm"
                           style={{
                             color: tier.color,
-                            fontSize: '0.7rem',
+                            fontSize: '0.65rem',
                             letterSpacing: '0.05em'
                           }}
                         >
@@ -167,7 +168,7 @@ export function ModernResultPopup() {
               </div>
               
               {/* Footer */}
-              <div className="w-full mt-5 text-xs text-center text-yellow-50/70 pt-3 border-t border-yellow-100/20">
+              <div className="w-full mt-4 text-xs text-center text-yellow-50/70 pt-3 border-t border-yellow-100/20">
                 <span>Click outside to close</span>
               </div>
             </div>

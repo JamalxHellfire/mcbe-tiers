@@ -55,7 +55,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       onClick(player);
     }
     
-    // Open popup with consistent data structure across all categories
+    // Open the modern popup with player data
     openPopup({
       player,
       tierAssignments: [
