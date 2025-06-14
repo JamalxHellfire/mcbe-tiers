@@ -8,6 +8,7 @@ export interface RankTier {
   color: string;
   gradient: string;
   icon: string;
+  borderColor: string;
 }
 
 // Updated rank tiers based on your requirements
@@ -18,7 +19,8 @@ export const rankTiers: RankTier[] = [
     maxPoints: 69,
     color: "text-green-400",
     gradient: "from-green-500 to-green-600",
-    icon: "🥉"
+    icon: "🥉",
+    borderColor: "border-green-400"
   },
   {
     title: "Combat Sargent",
@@ -26,7 +28,8 @@ export const rankTiers: RankTier[] = [
     maxPoints: 119,
     color: "text-blue-400",
     gradient: "from-blue-500 to-blue-600",
-    icon: "🥈"
+    icon: "🥈",
+    borderColor: "border-blue-400"
   },
   {
     title: "Combat Ace",
@@ -34,7 +37,8 @@ export const rankTiers: RankTier[] = [
     maxPoints: 149,
     color: "text-purple-400",
     gradient: "from-purple-500 to-purple-600",
-    icon: "🏅"
+    icon: "🏅",
+    borderColor: "border-purple-400"
   },
   {
     title: "Combat Marshal",
@@ -42,7 +46,8 @@ export const rankTiers: RankTier[] = [
     maxPoints: 199,
     color: "text-yellow-400",
     gradient: "from-yellow-500 to-yellow-600",
-    icon: "🥇"
+    icon: "🥇",
+    borderColor: "border-yellow-400"
   },
   {
     title: "Combat General",
@@ -50,7 +55,8 @@ export const rankTiers: RankTier[] = [
     maxPoints: null,
     color: "text-red-400",
     gradient: "from-red-500 to-red-600",
-    icon: "👑"
+    icon: "👑",
+    borderColor: "border-red-400"
   }
 ];
 
