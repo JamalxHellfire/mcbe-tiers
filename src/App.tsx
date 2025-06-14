@@ -9,6 +9,7 @@ import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import { PopupProvider } from "./contexts/PopupContext";
 import { CustomPlayerPopup } from "./components/CustomPlayerPopup";
+import { ModernResultPopup } from "./components/ModernResultPopup";
 import { useErrorHandler } from "./hooks/useErrorHandler";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ function App() {
             </Routes>
           </BrowserRouter>
           <CustomPlayerPopup />
+          <ModernResultPopup />
         </PopupProvider>
       </TooltipProvider>
     </QueryClientProvider>
