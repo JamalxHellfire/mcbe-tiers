@@ -37,7 +37,7 @@ export const useAdminPanel = () => {
     }
   };
 
-  const updatePlayerTier = async (playerId: string, gamemode: GameMode, tier: TierLevel) => {
+  const updatePlayerTier = async (playerId: number, gamemode: GameMode, tier: TierLevel) => {
     if (tier === 'Not Ranked') {
       toast({
         title: "Invalid Tier",
@@ -54,7 +54,7 @@ export const useAdminPanel = () => {
         .from('gamemode_scores')
         .upsert(
           { 
-            player_id: playerId, 
+            player_id: playerId.toString(), 
             gamemode: gamemode, 
             display_tier: tier,
             internal_tier: tier,
@@ -78,14 +78,14 @@ export const useAdminPanel = () => {
     }
   };
 
-  const deletePlayer = async (playerId: string) => {
+  const deletePlayer = async (playerId: number) => {
     setLoading(true);
     setError(null);
     try {
       const { error } = await supabase
         .from('players')
         .delete()
-        .eq('id', playerId);
+        .eq('id', playerId.toString());
 
       if (error) {
         setError(error.message);
@@ -115,12 +115,7 @@ export const useAdminPanel = () => {
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
         .upsert(
-          { 
-            ign, 
-            region, 
-            device, 
-            java_username: java_username || null 
-          },
+          { ign, region, device, java_username: java_username || null },
           { onConflict: 'ign' }
         )
         .select()

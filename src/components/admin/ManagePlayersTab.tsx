@@ -42,12 +42,12 @@ export function ManagePlayersTab() {
 
   const handleDeletePlayer = async (playerId: string) => {
     if (window.confirm('Are you sure you want to delete this player?')) {
-      await deletePlayer(playerId);
+      await deletePlayer(Number(playerId));
     }
   };
 
   const handleUpdateTier = async (playerId: string, gamemode: GameMode, newTier: TierLevel) => {
-    await updatePlayerTier(playerId, gamemode, newTier);
+    await updatePlayerTier(Number(playerId), gamemode, newTier);
     setEditingGamemode(null);
     await refreshPlayers();
   };
