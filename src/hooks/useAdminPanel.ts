@@ -85,7 +85,7 @@ export const useAdminPanel = () => {
       const { error } = await supabase
         .from('players')
         .delete()
-        .eq('id', playerId.toString());
+        .eq('id', playerId);
 
       if (error) {
         setError(error.message);
@@ -115,7 +115,12 @@ export const useAdminPanel = () => {
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
         .upsert(
-          { ign, region, device, java_username: java_username || null },
+          { 
+            ign, 
+            region, 
+            device, 
+            java_username: java_username || null 
+          },
           { onConflict: 'ign' }
         )
         .select()
