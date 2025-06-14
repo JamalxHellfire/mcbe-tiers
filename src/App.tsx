@@ -8,7 +8,6 @@ import SubcategoryPage from "./pages/SubcategoryPage";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import { PopupProvider } from "./contexts/PopupContext";
-import { CustomPlayerPopup } from "./components/CustomPlayerPopup";
 import { ModernResultPopup } from "./components/ModernResultPopup";
 import { useErrorHandler } from "./hooks/useErrorHandler";
 
@@ -30,7 +29,6 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          <CustomPlayerPopup />
           <ModernResultPopup />
         </PopupProvider>
       </TooltipProvider>
