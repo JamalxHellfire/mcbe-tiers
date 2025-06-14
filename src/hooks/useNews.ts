@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface NewsArticle {
   id: string;
@@ -26,19 +25,22 @@ export function useNews() {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .order('published_at', { ascending: false });
+      // For now, we'll use dummy data since the news_articles table doesn't exist
+      const dummyArticles: NewsArticle[] = [
+        {
+          id: '1',
+          title: 'New Tournament Announced',
+          content: 'Exciting tournament coming soon with amazing prizes...',
+          description: 'Exciting tournament coming soon...',
+          author: 'Admin',
+          category: 'tournaments',
+          published_at: '2024-01-15',
+          created_at: '2024-01-15',
+          updated_at: '2024-01-15'
+        }
+      ];
 
-      if (error) throw error;
-
-      const articlesWithDescription = (data || []).map(article => ({
-        ...article,
-        description: article.description || article.content.substring(0, 150) + '...'
-      }));
-
-      setArticles(articlesWithDescription);
+      setArticles(dummyArticles);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch news');
     } finally {
