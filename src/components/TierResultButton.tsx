@@ -55,8 +55,12 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       onClick(player);
     }
     
-    // Use real tier assignments from database
-    const tierAssignments = player.tierAssignments || [];
+    // Convert tierAssignments to match expected interface
+    const tierAssignments = (player.tierAssignments || []).map(assignment => ({
+      gamemode: assignment.gamemode,
+      tier: assignment.tier,
+      score: assignment.score
+    }));
     
     openPopup({
       player,

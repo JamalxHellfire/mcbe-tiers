@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -22,8 +23,12 @@ const Index = () => {
   const handlePlayerClick = (player: Player) => {
     const rankInfo = getPlayerRank(player.global_points || 0);
     
-    // Use real tier assignments from database instead of hardcoded data
-    const tierAssignments = player.tierAssignments || [];
+    // Convert tierAssignments to match expected interface
+    const tierAssignments = (player.tierAssignments || []).map(assignment => ({
+      gamemode: assignment.gamemode,
+      tier: assignment.tier,
+      score: assignment.score
+    }));
     
     openPopup({
       player,

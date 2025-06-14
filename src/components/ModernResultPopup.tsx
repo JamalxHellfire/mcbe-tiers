@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { RankBadgeIcon } from './RankBadgeIcon';
+import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 
 export function ModernResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
@@ -28,17 +29,24 @@ export function ModernResultPopup() {
   };
 
   const getTierData = (mode: GameMode) => {
-    const tierMap: Record<string, { code: string, color: string, gradient: string }> = {
-      'Mace': { code: 'HT1', color: '#fde047', gradient: 'linear-gradient(135deg, #fef9c3 0%, #fde047 90%)' },
-      'Sword': { code: 'HT1', color: '#f472b6', gradient: 'linear-gradient(135deg, #fff1fa 0%, #f472b6 90%)' },
-      'Crystal': { code: 'HT1', color: '#38bdf8', gradient: 'linear-gradient(135deg, #f0faff 0%, #38bdf8 90%)' },
-      'Axe': { code: 'LT1', color: '#7cffad', gradient: 'linear-gradient(135deg, #e6fff6 0%, #7cffad 90%)' },
-      'SMP': { code: 'LT1', color: '#fde68a', gradient: 'linear-gradient(135deg, #fffbe7 0%, #fde68a 90%)' },
-      'UHC': { code: 'LT1', color: '#fda4af', gradient: 'linear-gradient(135deg, #fff1fc 0%, #fda4af 100%)' },
-      'NethPot': { code: 'HT2', color: '#a78bfa', gradient: 'linear-gradient(135deg, #f5f3ff 0%, #a78bfa 90%)' },
-      'Bedwars': { code: 'LT1', color: '#fbbf24', gradient: 'linear-gradient(135deg, #fef3c7 0%, #fbbf24 90%)' },
-    };
-    return tierMap[mode] || { code: 'LT1', color: '#e5e7eb', gradient: 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)' };
+    // Find the actual tier for this gamemode from player data
+    const playerTier = popupData.tierAssignments.find(assignment => 
+      assignment.gamemode === mode
+    );
+    
+    if (playerTier) {
+      const tierMap: Record<string, { code: string, color: string, gradient: string }> = {
+        'HT1': { code: 'HT1', color: '#fde047', gradient: 'linear-gradient(135deg, #fef9c3 0%, #fde047 90%)' },
+        'LT1': { code: 'LT1', color: '#7cffad', gradient: 'linear-gradient(135deg, #e6fff6 0%, #7cffad 90%)' },
+        'HT2': { code: 'HT2', color: '#a78bfa', gradient: 'linear-gradient(135deg, #f5f3ff 0%, #a78bfa 90%)' },
+        'LT2': { code: 'LT2', color: '#fda4af', gradient: 'linear-gradient(135deg, #fff1fc 0%, #fda4af 100%)' },
+        'HT3': { code: 'HT3', color: '#f472b6', gradient: 'linear-gradient(135deg, #fff1fa 0%, #f472b6 90%)' },
+        'LT3': { code: 'LT3', color: '#38bdf8', gradient: 'linear-gradient(135deg, #f0faff 0%, #38bdf8 90%)' },
+      };
+      return tierMap[playerTier.tier] || { code: 'NR', color: '#e5e7eb', gradient: 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)' };
+    }
+    
+    return { code: 'NR', color: '#e5e7eb', gradient: 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)' };
   };
 
   return (
@@ -91,9 +99,10 @@ export function ModernResultPopup() {
                 >
                   <Avatar className="w-full h-full">
                     <AvatarImage
-                      src={`https://visage.surgeplay.com/bust/128/${popupData.player.ign}`}
+                      src={popupData.player.avatar_url || getAvatarUrl(popupData.player.ign, popupData.player.java_username)}
                       alt={popupData.player.ign}
                       className="object-cover object-center scale-110"
+                      onError={(e) => handleAvatarError(e, popupData.player.ign, popupData.player.java_username)}
                     />
                     <AvatarFallback className="bg-yellow-200 text-yellow-800 font-bold text-lg">
                       {popupData.player.ign.charAt(0)}

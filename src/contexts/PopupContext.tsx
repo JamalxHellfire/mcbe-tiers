@@ -5,7 +5,7 @@ import { GameMode, TierLevel, Player } from '@/services/playerService';
 interface TierAssignment {
   gamemode: GameMode;
   tier: TierLevel;
-  points: number;
+  score: number;
 }
 
 interface ResultPopupData {
