@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
@@ -112,9 +111,11 @@ export const useAdminPanel = () => {
   ) => {
     try {
       setLoading(true);
+      // Add id: undefined for upsert, to avoid TS error about extraneous keys (Supabase expects id, even if not defined)
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
         .upsert({
+          id: undefined,
           ign, 
           region, 
           device, 
