@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
@@ -61,10 +62,9 @@ export function useAdminPanel() {
   };
 
   const fetchNews = async () => {
-    setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('news')
+        .from('news_articles')
         .select('*')
         .order('published_at', { ascending: false });
 
@@ -79,16 +79,20 @@ export function useAdminPanel() {
         description: "Failed to fetch news",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const createNewsArticle = async (article: Omit<NewsArticle, 'id'>) => {
     try {
       const { error } = await supabase
-        .from('news')
-        .insert([article]);
+        .from('news_articles')
+        .insert([{
+          title: article.headline,
+          content: article.content,
+          description: article.excerpt,
+          author: article.author,
+          published_at: article.published_at
+        }]);
 
       if (error) throw error;
 
@@ -110,8 +114,14 @@ export function useAdminPanel() {
   const updateNewsArticle = async (id: string, updates: Partial<NewsArticle>) => {
     try {
       const { error } = await supabase
-        .from('news')
-        .update(updates)
+        .from('news_articles')
+        .update({
+          title: updates.headline,
+          content: updates.content,
+          description: updates.excerpt,
+          author: updates.author,
+          published_at: updates.published_at
+        })
         .eq('id', id);
 
       if (error) throw error;
@@ -134,7 +144,7 @@ export function useAdminPanel() {
   const deleteNewsArticle = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('news')
+        .from('news_articles')
         .delete()
         .eq('id', id);
 
@@ -155,7 +165,6 @@ export function useAdminPanel() {
     }
   };
 
-  // Fix the player update to remove 'tiers' property
   const updatePlayer = async (updatedPlayer: Player) => {
     try {
       const { error } = await supabase
@@ -164,8 +173,7 @@ export function useAdminPanel() {
           ign: updatedPlayer.ign,
           region: updatedPlayer.region,
           device: updatedPlayer.device,
-          global_points: updatedPlayer.global_points,
-          tier: updatedPlayer.tier
+          global_points: updatedPlayer.global_points
         })
         .eq('id', updatedPlayer.id);
 
@@ -236,7 +244,6 @@ export function useAdminPanel() {
     }
   };
 
-  // Fix the bulk tier assignment function
   const assignTiersBulk = async (playerIds: string[], gamemode: GameMode, tier: TierLevel, points: number) => {
     try {
       const assignments = playerIds.map(playerId => ({
