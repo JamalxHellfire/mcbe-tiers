@@ -98,27 +98,31 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </span>
               </div>
 
-              {/* Tier Icons with Badges */}
-              <div className="col-span-5 flex items-center justify-center gap-2">
-                {[
-                  { mode: 'mace', tier: 'LT2' },
-                  { mode: 'sword', tier: 'HT3' },
-                  { mode: 'crystal', tier: 'HT1' },
-                  { mode: 'axe', tier: 'HT1' },
-                  { mode: 'uhc', tier: 'HT1' },
-                  { mode: 'smp', tier: 'HT1' },
-                  { mode: 'nethpot', tier: 'LT2' },
-                  { mode: 'bedwars', tier: 'LT2' }
-                ].map(({ mode, tier }) => (
-                  <div key={mode} className="relative">
-                    <div className="w-9 h-9 rounded-full bg-gray-800/80 border-2 border-gray-600/50 flex items-center justify-center hover:bg-gray-700/80 transition-colors">
-                      <GameModeIcon mode={mode} className="w-5 h-5" />
+              {/* Tier Icons with Badges - Fixed spacing and positioning */}
+              <div className="col-span-5 flex items-center justify-center">
+                <div className="flex items-center gap-3">
+                  {[
+                    { mode: 'mace', tier: 'LT2' },
+                    { mode: 'sword', tier: 'HT3' },
+                    { mode: 'crystal', tier: 'HT1' },
+                    { mode: 'axe', tier: 'HT1' },
+                    { mode: 'uhc', tier: 'HT1' },
+                    { mode: 'smp', tier: 'HT1' },
+                    { mode: 'nethpot', tier: 'LT2' },
+                    { mode: 'bedwars', tier: 'LT2' }
+                  ].map(({ mode, tier }) => (
+                    <div key={mode} className="relative flex flex-col items-center">
+                      {/* Game mode icon */}
+                      <div className="w-8 h-8 rounded-full bg-gray-800/80 border border-gray-600/50 flex items-center justify-center hover:bg-gray-700/80 transition-colors mb-1">
+                        <GameModeIcon mode={mode} className="w-4 h-4" />
+                      </div>
+                      {/* Tier badge positioned below */}
+                      <div className={`px-1.5 py-0.5 rounded text-xs font-bold ${getTierBadgeColor(tier)} min-w-[28px] text-center`}>
+                        {tier}
+                      </div>
                     </div>
-                    <div className={`absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded text-xs font-bold ${getTierBadgeColor(tier)}`}>
-                      {tier}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </motion.div>
           );
