@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
@@ -113,11 +112,23 @@ export const useAdminPanel = () => {
     try {
       setLoading(true);
 
+      // Ensure device and region are of proper enum type per database
+      const deviceAllowed = ['PC', 'Mobile', 'Console'] as const;
+      const regionAllowed = ['NA', 'EU', 'ASIA', 'OCE', 'SA', 'AF'] as const;
+
+      const safeDevice = deviceAllowed.includes(device as typeof deviceAllowed[number])
+        ? (device as typeof deviceAllowed[number])
+        : undefined;
+
+      const safeRegion = regionAllowed.includes(region as typeof regionAllowed[number])
+        ? (region as typeof regionAllowed[number])
+        : undefined;
+
       // Only provide fields that match the 'Insert' type for 'players'!
       const playerInsertObj = {
         ign,
-        region,
-        device,
+        region: safeRegion,
+        device: safeDevice,
         java_username: java_username || null
       };
 
