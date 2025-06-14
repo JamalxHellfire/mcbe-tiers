@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -86,10 +85,11 @@ export function ModernResultPopup() {
             <div className="flex flex-col items-center px-5 pb-6 pt-7">
               {/* Avatar */}
               <div className="relative mb-2">
-                <span className="absolute inset-0 rounded-full pointer-events-none blur-sm" style={{boxShadow: '0 0 30px 4px #ffe06655'}} />
                 <div
                   className="w-20 h-20 rounded-full border-[4px] border-yellow-200/80 overflow-hidden flex items-center justify-center shadow-xl"
-                  style={{ background: 'linear-gradient(130deg, #ffe066 10%, #fffbe7 100%)', boxShadow: '0 0 16px #fff8' }}
+                  style={{
+                    background: 'linear-gradient(130deg, #ffe066 10%, #fffbe7 100%)',
+                  }}
                 >
                   <Avatar className="w-full h-full">
                     <AvatarImage
@@ -112,7 +112,6 @@ export function ModernResultPopup() {
                   <span className="text-[1rem] font-bold text-yellow-700 drop-shadow">⚜</span>
                   <span className="font-semibold text-yellow-600 tracking-wider">Combat Master</span>
                 </div>
-                {/* Region, pos, points row */}
                 <div className="flex items-center gap-2.5 text-xs text-yellow-100/80 mt-0.5">
                   <div className="px-2 py-0.5 rounded-xl bg-black/10 border border-yellow-200/40">{popupData.player.region ?? 'NA'}</div>
                   <div>#{position} overall</div>
