@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,20 +9,21 @@ import { Trophy, User, Globe, Smartphone, Sparkles } from 'lucide-react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { GameMode, TierLevel } from '@/services/playerService';
 import { TIER_LEVELS, REGIONS, DEVICES } from '@/lib/constants';
+import { GameModeIcon } from '@/components/GameModeIcon';
 
 interface TierRankings {
   [key: string]: TierLevel;
 }
 
 const gameModes = [
-  { key: 'crystal', name: 'Crystal', icon: '🔮', color: 'from-purple-500 to-purple-600', textColor: 'text-purple-400' },
-  { key: 'sword', name: 'Sword', icon: '⚔️', color: 'from-blue-500 to-blue-600', textColor: 'text-blue-400' },
-  { key: 'smp', name: 'SMP', icon: '🏠', color: 'from-green-500 to-green-600', textColor: 'text-green-400' },
-  { key: 'uhc', name: 'UHC', icon: '❤️', color: 'from-red-500 to-red-600', textColor: 'text-red-400' },
-  { key: 'axe', name: 'Axe', icon: '🪓', color: 'from-cyan-500 to-cyan-600', textColor: 'text-cyan-400' },
-  { key: 'nethpot', name: 'NethPot', icon: '🧪', color: 'from-orange-500 to-orange-600', textColor: 'text-orange-400' },
-  { key: 'bedwars', name: 'Bedwars', icon: '🛏️', color: 'from-yellow-500 to-yellow-600', textColor: 'text-yellow-400' },
-  { key: 'mace', name: 'Mace', icon: '🔨', color: 'from-gray-500 to-gray-600', textColor: 'text-gray-400' }
+  { key: 'crystal', name: 'Crystal', color: 'from-purple-500 to-purple-600', textColor: 'text-purple-400' },
+  { key: 'sword', name: 'Sword', color: 'from-blue-500 to-blue-600', textColor: 'text-blue-400' },
+  { key: 'smp', name: 'SMP', color: 'from-green-500 to-green-600', textColor: 'text-green-400' },
+  { key: 'uhc', name: 'UHC', color: 'from-red-500 to-red-600', textColor: 'text-red-400' },
+  { key: 'axe', name: 'Axe', color: 'from-cyan-500 to-cyan-600', textColor: 'text-cyan-400' },
+  { key: 'nethpot', name: 'NethPot', color: 'from-orange-500 to-orange-600', textColor: 'text-orange-400' },
+  { key: 'bedwars', name: 'Bedwars', color: 'from-yellow-500 to-yellow-600', textColor: 'text-yellow-400' },
+  { key: 'mace', name: 'Mace', color: 'from-gray-500 to-gray-600', textColor: 'text-gray-400' }
 ];
 
 export function SubmitResultsForm() {
@@ -194,8 +196,8 @@ export function SubmitResultsForm() {
                   <div key={mode.key} className="group">
                     <div className="space-y-4 p-6 bg-gray-800/30 rounded-2xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:transform hover:scale-105">
                       <div className="flex items-center space-x-3">
-                        <div className={`p-3 bg-gradient-to-br ${mode.color} rounded-xl shadow-lg`}>
-                          <span className="text-xl">{mode.icon}</span>
+                        <div className={`p-3 bg-gradient-to-br ${mode.color} rounded-xl shadow-lg flex items-center justify-center`}>
+                          <GameModeIcon mode={mode.key} className="h-8 w-8" />
                         </div>
                         <div>
                           <h4 className={`font-bold text-lg ${mode.textColor}`}>
