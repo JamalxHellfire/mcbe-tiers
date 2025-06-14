@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { TierGrid } from '../components/TierGrid';
 import { Footer } from '../components/Footer';
-import { PlayerModal } from '../components/PlayerModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameMode } from '@/services/playerService';
@@ -12,9 +11,6 @@ import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 const SubcategoryPage = () => {
   const { gameMode: gameModeParam } = useParams<{ gameMode: string }>();
   const gameMode = toDatabaseGameMode(gameModeParam || 'Crystal');
-
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const navigate = useNavigate();
   
   const handleModeChange = (mode: string) => {
@@ -26,8 +22,8 @@ const SubcategoryPage = () => {
   };
   
   const handlePlayerClick = (player: any) => {
-    setSelectedPlayer(player);
-    setIsPlayerModalOpen(true);
+    // Player clicks will be handled by TierResultButton which uses the popup context
+    console.log('Player clicked:', player);
   };
   
   return (
@@ -55,14 +51,6 @@ const SubcategoryPage = () => {
       </main>
       
       <Footer />
-      
-      {selectedPlayer && (
-        <PlayerModal
-          isOpen={isPlayerModalOpen}
-          onClose={() => setIsPlayerModalOpen(false)}
-          player={selectedPlayer}
-        />
-      )}
     </div>
   );
 };

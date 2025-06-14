@@ -6,6 +6,7 @@ import { ChevronRight, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getPlayerRank } from '@/utils/rankUtils';
+import { GameMode } from '@/services/playerService';
 
 interface TierResultButtonProps {
   player: Player;
@@ -54,15 +55,24 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       onClick(player);
     }
     
-    // Open popup with player data
+    // Open popup with consistent data structure across all categories
     openPopup({
       player,
-      tierAssignments: [], // Will be loaded from database
+      tierAssignments: [
+        { gamemode: 'Crystal' as GameMode, tier: 'HT1', points: 100 },
+        { gamemode: 'Sword' as GameMode, tier: 'HT1', points: 95 },
+        { gamemode: 'Bedwars' as GameMode, tier: 'HT1', points: 90 },
+        { gamemode: 'Mace' as GameMode, tier: 'LT1', points: 85 },
+        { gamemode: 'SMP' as GameMode, tier: 'LT1', points: 80 },
+        { gamemode: 'UHC' as GameMode, tier: 'LT1', points: 75 },
+        { gamemode: 'NethPot' as GameMode, tier: 'HT2', points: 70 },
+        { gamemode: 'Axe' as GameMode, tier: 'LT1', points: 65 }
+      ],
       combatRank: {
         title: rankInfo.title,
         points: player.global_points || 0,
         color: rankInfo.color,
-        effectType: 'default',
+        effectType: 'general',
         rankNumber: player.overall_rank || 1,
         borderColor: rankInfo.borderColor
       },
