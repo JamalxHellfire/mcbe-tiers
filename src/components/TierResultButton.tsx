@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
+import { UltraRankBadge } from './UltraRankBadge';
 
 interface TierResultButtonProps {
   player: Player;
@@ -23,25 +24,35 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
     let borderColor = 'border-gray-400/50';
     
     switch (rank.title) {
-      case 'Combat General':
+      case 'Combat Grandmaster':
+        color = 'text-purple-300';
+        bg = 'bg-gradient-to-r from-purple-500/20 to-violet-500/20';
+        borderColor = 'border-purple-400/50';
+        break;
+      case 'Combat Master':
         color = 'text-yellow-300';
         bg = 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20';
         borderColor = 'border-yellow-400/50';
-        break;
-      case 'Combat Marshal':
-        color = 'text-red-300';
-        bg = 'bg-gradient-to-r from-red-500/20 to-pink-500/20';
-        borderColor = 'border-red-400/50';
         break;
       case 'Combat Ace':
         color = 'text-blue-300';
         bg = 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20';
         borderColor = 'border-blue-400/50';
         break;
-      case 'Combat Sargent':
+      case 'Combat Specialist':
+        color = 'text-green-300';
+        bg = 'bg-gradient-to-r from-green-500/20 to-emerald-500/20';
+        borderColor = 'border-green-400/50';
+        break;
+      case 'Combat Cadet':
         color = 'text-orange-300';
         bg = 'bg-gradient-to-r from-orange-500/20 to-amber-500/20';
         borderColor = 'border-orange-400/50';
+        break;
+      case 'Combat Novice':
+        color = 'text-slate-300';
+        bg = 'bg-gradient-to-r from-slate-500/20 to-gray-500/20';
+        borderColor = 'border-slate-400/50';
         break;
     }
     
@@ -55,7 +66,6 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       onClick(player);
     }
     
-    // Convert tierAssignments to match expected interface
     const tierAssignments = (player.tierAssignments || []).map(assignment => ({
       gamemode: assignment.gamemode,
       tier: assignment.tier,
@@ -90,7 +100,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       <div className={`absolute inset-0 ${rankInfo.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
       <div className="relative flex items-center gap-4 z-10">
-        {/* Avatar with better error handling */}
+        {/* Avatar */}
         <div className="relative">
           <Avatar className={`w-12 h-12 border-2 border-slate-500/50 group-hover:${rankInfo.borderColor} transition-all duration-300 shadow-md`}>
             <AvatarImage 
@@ -107,16 +117,18 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
         
         {/* Player info */}
         <div className="flex-1 text-left">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-3 mb-1">
             <span className="text-white font-bold text-lg group-hover:text-blue-200 transition-colors duration-300">
               {player.ign}
             </span>
-            <motion.span 
-              className={`text-xs px-2 py-1 rounded-full ${rankInfo.bg} ${rankInfo.color} border ${rankInfo.borderColor} font-medium backdrop-blur-sm`}
-              whileHover={{ scale: 1.05 }}
-            >
-              {rankInfo.title.replace('Combat ', '')}
-            </motion.span>
+            {/* Ultra Rank Badge (small) */}
+            <div className="scale-75">
+              <UltraRankBadge 
+                rank={rankInfo.title} 
+                size="small"
+                className="opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+              />
+            </div>
           </div>
           
           <div className="flex items-center gap-3 text-sm text-slate-400">
@@ -137,17 +149,22 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
           </div>
         </div>
         
-        {/* Arrow indicator */}
+        {/* Arrow indicator with enhanced animation */}
         <motion.div 
           className="text-slate-400 group-hover:text-blue-400 transition-colors duration-300"
-          whileHover={{ x: 3 }}
+          whileHover={{ x: 3, scale: 1.1 }}
         >
           <ChevronRight className="w-5 h-5" />
         </motion.div>
       </div>
       
-      {/* Shine effect on hover */}
-      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+      {/* Ultra shine effect on hover */}
+      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+      
+      {/* Additional glow effect for higher ranks */}
+      {(rankInfo.title.includes('Grandmaster') || rankInfo.title.includes('Master')) && (
+        <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${rankInfo.bg} blur-sm`} />
+      )}
     </motion.button>
   );
 }
