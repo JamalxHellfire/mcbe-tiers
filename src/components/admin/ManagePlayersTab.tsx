@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Search, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { GAME_MODES, TIER_LEVELS, REGIONS, DEVICES } from '@/lib/constants';
+import { GAME_MODES, TIER_LEVELS } from '@/lib/constants';
 
 export function ManagePlayersTab() {
   const {
@@ -24,9 +24,9 @@ export function ManagePlayersTab() {
 
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingPlayer, setEditingPlayer] = useState<number | null>(null);
+  const [editingPlayer, setEditingPlayer] = useState<string | null>(null);
   const [editingGamemode, setEditingGamemode] = useState<{
-    playerId: number;
+    playerId: string;
     gamemode: GameMode;
     currentTier: TierLevel;
   } | null>(null);
@@ -40,14 +40,14 @@ export function ManagePlayersTab() {
     (player.java_username && player.java_username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleDeletePlayer = async (playerId: number) => {
+  const handleDeletePlayer = async (playerId: string) => {
     if (window.confirm('Are you sure you want to delete this player?')) {
-      await deletePlayer(playerId);
+      await deletePlayer(Number(playerId));
     }
   };
 
-  const handleUpdateTier = async (playerId: number, gamemode: GameMode, newTier: TierLevel) => {
-    await updatePlayerTier(playerId, gamemode, newTier);
+  const handleUpdateTier = async (playerId: string, gamemode: GameMode, newTier: TierLevel) => {
+    await updatePlayerTier(Number(playerId), gamemode, newTier);
     setEditingGamemode(null);
     await refreshPlayers();
   };

@@ -56,10 +56,11 @@ export const useAdminPanel = () => {
           { 
             player_id: playerId.toString(), 
             gamemode: gamemode, 
-            display_tier: tier as any,
+            display_tier: tier,
+            internal_tier: tier,
             score: 0
           },
-          { onConflict: ['player_id', 'gamemode'] }
+          { onConflict: 'player_id,gamemode' }
         );
 
       if (error) {
@@ -141,10 +142,11 @@ export const useAdminPanel = () => {
                 { 
                   player_id: playerId, 
                   gamemode, 
-                  display_tier: tier as any, 
+                  display_tier: tier,
+                  internal_tier: tier,
                   score: points 
                 },
-                { onConflict: ['player_id', 'gamemode'] }
+                { onConflict: 'player_id,gamemode' }
               );
 
             if (gamemodeUpsertError) {

@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
-import SubmitResultsForm from '@/components/admin/SubmitResultsForm';
-import ManagePlayersTab from '@/components/admin/ManagePlayersTab';
+import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
+import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { UploadCloud, Users, Wrench } from 'lucide-react';
@@ -37,7 +37,7 @@ const AdminPanel = () => {
     >
       <Icon className="w-5 h-5 mr-2" />
       {label}
-    </button>
+    </Button>
   );
 
   return (
