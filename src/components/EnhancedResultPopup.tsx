@@ -476,7 +476,7 @@ export function EnhancedResultPopup() {
 
             {/* Content */}
             <div className="relative z-20 p-6 text-center">
-              {/* Avatar Section with Rank Badge */}
+              {/* Avatar Section with Enhanced Rank Badge */}
               <motion.div 
                 className="mb-6"
                 initial={{ scale: 0, rotate: -20 }}
@@ -495,9 +495,14 @@ export function EnhancedResultPopup() {
                     </AvatarFallback>
                   </Avatar>
                   
-                  {/* Rank badge overlay */}
+                  {/* Enhanced rank badge overlay */}
                   <div className="absolute -bottom-2 -right-2">
-                    <RankBadge rank={playerRank} size="lg" />
+                    <RankBadge 
+                      rank={playerRank} 
+                      size="lg" 
+                      showGlow={true}
+                      animated={true}
+                    />
                   </div>
                 </div>
 
@@ -511,11 +516,11 @@ export function EnhancedResultPopup() {
                   {popupData.player.ign}
                 </motion.h3>
 
-                {/* Rank Title */}
+                {/* Rank Title with improved styling */}
                 <motion.div 
                   className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl border border-white/30 backdrop-blur-md mb-3"
                   style={{
-                    background: `linear-gradient(135deg, ${playerRank.gradient.replace('from-', '').replace('via-', '').replace('to-', '')})`
+                    background: playerRank.gradient
                   }}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
