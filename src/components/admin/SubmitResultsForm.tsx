@@ -191,19 +191,18 @@ export function SubmitResultsForm() {
                 <h3 className="text-xl font-semibold text-white">Tier Rankings</h3>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {gameModes.map((mode) => (
                   <div key={mode.key} className="group">
-                    <div className="space-y-4 p-6 bg-gray-800/30 rounded-2xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:transform hover:scale-105">
+                    <div className="space-y-3 p-4 bg-gray-800/30 rounded-xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300">
                       <div className="flex items-center space-x-3">
-                        <div className={`p-3 bg-gradient-to-br ${mode.color} rounded-xl shadow-lg flex items-center justify-center`}>
-                          <GameModeIcon mode={mode.key} className="h-8 w-8" />
+                        <div className="flex-shrink-0">
+                          <GameModeIcon mode={mode.key} className="h-6 w-6" />
                         </div>
-                        <div>
-                          <h4 className={`font-bold text-lg ${mode.textColor}`}>
+                        <div className="flex-1 min-w-0">
+                          <h4 className={`font-bold text-sm ${mode.textColor} truncate`}>
                             {mode.name}
                           </h4>
-                          <p className="text-gray-400 text-sm">Set tier ranking</p>
                         </div>
                       </div>
                       
@@ -211,7 +210,7 @@ export function SubmitResultsForm() {
                         value={tierRankings[mode.key] || 'Not Ranked'}
                         onValueChange={(value) => handleTierChange(mode.key, value)}
                       >
-                        <SelectTrigger className="bg-gray-700/50 border-gray-600/50 text-white h-12 rounded-xl hover:bg-gray-700/70 transition-all duration-300">
+                        <SelectTrigger className="bg-gray-700/50 border-gray-600/50 text-white h-10 rounded-lg hover:bg-gray-700/70 transition-all duration-300 text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-600 rounded-xl">

@@ -24,7 +24,6 @@ export function ManagePlayersTab() {
 
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingPlayer, setEditingPlayer] = useState<string | null>(null);
   const [editingGamemode, setEditingGamemode] = useState<{
     playerId: string;
     gamemode: GameMode;
@@ -41,15 +40,44 @@ export function ManagePlayersTab() {
   );
 
   const handleDeletePlayer = async (playerId: string) => {
-    if (window.confirm('Are you sure you want to delete this player?')) {
-      await deletePlayer(Number(playerId));
+    // Validate player ID
+    const playerIdNum = parseInt(playerId);
+    if (isNaN(playerIdNum)) {
+      toast({
+        title: "Error",
+        description: "Invalid player ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (window.confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
+      await deletePlayer(playerIdNum);
+      await refreshPlayers();
     }
   };
 
   const handleUpdateTier = async (playerId: string, gamemode: GameMode, newTier: TierLevel) => {
-    await updatePlayerTier(Number(playerId), gamemode, newTier);
+    // Validate player ID
+    const playerIdNum = parseInt(playerId);
+    if (isNaN(playerIdNum)) {
+      toast({
+        title: "Error",
+        description: "Invalid player ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    await updatePlayerTier(playerIdNum, gamemode, newTier);
     setEditingGamemode(null);
     await refreshPlayers();
+  };
+
+  const getPlayerTier = (player: Player, gamemode: GameMode): TierLevel => {
+    // Find the tier for this gamemode from the player's tier assignments
+    const tierAssignment = player.tierAssignments?.find(assignment => assignment.gamemode === gamemode);
+    return tierAssignment?.tier || 'Not Ranked';
   };
 
   if (loading) {
@@ -57,7 +85,7 @@ export function ManagePlayersTab() {
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <p>Loading players...</p>
+          <p className="text-white">Loading players...</p>
         </div>
       </div>
     );
@@ -76,10 +104,10 @@ export function ManagePlayersTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50">
         <CardHeader>
-          <CardTitle>Player Management</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Player Management</CardTitle>
+          <CardDescription className="text-gray-400">
             Manage player accounts, tiers, and information
           </CardDescription>
         </CardHeader>
@@ -93,47 +121,48 @@ export function ManagePlayersTab() {
                   placeholder="Search players by IGN or Java username..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
                 />
               </div>
-              <Button onClick={refreshPlayers} variant="outline">
+              <Button onClick={refreshPlayers} variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
                 Refresh
               </Button>
             </div>
 
             {/* Players Table */}
-            <div className="rounded-md border">
+            <div className="rounded-md border border-gray-700/50 bg-gray-800/30">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>IGN</TableHead>
-                    <TableHead>Java Username</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Device</TableHead>
-                    <TableHead>Global Points</TableHead>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Gamemode Tiers</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="border-gray-700/50 hover:bg-gray-800/50">
+                    <TableHead className="text-gray-300">IGN</TableHead>
+                    <TableHead className="text-gray-300">Java Username</TableHead>
+                    <TableHead className="text-gray-300">Region</TableHead>
+                    <TableHead className="text-gray-300">Device</TableHead>
+                    <TableHead className="text-gray-300">Global Points</TableHead>
+                    <TableHead className="text-gray-300">Rank</TableHead>
+                    <TableHead className="text-gray-300">Gamemode Tiers</TableHead>
+                    <TableHead className="text-gray-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPlayers.map((player) => (
-                    <TableRow key={player.id}>
-                      <TableCell className="font-medium">{player.ign}</TableCell>
-                      <TableCell>{player.java_username || 'N/A'}</TableCell>
+                    <TableRow key={player.id} className="border-gray-700/50 hover:bg-gray-800/30">
+                      <TableCell className="font-medium text-white">{player.ign}</TableCell>
+                      <TableCell className="text-gray-300">{player.java_username || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{player.region}</Badge>
+                        <Badge variant="outline" className="border-gray-600 text-gray-300">{player.region}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{player.device}</Badge>
+                        <Badge variant="secondary" className="bg-gray-700 text-gray-300">{player.device}</Badge>
                       </TableCell>
-                      <TableCell>{player.global_points || 0}</TableCell>
-                      <TableCell>#{player.overall_rank || 'N/A'}</TableCell>
+                      <TableCell className="text-white">{player.global_points || 0}</TableCell>
+                      <TableCell className="text-white">#{player.overall_rank || 'N/A'}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {GAME_MODES.map((gamemode) => {
                             const isEditing = editingGamemode?.playerId === player.id && 
                                             editingGamemode?.gamemode === gamemode;
+                            const currentTier = getPlayerTier(player, gamemode);
                             
                             return (
                               <div key={gamemode} className="flex items-center gap-1">
@@ -148,12 +177,12 @@ export function ManagePlayersTab() {
                                         })
                                       }
                                     >
-                                      <SelectTrigger className="w-20 h-6 text-xs">
+                                      <SelectTrigger className="w-20 h-6 text-xs bg-gray-700 border-gray-600 text-white">
                                         <SelectValue />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="bg-gray-800 border-gray-600">
                                         {TIER_LEVELS.filter(tier => tier !== 'Not Ranked').map((tier) => (
-                                          <SelectItem key={tier} value={tier}>
+                                          <SelectItem key={tier} value={tier} className="text-white hover:bg-gray-700 focus:bg-gray-700">
                                             {tier}
                                           </SelectItem>
                                         ))}
@@ -162,7 +191,7 @@ export function ManagePlayersTab() {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="h-6 w-6 p-0"
+                                      className="h-6 w-6 p-0 text-green-400 hover:bg-green-400/20"
                                       onClick={() => handleUpdateTier(
                                         player.id, 
                                         gamemode, 
@@ -174,7 +203,7 @@ export function ManagePlayersTab() {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="h-6 w-6 p-0"
+                                      className="h-6 w-6 p-0 text-red-400 hover:bg-red-400/20"
                                       onClick={() => setEditingGamemode(null)}
                                     >
                                       <X className="h-3 w-3" />
@@ -183,14 +212,14 @@ export function ManagePlayersTab() {
                                 ) : (
                                   <Badge
                                     variant="outline"
-                                    className="text-xs cursor-pointer hover:bg-gray-100"
+                                    className="text-xs cursor-pointer hover:bg-gray-700 border-gray-600 text-gray-300"
                                     onClick={() => setEditingGamemode({
                                       playerId: player.id,
                                       gamemode,
-                                      currentTier: 'HT1' // Default tier for editing
+                                      currentTier: currentTier !== 'Not Ranked' ? currentTier : 'HT1'
                                     })}
                                   >
-                                    {gamemode}
+                                    {gamemode}: {currentTier}
                                     <Edit className="h-2 w-2 ml-1" />
                                   </Badge>
                                 )}
@@ -203,6 +232,7 @@ export function ManagePlayersTab() {
                         <Button
                           size="sm"
                           variant="destructive"
+                          className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
                           onClick={() => handleDeletePlayer(player.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -215,8 +245,8 @@ export function ManagePlayersTab() {
             </div>
 
             {filteredPlayers.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No players found
+              <div className="text-center py-8 text-gray-400">
+                {searchTerm ? 'No players found matching your search' : 'No players found'}
               </div>
             )}
           </div>
