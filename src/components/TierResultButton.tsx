@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -93,7 +92,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
               size="sm" 
               showGlow={false}
               animated={true}
-              onClick={handleRankBadgeClick}
+              onClick={() => handleRankBadgeClick({} as React.MouseEvent)}
             />
           </div>
         </div>
