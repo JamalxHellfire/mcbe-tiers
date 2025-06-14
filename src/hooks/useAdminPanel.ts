@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
@@ -7,14 +8,6 @@ interface PlayerResult {
   gamemode: GameMode;
   tier: TierLevel;
   points: number;
-}
-
-interface SubmitPlayerResultsParams {
-  ign: string;
-  region: string;
-  device: string;
-  java_username?: string;
-  results?: Array<PlayerResult>;
 }
 
 export const useAdminPanel = () => {
@@ -45,13 +38,27 @@ export const useAdminPanel = () => {
   };
 
   const updatePlayerTier = async (playerId: number, gamemode: GameMode, tier: TierLevel) => {
+    if (tier === 'Not Ranked') {
+      toast({
+        title: "Invalid Tier",
+        description: "Cannot set tier to 'Not Ranked'",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       const { error } = await supabase
         .from('gamemode_scores')
         .upsert(
-          { player_id: playerId, gamemode: gamemode, internal_tier: tier },
+          { 
+            player_id: playerId.toString(), 
+            gamemode: gamemode, 
+            display_tier: tier as any,
+            score: 0
+          },
           { onConflict: ['player_id', 'gamemode'] }
         );
 
@@ -77,7 +84,7 @@ export const useAdminPanel = () => {
       const { error } = await supabase
         .from('players')
         .delete()
-        .eq('id', playerId);
+        .eq('id', playerId.toString());
 
       if (error) {
         setError(error.message);
@@ -106,7 +113,10 @@ export const useAdminPanel = () => {
       setLoading(true);
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
-        .upsert([{ ign, region, device, java_username: java_username || null }], { onConflict: 'ign' })
+        .upsert(
+          { ign, region, device, java_username: java_username || null },
+          { onConflict: 'ign' }
+        )
         .select()
         .single();
 
@@ -124,16 +134,23 @@ export const useAdminPanel = () => {
       if (results && results.length > 0) {
         for (const result of results) {
           const { gamemode, tier, points } = result;
-          const { error: gamemodeUpsertError } = await supabase
-            .from('gamemode_scores')
-            .upsert(
-              { player_id: playerId, gamemode, internal_tier: tier, score: points },
-              { onConflict: ['player_id', 'gamemode'] }
-            );
+          if (tier !== 'Not Ranked') {
+            const { error: gamemodeUpsertError } = await supabase
+              .from('gamemode_scores')
+              .upsert(
+                { 
+                  player_id: playerId, 
+                  gamemode, 
+                  display_tier: tier as any, 
+                  score: points 
+                },
+                { onConflict: ['player_id', 'gamemode'] }
+              );
 
-          if (gamemodeUpsertError) {
-            console.error(`Gamemode ${gamemode} upsert error:`, gamemodeUpsertError);
-            throw new Error(`Failed to upsert gamemode ${gamemode}: ${gamemodeUpsertError.message}`);
+            if (gamemodeUpsertError) {
+              console.error(`Gamemode ${gamemode} upsert error:`, gamemodeUpsertError);
+              throw new Error(`Failed to upsert gamemode ${gamemode}: ${gamemodeUpsertError.message}`);
+            }
           }
         }
       }

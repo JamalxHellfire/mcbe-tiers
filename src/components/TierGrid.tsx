@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { Trophy, Shield, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGamemodeTiers } from '@/hooks/useGamemodeTiers';
 import { GameMode } from '@/services/playerService';
 import { Button } from '@/components/ui/button';
-import { TierResultButton } from './TierResultButton';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 
 interface TierGridProps {
@@ -194,16 +194,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                             </motion.div>
                           )}
                         </div>
-
-                        {/* Result Button - Add sample result button for demonstration */}
-                        {tier === 1 && visiblePlayers.length > 0 && (
-                          <div className="p-3 border-t border-white/5">
-                            <TierResultButton 
-                              player={visiblePlayers[0]} 
-                              onClick={onPlayerClick}
-                            />
-                          </div>
-                        )}
                       </div>
                     ) : (
                       <div className="text-center py-6 text-white/20 text-sm">
