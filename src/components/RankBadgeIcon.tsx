@@ -1,12 +1,15 @@
 
 import React from 'react';
-import { Award } from 'lucide-react';
+import { Award, Shield, Star, Crown, Zap } from 'lucide-react';
 
-// Expand with additional rank icons as needed!
-const rankIconMap: Record<string, React.ReactNode> = {
-  'Combat Master': <Award />,
-  // Example for custom in the future:
-  // 'Combat Supreme': <YourCustomIcon />,
+// Map of rank titles to their corresponding icons
+const rankIconMap: Record<string, React.ComponentType<any>> = {
+  'Combat Master': Award,
+  'Combat General': Crown,
+  'Combat Marshal': Shield,
+  'Combat Ace': Star,
+  'Combat Sargent': Zap,
+  // Add more ranks as needed
 };
 
 interface RankBadgeIconProps {
@@ -15,8 +18,11 @@ interface RankBadgeIconProps {
 }
 
 export function RankBadgeIcon({ rank, className = '' }: RankBadgeIconProps) {
-  const icon = rankIconMap[rank] || null;
-  if (!icon) return null;
-  // Clone with sizing
-  return React.cloneElement(icon as React.ReactElement, { className });
+  const IconComponent = rankIconMap[rank];
+  
+  if (!IconComponent) {
+    return null;
+  }
+  
+  return <IconComponent className={className} />;
 }
