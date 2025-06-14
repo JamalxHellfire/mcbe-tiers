@@ -23,9 +23,23 @@ const getRegionInfo = (regionCode: string = 'NA') => {
   return regions[regionCode] || regions['NA'];
 };
 
-// Enhanced rank-based visual effects matching the reference image
+// Enhanced rank-based visual effects matching the new rank system
 const getRankEffects = (points: number) => {
-  if (points >= 300) {
+  if (points >= 400) {
+    return {
+      rank: 'Combat Grandmaster',
+      bgGradient: 'from-purple-600/50 via-violet-500/40 to-indigo-600/50',
+      borderColor: 'border-purple-400',
+      shadowEffect: 'shadow-[0_0_60px_rgba(147,51,234,0.9)]',
+      iconColor: 'text-purple-300',
+      icon: Crown,
+      particles: 'purple',
+      animation: 'animate-pulse',
+      badgeStyle: 'bg-gradient-to-r from-purple-600 to-violet-500',
+      textGlow: 'text-purple-100 drop-shadow-[0_0_20px_rgba(147,51,234,1)]',
+      avatarGlow: 'shadow-[0_0_40px_rgba(147,51,234,0.9)]'
+    };
+  } else if (points >= 250) {
     return {
       rank: 'Combat Master',
       bgGradient: 'from-yellow-600/50 via-amber-500/40 to-orange-600/50',
@@ -39,21 +53,7 @@ const getRankEffects = (points: number) => {
       textGlow: 'text-yellow-100 drop-shadow-[0_0_15px_rgba(251,191,36,1)]',
       avatarGlow: 'shadow-[0_0_30px_rgba(251,191,36,0.8)]'
     };
-  } else if (points >= 200) {
-    return {
-      rank: 'Combat General',
-      bgGradient: 'from-red-600/40 via-pink-500/30 to-rose-600/40',
-      borderColor: 'border-red-400',
-      shadowEffect: 'shadow-[0_0_40px_rgba(239,68,68,0.7)]',
-      iconColor: 'text-red-300',
-      icon: Sword,
-      particles: 'red',
-      animation: 'animate-bounce',
-      badgeStyle: 'bg-gradient-to-r from-red-600 to-pink-500',
-      textGlow: 'text-red-100 drop-shadow-[0_0_12px_rgba(239,68,68,0.9)]',
-      avatarGlow: 'shadow-[0_0_25px_rgba(239,68,68,0.7)]'
-    };
-  } else if (points >= 120) {
+  } else if (points >= 100) {
     return {
       rank: 'Combat Ace',
       bgGradient: 'from-blue-600/35 via-cyan-500/25 to-indigo-600/35',
@@ -67,23 +67,51 @@ const getRankEffects = (points: number) => {
       textGlow: 'text-blue-100 drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]',
       avatarGlow: 'shadow-[0_0_20px_rgba(59,130,246,0.6)]'
     };
-  } else if (points >= 70) {
+  } else if (points >= 50) {
     return {
-      rank: 'Combat Sergeant',
+      rank: 'Combat Specialist',
+      bgGradient: 'from-green-600/30 via-emerald-500/20 to-teal-600/30',
+      borderColor: 'border-green-400',
+      shadowEffect: 'shadow-[0_0_25px_rgba(34,197,94,0.5)]',
+      iconColor: 'text-green-300',
+      icon: Shield,
+      particles: 'green',
+      animation: 'animate-pulse',
+      badgeStyle: 'bg-gradient-to-r from-green-600 to-emerald-500',
+      textGlow: 'text-green-100 drop-shadow-[0_0_8px_rgba(34,197,94,0.7)]',
+      avatarGlow: 'shadow-[0_0_15px_rgba(34,197,94,0.5)]'
+    };
+  } else if (points >= 20) {
+    return {
+      rank: 'Combat Cadet',
       bgGradient: 'from-orange-600/30 via-amber-500/20 to-yellow-600/30',
       borderColor: 'border-orange-400',
       shadowEffect: 'shadow-[0_0_25px_rgba(249,115,22,0.5)]',
       iconColor: 'text-orange-300',
-      icon: Shield,
+      icon: Sword,
       particles: 'orange',
       animation: 'animate-pulse',
       badgeStyle: 'bg-gradient-to-r from-orange-600 to-amber-500',
       textGlow: 'text-orange-100 drop-shadow-[0_0_8px_rgba(249,115,22,0.7)]',
       avatarGlow: 'shadow-[0_0_15px_rgba(249,115,22,0.5)]'
     };
+  } else if (points >= 10) {
+    return {
+      rank: 'Combat Novice',
+      bgGradient: 'from-slate-600/20 via-gray-500/15 to-slate-700/20',
+      borderColor: 'border-slate-500',
+      shadowEffect: 'shadow-[0_0_20px_rgba(100,116,139,0.4)]',
+      iconColor: 'text-slate-400',
+      icon: Trophy,
+      particles: 'silver',
+      animation: '',
+      badgeStyle: 'bg-gradient-to-r from-slate-600 to-gray-500',
+      textGlow: 'text-slate-200',
+      avatarGlow: 'shadow-[0_0_10px_rgba(100,116,139,0.4)]'
+    };
   } else {
     return {
-      rank: 'Combat Rookie',
+      rank: 'Rookie',
       bgGradient: 'from-gray-600/20 via-slate-500/15 to-gray-700/20',
       borderColor: 'border-gray-500',
       shadowEffect: 'shadow-[0_0_20px_rgba(107,114,128,0.4)]',
@@ -126,10 +154,12 @@ const FloatingParticles = ({ type, isVisible }: { type: string, isVisible: boole
     }> = [];
 
     const colors = {
+      purple: ['#a855f7', '#c084fc', '#d8b4fe', '#8b5cf6'],
       gold: ['#ffd700', '#ffec8b', '#fff9c4', '#ffc107'],
-      red: ['#ff6b6b', '#ff8a8a', '#ff4757', '#e53e3e'],
       blue: ['#4dabf7', '#74c0fc', '#a5d8ff', '#3182ce'],
+      green: ['#22c55e', '#4ade80', '#86efac', '#16a34a'],
       orange: ['#ff922b', '#ffb366', '#ffc947', '#ed8936'],
+      silver: ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b'],
       gray: ['#adb5bd', '#ced4da', '#868e96', '#718096']
     };
 
@@ -182,7 +212,7 @@ const FloatingParticles = ({ type, isVisible }: { type: string, isVisible: boole
         ctx.fill();
         
         // Add glow effect for certain particles
-        if (type === 'gold' || type === 'red') {
+        if (type === 'gold' || type === 'purple' || type === 'blue') {
           ctx.shadowBlur = 10;
           ctx.shadowColor = p.color;
           ctx.fill();
@@ -449,7 +479,7 @@ export function EnhancedResultPopup() {
                               <div className="text-center">
                                 <p className="font-medium">{toDisplayGameMode(mode)}</p>
                                 {tier !== 'Not Ranked' ? (
-                                  <p className="text-sm">{assignment?.points || 0} points</p>
+                                  <p className="text-sm">{assignment?.score || 0} points</p>
                                 ) : (
                                   <p className="text-sm">Not Ranked</p>
                                 )}

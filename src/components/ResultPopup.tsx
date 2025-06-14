@@ -390,7 +390,7 @@ export function ResultPopup() {
                             <div className="text-center">
                               <p className="font-medium">{toDisplayGameMode(mode)}</p>
                               {tier !== 'Not Ranked' ? (
-                                <p className="text-sm">{assignment?.points || 0} points</p>
+                                <p className="text-sm">{assignment?.score || 0} points</p>
                               ) : (
                                 <p className="text-sm">Not Ranked</p>
                               )}

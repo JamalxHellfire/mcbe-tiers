@@ -11,52 +11,70 @@ export interface RankTier {
   borderColor: string;
 }
 
-// Updated rank tiers based on your requirements
+// Updated rank tiers based on new rank system
 export const rankTiers: RankTier[] = [
   {
-    title: "Combat Rookie",
+    title: "Rookie",
     minPoints: 0,
-    maxPoints: 69,
+    maxPoints: 9,
+    color: "text-gray-400",
+    gradient: "from-gray-500 to-gray-600",
+    icon: "🥉",
+    borderColor: "border-gray-400"
+  },
+  {
+    title: "Combat Novice",
+    minPoints: 10,
+    maxPoints: 19,
+    color: "text-slate-400",
+    gradient: "from-slate-500 to-slate-600",
+    icon: "🏅",
+    borderColor: "border-slate-400"
+  },
+  {
+    title: "Combat Cadet",
+    minPoints: 20,
+    maxPoints: 49,
+    color: "text-orange-400",
+    gradient: "from-orange-500 to-orange-600",
+    icon: "⚔️",
+    borderColor: "border-orange-400"
+  },
+  {
+    title: "Combat Specialist",
+    minPoints: 50,
+    maxPoints: 99,
     color: "text-green-400",
     gradient: "from-green-500 to-green-600",
-    icon: "🥉",
+    icon: "🛡️",
     borderColor: "border-green-400"
   },
   {
-    title: "Combat Sargent",
-    minPoints: 70,
-    maxPoints: 119,
+    title: "Combat Ace",
+    minPoints: 100,
+    maxPoints: 249,
     color: "text-blue-400",
     gradient: "from-blue-500 to-blue-600",
-    icon: "🥈",
+    icon: "⭐",
     borderColor: "border-blue-400"
   },
   {
-    title: "Combat Ace",
-    minPoints: 120,
-    maxPoints: 149,
-    color: "text-purple-400",
-    gradient: "from-purple-500 to-purple-600",
-    icon: "🏅",
-    borderColor: "border-purple-400"
-  },
-  {
-    title: "Combat Marshal",
-    minPoints: 150,
-    maxPoints: 199,
+    title: "Combat Master",
+    minPoints: 250,
+    maxPoints: 399,
     color: "text-yellow-400",
     gradient: "from-yellow-500 to-yellow-600",
-    icon: "🥇",
+    icon: "👑",
     borderColor: "border-yellow-400"
   },
   {
-    title: "Combat General",
-    minPoints: 200,
+    title: "Combat Grandmaster",
+    minPoints: 400,
     maxPoints: null,
-    color: "text-red-400",
-    gradient: "from-red-500 to-red-600",
-    icon: "👑",
-    borderColor: "border-red-400"
+    color: "text-purple-400",
+    gradient: "from-purple-500 to-purple-600",
+    icon: "💎",
+    borderColor: "border-purple-400"
   }
 ];
 
