@@ -66,18 +66,16 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   const handleAuthSuccess = async () => {
     console.log('Auth success callback triggered');
     
-    // Small delay to ensure database update is complete
-    setTimeout(async () => {
-      try {
-        const result = await adminService.checkAdminAccess();
-        if (result.hasAccess && result.role) {
-          console.log('Setting user role after auth success:', result.role);
-          setUserRole(result.role);
-        }
-      } catch (error) {
-        console.error('Error in auth success callback:', error);
+    // Immediate check for updated access
+    try {
+      const result = await adminService.checkAdminAccess();
+      if (result.hasAccess && result.role) {
+        console.log('Setting user role after auth success:', result.role);
+        setUserRole(result.role);
       }
-    }, 500);
+    } catch (error) {
+      console.error('Error in auth success callback:', error);
+    }
   };
 
   if (isLoading) {

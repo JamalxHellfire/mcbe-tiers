@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminLoginResult {
@@ -55,23 +56,35 @@ const getUserIP = async (): Promise<string> => {
   return userIp;
 };
 
-// Check if user has existing access based on IP
+// Check if user has existing access based on IP - bypassing the database function for now
 export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string }> => {
   try {
-    console.log('Checking admin access via database...');
-    const { data, error } = await supabase.rpc('check_admin_access');
+    console.log('Checking admin access directly...');
+    const userIp = await getUserIP();
+    console.log('Checking access for IP:', userIp);
+    
+    // Query admin_users table directly with our client IP
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('role, last_access')
+      .eq('ip_address', userIp)
+      .maybeSingle();
     
     if (error) {
-      console.error('Admin access check error:', error);
-      throw error;
+      console.error('Direct admin access check error:', error);
+      return { hasAccess: false };
     }
     
-    console.log('Database access check result:', data);
+    console.log('Direct access check result:', data);
     
-    if (data && data.length > 0) {
-      const result = data[0];
-      console.log('Admin access result:', result);
-      return { hasAccess: result.has_access, role: result.user_role };
+    if (data) {
+      // Update last access
+      await supabase
+        .from('admin_users')
+        .update({ last_access: new Date().toISOString() })
+        .eq('ip_address', userIp);
+      
+      return { hasAccess: true, role: data.role };
     }
     
     return { hasAccess: false };
