@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NewAdminProtectedRoute } from '@/components/admin/NewAdminProtectedRoute';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
@@ -28,10 +27,12 @@ import {
   Database,
   UserCheck,
   Terminal,
-  UserCog
+  UserCog,
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { newAdminService } from '@/services/newAdminService';
 
 type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications';
 
@@ -63,18 +64,55 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
   const visibleTabs = getVisibleTabs(userRole);
   const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0] || 'submit');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   const handleLogout = () => {
-    // Clear any local storage and reload
-    localStorage.clear();
-    sessionStorage.clear();
+    // Clear all authentication state
+    newAdminService.clearAllAuthState();
     toast({
       title: "Logged out",
-      description: "You have been logged out successfully.",
+      description: "You have been logged out and all sessions cleared.",
     });
+    // Force reload to clear any remaining state
     window.location.href = '/';
+  };
+
+  const handleClearAllSessions = async () => {
+    if (userRole !== 'owner') {
+      toast({
+        title: "Access Denied",
+        description: "Only owners can clear all admin sessions.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await newAdminService.clearAllAdminSessions();
+      if (result.success) {
+        toast({
+          title: "Sessions Cleared",
+          description: "All admin sessions have been cleared. All admins will need to re-authenticate.",
+        });
+      } else {
+        toast({
+          title: "Clear Failed",
+          description: result.error || "Failed to clear sessions",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while clearing sessions",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderContent = () => {
@@ -209,6 +247,20 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
                   </Button>
                 )}
                 
+                {/* Owner-only Clear All Sessions Button */}
+                {!isMobile && userRole === 'owner' && (
+                  <Button 
+                    onClick={handleClearAllSessions}
+                    disabled={isLoading}
+                    variant="destructive" 
+                    size="sm"
+                    className="bg-orange-600/20 border border-orange-500/50 text-orange-400 hover:bg-orange-600/30"
+                  >
+                    <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                    Clear Sessions
+                  </Button>
+                )}
+                
                 {/* Logout Button */}
                 {!isMobile && (
                   <Button 
@@ -246,6 +298,18 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
                     <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Real-time system activity monitor" />
                     <TabButton tabName="applications" label="Applications" icon={UserCog} description="Review admin applications" />
                     <TabButton tabName="tools" label="Admin Tools" icon={Wrench} description="Mass submission and system tools" />
+                    
+                    {userRole === 'owner' && (
+                      <Button 
+                        onClick={handleClearAllSessions}
+                        disabled={isLoading}
+                        className="w-full bg-orange-600/20 border border-orange-500/50 text-orange-400 hover:bg-orange-600/30 mt-3"
+                        size="sm"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Clear All Sessions
+                      </Button>
+                    )}
                     
                     <Button 
                       onClick={handleLogout}

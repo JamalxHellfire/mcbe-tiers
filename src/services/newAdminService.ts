@@ -35,6 +35,30 @@ export interface AdminUser {
   last_access: string;
 }
 
+// Clear all authentication state
+export const clearAllAuthState = (): void => {
+  // Clear localStorage
+  localStorage.removeItem('admin_session_token');
+  localStorage.removeItem('new_admin_auth');
+  localStorage.removeItem('admin_role');
+  localStorage.removeItem('admin_ip');
+  
+  // Clear any other auth-related items
+  Object.keys(localStorage).forEach(key => {
+    if (key.includes('admin') || key.includes('auth')) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  // Clear sessionStorage
+  sessionStorage.clear();
+  
+  // Clear cookies
+  document.cookie.split(";").forEach(function(c) { 
+    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+  });
+};
+
 // Check if user has existing access based on IP
 export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string }> => {
   try {
@@ -104,7 +128,7 @@ export const submitOnboardingApplication = async (data: OnboardingData): Promise
       .from('admin_applications')
       .insert({
         discord: data.discord,
-        requested_role: data.requestedRole,
+        requested_role: data.requestedRole as 'admin' | 'moderator' | 'tester',
         secret_key: data.secretKey,
         ip_address: userIp,
         status: 'pending'
@@ -115,6 +139,24 @@ export const submitOnboardingApplication = async (data: OnboardingData): Promise
     return { success: true };
   } catch (error: any) {
     console.error('Onboarding submission error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Clear all admin sessions (owner only)
+export const clearAllAdminSessions = async (): Promise<{ success: boolean; error?: string }> => {
+  try {
+    // Delete all admin users (this will force re-authentication)
+    const { error } = await supabase
+      .from('admin_users')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Clear sessions error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -224,5 +266,7 @@ export const newAdminService = {
   submitOnboardingApplication,
   getPendingApplications,
   reviewApplication,
-  getAdminUsers
+  getAdminUsers,
+  clearAllAuthState,
+  clearAllAdminSessions
 };

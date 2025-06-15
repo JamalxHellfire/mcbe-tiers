@@ -6,7 +6,21 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Search, UserPlus, Trash2, Shield, ShieldOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Player } from '@/services/playerService';
+
+interface Player {
+  id: string;
+  ign: string;
+  java_username?: string;
+  uuid?: string;
+  avatar_url?: string;
+  region?: string;
+  device?: string;
+  global_points: number;
+  overall_rank?: number;
+  banned: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const UserManagement = () => {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -160,7 +174,7 @@ const UserManagement = () => {
                 
                 <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
                   <Button
-                    onClick={() => handleToggleBan(player.id, player.banned || false)}
+                    onClick={() => handleToggleBan(player.id, player.banned)}
                     disabled={isLoading}
                     className={`admin-button ${
                       player.banned
