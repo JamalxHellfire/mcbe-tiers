@@ -8,7 +8,6 @@ import { TierGrid } from '../components/TierGrid';
 import { usePopup } from '../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
 import { GameMode, Player } from '../services/playerService';
-import { motion } from 'framer-motion';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { usePointsCalculation } from '@/hooks/usePointsCalculation';
@@ -78,32 +77,22 @@ const Index = () => {
 
     if (selectedMode === 'overall') {
       return (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-full"
-        >
+        <div className="w-full simple-animation">
           <MinecraftLeaderboardTable 
             players={players}
             onPlayerClick={handlePlayerClick} 
           />
-        </motion.div>
+        </div>
       );
     }
 
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full"
-      >
+      <div className="w-full simple-animation">
         <TierGrid 
           selectedMode={toDatabaseGameMode(selectedMode)}
           onPlayerClick={handlePlayerClick} 
         />
-      </motion.div>
+      </div>
     );
   }, [loading, error, selectedMode, players, handlePlayerClick]);
 
@@ -116,7 +105,7 @@ const Index = () => {
       />
       
       <main className="flex-grow w-full">
-        <div className="w-full px-4 py-6">
+        <div className="w-full px-2 py-3">
           {mainContent}
         </div>
       </main>

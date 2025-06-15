@@ -47,8 +47,8 @@
   }
 
   ::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
+    width: 2px;
+    height: 2px;
   }
 
   ::-webkit-scrollbar-track {
@@ -62,16 +62,15 @@
 
 @layer components {
   .glass {
-    @apply backdrop-blur-sm bg-dark-surface/60 border border-white/10 shadow-md;
+    @apply backdrop-blur-sm bg-dark-surface/50 border border-white/10;
   }
 
   .tier-row {
-    @apply p-2 md:p-3 rounded-lg backdrop-blur-sm border
-           transition-all duration-150 glass;
+    @apply p-2 rounded-lg backdrop-blur-sm border transition-colors duration-150 glass;
   }
 
   .tier-header {
-    @apply font-semibold mb-2 pb-2 relative text-sm md:text-base;
+    @apply font-semibold mb-2 pb-2 relative text-sm;
   }
 
   .tier-section-container {
@@ -79,18 +78,18 @@
   }
 
   .tier-section {
-    @apply p-2 rounded-md bg-dark-surface/60 flex-1 
-           min-h-[60px] md:min-h-[80px] border border-white/10 
-           backdrop-blur-sm transition-all duration-150 hover:border-white/20;
+    @apply p-2 rounded-md bg-dark-surface/50 flex-1 
+           min-h-[50px] border border-white/10 
+           backdrop-blur-sm;
   }
 
   .tier-placeholder {
-    @apply text-white/30 text-center py-2 md:py-3 italic text-xs;
+    @apply text-white/30 text-center py-2 italic text-xs;
   }
 
   .game-mode-button {
-    @apply px-2 py-1 md:px-3 md:py-1.5 rounded-md transition-all duration-150 hover:bg-white/10 
-           hover:scale-[1.02] relative text-xs font-medium;
+    @apply px-2 py-1 rounded-md transition-colors duration-150 hover:bg-white/10 
+           relative text-xs font-medium;
   }
 
   .game-mode-button.active {
@@ -102,27 +101,27 @@
   }
 
   .logo-text {
-    @apply text-base md:text-lg font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
+    @apply text-base font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
            bg-clip-text text-transparent hover:from-white hover:to-white/80 transition-all;
   }
 
   .navbar {
-    @apply sticky top-0 z-20 glass border-b border-white/10 shadow-md;
+    @apply sticky top-0 z-20 glass border-b border-white/10;
   }
 
   .content-container {
-    @apply container mx-auto px-2 md:px-4 max-w-7xl py-2 md:py-3;
+    @apply container mx-auto px-2 max-w-7xl py-2;
   }
   
   .section-heading {
-    @apply text-lg md:text-xl font-bold text-center mb-3 md:mb-4 bg-gradient-to-r 
+    @apply text-lg font-bold text-center mb-3 bg-gradient-to-r 
            from-white to-white/70 bg-clip-text text-transparent;
   }
   
   .player-result-button {
     @apply flex items-center p-2 bg-dark-surface/70 rounded-lg
-           border border-white/10 hover:border-white/20 transition-all
-           duration-150 shadow-sm;
+           border border-white/10 hover:border-white/20 transition-colors
+           duration-150;
   }
   
   .player-avatar-frame {
@@ -135,11 +134,11 @@
   }
   
   .tier-tab {
-    @apply transition-all duration-150 shadow-sm hover:shadow-md;
+    @apply transition-colors duration-150;
   }
   
   .tier-column {
-    @apply transition-all duration-150;
+    @apply transition-colors duration-150;
   }
 
   /* Optimized mobile styles */
@@ -153,7 +152,7 @@
     }
     
     .tier-section {
-      @apply p-1.5 min-h-[50px];
+      @apply p-1.5 min-h-[40px];
     }
     
     .game-mode-button {
@@ -167,22 +166,29 @@
     .navbar {
       @apply sticky top-0 z-30;
     }
+
+    /* Disable animations on mobile for performance */
+    * {
+      animation-duration: 0s !important;
+      transition-duration: 0.1s !important;
+      transform: none !important;
+    }
   }
 
   /* Admin panel optimized styles */
   .admin-card {
     @apply bg-gray-900/30 backdrop-blur-sm border border-gray-700/40 rounded-lg 
-           p-3 shadow-md transition-all duration-150 hover:border-gray-600/40;
+           p-3 transition-colors duration-150 hover:border-gray-600/40;
   }
 
   .admin-button {
-    @apply px-3 py-2 text-sm rounded-md transition-all duration-150 font-medium;
+    @apply px-3 py-2 text-sm rounded-md transition-colors duration-150 font-medium;
   }
 
   .admin-input {
     @apply w-full px-3 py-2 text-sm bg-gray-800/40 border border-gray-600/40 rounded-md
            focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/20
-           text-white placeholder:text-gray-400 transition-all duration-150;
+           text-white placeholder:text-gray-400 transition-colors duration-150;
   }
 
   .admin-table {
@@ -253,29 +259,22 @@
   @apply py-1.5 px-1 border-t border-white/5 text-xs;
 }
 
-/* Mobile performance optimizations */
-@media (max-width: 768px) {
-  .dropdown-content {
-    @apply max-h-40 overflow-y-auto;
-  }
-
-  .mobile-nav-item {
-    @apply p-1.5 text-sm;
-  }
-  
-  /* Minimal animations on mobile for performance */
-  * {
-    animation-duration: 0.15s !important;
-    transition-duration: 0.15s !important;
-  }
+/* Performance optimizations */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Performance optimized animations */
-@keyframes optimized-fade-in {
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Optimized animations - minimal for performance */
+@keyframes simple-fade {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.optimized-animation {
-  animation: optimized-fade-in 0.15s ease-out;
+.simple-animation {
+  animation: simple-fade 0.2s ease-out;
 }
