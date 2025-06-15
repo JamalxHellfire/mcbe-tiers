@@ -1,11 +1,25 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trophy } from 'lucide-react';
+import { X, Trophy, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
+
+// Helper to get device icon
+const getDeviceIcon = (device: string = 'PC') => {
+  switch(device?.toLowerCase()) {
+    case 'mobile':
+    case 'bedrock':
+      return <Smartphone className="w-4 h-4 text-blue-400" />;
+    case 'console':
+      return <Gamepad className="w-4 h-4 text-green-400" />;
+    case 'pc':
+    case 'java':
+    default:
+      return <Monitor className="w-4 h-4 text-white/80" />;
+  }
+};
 
 // Helper to get region styling with proper hex colors
 const getRegionStyling = (regionCode: string = 'NA') => {
@@ -141,10 +155,13 @@ export function ImageMatchedPopup() {
                   </div>
                 </div>
 
-                {/* Player Name */}
-                <h3 className="text-lg font-bold mb-2 text-white">
-                  {popupData.player.ign}
-                </h3>
+                {/* Player Name with Device Icon */}
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  {getDeviceIcon(popupData.player.device)}
+                  <h3 className="text-lg font-bold text-white">
+                    {popupData.player.ign}
+                  </h3>
+                </div>
 
                 {/* Combat Master Badge */}
                 <div 

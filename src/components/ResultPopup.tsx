@@ -1,7 +1,6 @@
-
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trophy } from 'lucide-react';
+import { X, Trophy, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -9,6 +8,21 @@ import { RankBadgeEffects, RankText, PositionBadge } from './RankBadgeEffects';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
+
+// Helper to get device icon
+const getDeviceIcon = (device: string = 'PC') => {
+  switch(device?.toLowerCase()) {
+    case 'mobile':
+    case 'bedrock':
+      return <Smartphone className="w-4 h-4 text-blue-400" />;
+    case 'console':
+      return <Gamepad className="w-4 h-4 text-green-400" />;
+    case 'pc':
+    case 'java':
+    default:
+      return <Monitor className="w-4 h-4 text-white/80" />;
+  }
+};
 
 // Helper to get region colors and styling with proper hex colors for borders
 const getRegionStyling = (regionCode: string = 'NA') => {
@@ -214,6 +228,7 @@ export function ResultPopup() {
                       </Tooltip>
                     </TooltipProvider>
                     
+                    {getDeviceIcon(popupData.player.device)}
                     <h3 className="text-xl font-bold text-white">{popupData.player.ign}</h3>
                   </div>
                   
