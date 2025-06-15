@@ -41,8 +41,8 @@ export const clearAllAuthState = (): void => {
   localStorage.removeItem('new_admin_auth');
   localStorage.removeItem('admin_role');
   localStorage.removeItem('admin_ip');
-  
-  // Clear supabase and other auth-related storage
+
+  // EXTENDED DEBUG: Extra storage cleanup
   Object.keys(localStorage).forEach(key => {
     if (
       key.includes('admin') ||
@@ -66,9 +66,35 @@ export const clearAllAuthState = (): void => {
   });
 
   // Clear cookies
-  document.cookie.split(";").forEach(function(c) { 
-    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-  });
+  if (typeof document !== "undefined") {
+    document.cookie.split(";").forEach(function(c) {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+  }
+
+  // Attempt to force reload all storage
+  if ('caches' in window) {
+    try {
+      caches.keys().then(keys => {
+        keys.forEach(key => caches.delete(key));
+      });
+    } catch (err) {
+      console.warn("[ADMIN DEBUG] Could not clear caches:", err);
+    }
+  }
+};
+
+export const forceCheckAdminAccess = async (maxRetries = 24, baseDelayMs = 50): Promise<{ hasAccess: boolean; role?: string, checks?: any[] }> => {
+  let checks = [];
+  for (let i = 0; i < maxRetries; i++) {
+    const res = await checkAdminAccess();
+    checks.push(res);
+    if (res.hasAccess && res.role) return { ...res, checks };
+    await new Promise((r) => setTimeout(r, Math.min(baseDelayMs * (1.2 ** i), 1000)));
+  }
+  return { hasAccess: false, checks };
 };
 
 // Check if user has existing access based on IP
@@ -106,8 +132,8 @@ async function robustCheckAdminAccess(maxRetries = 16, baseDelayMs = 80): Promis
   return lastResult;
 }
 
-// Authenticate with password (now with robust check, full debug)
-export const authenticateAdmin = async (password: string): Promise<AdminAuthResult> => {
+// Authenticate with password (now with robust check, full debug, returns poll checks)
+export const authenticateAdmin = async (password: string, aggressive: boolean = false): Promise<AdminAuthResult & { debug?: any[] }> => {
   try {
     clearAllAuthState();
 
@@ -126,22 +152,30 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
     const ownerResult = await response.json();
     console.info("[ADMIN DEBUG] ownerResult from edge:", ownerResult);
 
+    let checkResult;
+    let pollHistory = [];
+
     if (ownerResult?.success && ownerResult?.role === "owner") {
       // Robust: wait up to 2.5s for DB upsert to complete, polling each time
-      const check = await robustCheckAdminAccess();
-      if (check.hasAccess && check.role === "owner") {
-        localStorage.setItem('admin_role', 'owner');
-        // Optionally store the IP for further debugging
-        if (ownerResult?.ip_address) localStorage.setItem('admin_ip', ownerResult.ip_address);
-        return { success: true, role: "owner" };
+      if (aggressive) {
+        const force = await forceCheckAdminAccess();
+        pollHistory = force.checks || [];
+        checkResult = force;
       } else {
-        // Return both edge and DB info for user debug
+        checkResult = await robustCheckAdminAccess();
+      }
+      if (checkResult.hasAccess && checkResult.role === "owner") {
+        localStorage.setItem('admin_role', 'owner');
+        if (ownerResult?.ip_address) localStorage.setItem('admin_ip', ownerResult.ip_address);
+        return { success: true, role: "owner", debug: [ownerResult, ...pollHistory] };
+      } else {
         return {
           success: false,
+          debug: [ownerResult, ...pollHistory],
           error:
             "[ADMIN DEBUG] Owner login succeeded in edge function, but admin access was still denied after all DB checks.\n" +
             "Edge function ownerResult: " + JSON.stringify(ownerResult, null, 2) +
-            "\nLast DB access check: " + JSON.stringify(check, null, 2),
+            "\nLast DB access check: " + JSON.stringify(checkResult, null, 2),
         };
       }
     }
@@ -161,6 +195,18 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
     console.error('[ADMIN DEBUG] Admin authentication error:', error);
     return { success: false, error: error.message };
   }
+};
+
+export const aggressiveManualRecheck = async (): Promise<{ hasAccess: boolean; role?: string, detail?: any[] }> => {
+  // Try to force extra DB checks manually
+  let tries = [];
+  for (let i = 0; i < 12; i++) {
+    const res = await checkAdminAccess();
+    tries.push(res);
+    if (res.hasAccess && res.role) return { ...res, detail: tries };
+    await new Promise((r) => setTimeout(r, 80));
+  }
+  return { hasAccess: false, detail: tries };
 };
 
 // Submit onboarding application
@@ -312,5 +358,7 @@ export const newAdminService = {
   reviewApplication,
   getAdminUsers,
   clearAllAuthState,
-  clearAllAdminSessions
+  clearAllAdminSessions,
+  forceCheckAdminAccess,
+  aggressiveManualRecheck
 };

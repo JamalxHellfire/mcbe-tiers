@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, UserPlus, CheckCircle } from 'lucide-react';
-import { newAdminService } from '@/services/newAdminService';
+import { newAdminService, clearAllAuthState } from '@/services/newAdminService';
 
 interface NewAdminAuthProps {
   onAuthSuccess: (role: string) => void;
@@ -22,6 +21,9 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [debugInfo, setDebugInfo] = useState<any[]>([]);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  const [manualAccessCheckRunning, setManualAccessCheckRunning] = useState(false);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +38,12 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
     setIsLoading(true);
     try {
+      setErrorDetail(null);
+      setDebugInfo([]);
+      clearAllAuthState();
+
       console.info("[ADMIN DEBUG] Submitting owner password to login...");
-      const result = await newAdminService.authenticateAdmin(password);
+      const result = await newAdminService.authenticateAdmin(password, true);
 
       if (result.success) {
         if (result.needsOnboarding) {
@@ -47,24 +53,29 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             title: "Login Successful",
             description: `Welcome, ${result.role}!`
           });
-          // Key: run onAuthSuccess BEFORE reload for instant state switch
+          setDebugInfo(result.debug || []);
           onAuthSuccess(result.role);
           setTimeout(() => {
             window.location.reload();
-          }, 120); // Less delay for snappier feedback
+          }, 120);
           return;
         }
       } else {
         // If login failed but debug info present, show trace
+        setDebugInfo(result.debug || []);
+        setErrorDetail(
+            typeof result.error === "string" && result.error.includes("[ADMIN DEBUG]")
+              ? "Admin panel access failed after owner login. See details below and in the browser developer console."
+              : (result.error ?? "Invalid password")
+        );
         toast({
           title: "Login Failed",
           description: typeof result.error === "string" && result.error.includes("[ADMIN DEBUG]")
-            ? "Admin panel access failed after owner login.\nSee detail in browser developer console."
+            ? "Admin panel access failed after owner login. See details below."
             : (result.error ?? "Invalid password"),
           variant: "destructive"
         });
         if (result.error) {
-          // Console prints ALL debug details for full trace (ownerResult, DB access check)
           console.error("[ADMIN DEBUG] Login error/detail:", result.error);
         }
       }
@@ -75,48 +86,33 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
         description: "An error occurred during login",
         variant: "destructive"
       });
+      setErrorDetail("A client or network error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOnboardingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!onboardingData.discord || !onboardingData.requestedRole || !onboardingData.secretKey) {
-      toast({
-        title: "All Fields Required",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+  const handleManualRecheck = async () => {
+    setManualAccessCheckRunning(true);
+    setErrorDetail(null);
+    setDebugInfo([]);
     try {
-      const result = await newAdminService.submitOnboardingApplication(onboardingData);
-      
-      if (result.success) {
-        setStep('pending');
+      const force = await newAdminService.aggressiveManualRecheck();
+      setDebugInfo(force.detail || []);
+      if (force.hasAccess && force.role) {
         toast({
-          title: "Application Submitted",
-          description: "Your application has been submitted for review",
+          title: "Manual Force-Access Successful",
+          description: "Your session has been forcibly refreshed."
         });
+        setTimeout(() => {
+          onAuthSuccess(force.role!);
+          window.location.reload();
+        }, 120);
       } else {
-        toast({
-          title: "Submission Failed",
-          description: result.error || "Failed to submit application",
-          variant: "destructive"
-        });
+        setErrorDetail("Manual access force-check failed. See trace below.");
       }
-    } catch (error) {
-      console.error('Onboarding error:', error);
-      toast({
-        title: "Submission Error",
-        description: "An error occurred during submission",
-        variant: "destructive"
-      });
     } finally {
-      setIsLoading(false);
+      setManualAccessCheckRunning(false);
     }
   };
 
@@ -247,7 +243,6 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             Enter your admin password to access the dashboard
           </CardDescription>
         </CardHeader>
-        
         <CardContent>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -264,10 +259,10 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
                   placeholder="Enter admin password"
                   className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/25"
                   disabled={isLoading}
+                  autoComplete="off"
                 />
               </div>
             </div>
-            
             <Button 
               type="submit" 
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
@@ -276,6 +271,49 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
               {isLoading ? 'Authenticating...' : 'Access Admin Panel'}
             </Button>
           </form>
+
+          {/* AGGRESSIVE TROUBLESHOOT UI */}
+          {errorDetail && (
+            <div className="mt-4 p-3 bg-gray-800/80 rounded text-red-300 border border-red-400/60 text-xs whitespace-pre-wrap">
+              <b>Access Error:</b> <br />
+              {errorDetail}
+            </div>
+          )}
+
+          {/* Show all debug info */}
+          {debugInfo && debugInfo.length > 0 && (
+            <div className="mt-2 max-h-40 overflow-y-auto p-2 text-xs rounded bg-gray-900/60 text-sky-200 border border-sky-400/20">
+              <b>Debug Trace:</b>
+              <pre className="whitespace-pre-wrap break-words">{JSON.stringify(debugInfo, null, 2)}</pre>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2 mt-3">
+            <Button 
+              variant="ghost"
+              className="w-full border border-purple-400/20 text-purple-300 hover:bg-purple-800/30"
+              onClick={handleManualRecheck}
+              disabled={isLoading || manualAccessCheckRunning}
+              type="button"
+            >
+              {manualAccessCheckRunning ? "Retrying..." : "Force Manual Access Check"}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full border border-gray-400/30 text-gray-300 hover:bg-gray-700/40"
+              onClick={() => window.location.reload()}
+              type="button"
+              disabled={isLoading || manualAccessCheckRunning}
+            >
+              Reload Page
+            </Button>
+          </div>
+
+          <div className="mt-3 text-xs text-center text-gray-400/80">
+            <span>
+              Still can't get in? Contact owner or try refreshing cookies &amp; state.
+            </span>
+          </div>
         </CardContent>
       </Card>
     </div>
