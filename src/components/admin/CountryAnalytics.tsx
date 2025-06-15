@@ -2,18 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe, Users, TrendingUp, MapPin } from 'lucide-react';
-import { getCountryAnalytics } from '@/services/analyticsService';
-
-interface CountryData {
-  country: string;
-  countryCode: string;
-  visits: number;
-  percentage: number;
-  flag: string;
-}
+import { getCountryAnalytics, CountryStats } from '@/services/analyticsService';
 
 const CountryAnalytics = () => {
-  const [countryData, setCountryData] = useState<CountryData[]>([]);
+  const [countryData, setCountryData] = useState<CountryStats[]>([]);
   const [totalVisits, setTotalVisits] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,8 +19,8 @@ const CountryAnalytics = () => {
           setCountryData(realData);
           setTotalVisits(realData.reduce((sum, country) => sum + country.visits, 0));
         } else {
-          // Fallback data if no real data exists
-          const fallbackData: CountryData[] = [
+          // Fallback data if no real data exists with proper flag emojis
+          const fallbackData: CountryStats[] = [
             { 
               country: 'United States', 
               countryCode: 'US', 
@@ -63,6 +55,27 @@ const CountryAnalytics = () => {
               visits: 756, 
               percentage: 8.6, 
               flag: '🇩🇪'
+            },
+            { 
+              country: 'France', 
+              countryCode: 'FR', 
+              visits: 634, 
+              percentage: 7.2, 
+              flag: '🇫🇷'
+            },
+            { 
+              country: 'Japan', 
+              countryCode: 'JP', 
+              visits: 512, 
+              percentage: 5.8, 
+              flag: '🇯🇵'
+            },
+            { 
+              country: 'Brazil', 
+              countryCode: 'BR', 
+              visits: 398, 
+              percentage: 4.5, 
+              flag: '🇧🇷'
             }
           ];
           setCountryData(fallbackData);
@@ -70,7 +83,6 @@ const CountryAnalytics = () => {
         }
       } catch (error) {
         console.error('Error loading country analytics:', error);
-        // Set empty data on error
         setCountryData([]);
         setTotalVisits(0);
       } finally {
@@ -147,7 +159,15 @@ const CountryAnalytics = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-400 font-medium">Top Country</p>
-                <p className="text-xl font-bold text-white">{countryData[0]?.country || 'N/A'}</p>
+                <p className="text-xl font-bold text-white flex items-center space-x-2">
+                  {countryData[0] && (
+                    <>
+                      <span className="text-2xl">{countryData[0].flag}</span>
+                      <span>{countryData[0].country}</span>
+                    </>
+                  )}
+                  {!countryData[0] && <span>N/A</span>}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -178,13 +198,13 @@ const CountryAnalytics = () => {
                       #{index + 1}
                     </div>
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl" role="img" aria-label={`${country.country} flag`}>
+                      <div className="text-3xl w-12 h-8 flex items-center justify-center bg-gray-700/30 rounded-lg border border-gray-600/40">
                         {country.flag}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="text-white font-semibold">{country.country}</h4>
-                      <p className="text-gray-400 text-sm font-mono">{country.countryCode}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold">{country.country}</h4>
+                        <p className="text-gray-400 text-sm font-mono">{country.countryCode}</p>
+                      </div>
                     </div>
                   </div>
                   

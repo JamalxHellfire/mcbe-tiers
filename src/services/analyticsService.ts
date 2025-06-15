@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 interface AnalyticsEvent {
@@ -11,7 +12,7 @@ interface AnalyticsEvent {
   country_code?: string;
 }
 
-interface VisitorStats {
+export interface VisitorStats {
   totalUniqueVisits: number;
   totalPageVisits: number;
   pcUsers: number;
@@ -19,14 +20,14 @@ interface VisitorStats {
   tabletUsers: number;
 }
 
-interface DailyStats {
+export interface DailyStats {
   date: string;
   visits: number;
   unique_visitors: number;
   page_views: number;
 }
 
-interface CountryStats {
+export interface CountryStats {
   country: string;
   countryCode: string;
   visits: number;
