@@ -23,14 +23,14 @@ export function AnalyticsDashboard() {
     }
   });
 
-  // Fetch visitor analytics
+  // Fetch visitor analytics from system logs
   const { data: visitorData, isLoading: visitorsLoading } = useQuery({
     queryKey: ['visitorAnalytics'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('system_logs')
         .select('*')
-        .eq('log_type', 'page_visit')
+        .eq('operation', 'page_visit')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -40,7 +40,15 @@ export function AnalyticsDashboard() {
 
   // Calculate visitor stats
   const totalVisits = visitorData?.length || 0;
-  const uniquePages = new Set(visitorData?.map(log => log.log_data?.path) || []).size;
+  const uniquePages = new Set(visitorData?.map(log => {
+    try {
+      const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+      return details?.path || 'Unknown';
+    } catch {
+      return 'Unknown';
+    }
+  }) || []).size;
+  
   const recentVisits = visitorData?.filter(log => {
     const logTime = new Date(log.created_at);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -50,21 +58,26 @@ export function AnalyticsDashboard() {
   // Group visits by page
   const pageVisits = {};
   visitorData?.forEach(log => {
-    const path = log.log_data?.path || 'Unknown';
-    pageVisits[path] = (pageVisits[path] || 0) + 1;
+    try {
+      const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+      const path = details?.path || 'Unknown';
+      pageVisits[path] = (pageVisits[path] || 0) + 1;
+    } catch {
+      const path = 'Unknown';
+      pageVisits[path] = (pageVisits[path] || 0) + 1;
+    }
   });
 
   // Get chat logs
   const chatLogs = systemLogs.filter(log => 
-    log.log_type === 'chat_message' || 
-    log.log_type === 'chat_error' ||
-    log.log_type === 'knowledge_base'
+    log.operation === 'chat_message' || 
+    log.operation === 'chat_error' ||
+    log.operation === 'knowledge_base'
   );
 
   // Get error logs
   const errorLogs = systemLogs.filter(log => 
-    log.log_type === 'error' || 
-    log.log_type === 'chat_error'
+    log.level === 'error'
   );
 
   if (logsLoading || visitorsLoading) {
@@ -143,12 +156,12 @@ export function AnalyticsDashboard() {
             <ScrollArea className="h-64">
               <div className="space-y-2">
                 {Object.entries(pageVisits)
-                  .sort(([,a], [,b]) => b - a)
+                  .sort(([,a], [,b]) => (b as number) - (a as number))
                   .map(([path, count]) => (
                     <div key={path} className="flex justify-between items-center p-2 rounded bg-white/5">
                       <span className="text-white/80 text-sm">{path}</span>
                       <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
-                        {count}
+                        {count as number}
                       </Badge>
                     </div>
                   ))}
@@ -172,18 +185,21 @@ export function AnalyticsDashboard() {
                         <Badge 
                           variant="outline" 
                           className={`text-xs ${
-                            log.log_type === 'error' ? 'border-red-500 text-red-400' :
-                            log.log_type === 'chat_message' ? 'border-blue-500 text-blue-400' :
-                            log.log_type === 'page_visit' ? 'border-green-500 text-green-400' :
+                            log.level === 'error' ? 'border-red-500 text-red-400' :
+                            log.operation === 'chat_message' ? 'border-blue-500 text-blue-400' :
+                            log.operation === 'page_visit' ? 'border-green-500 text-green-400' :
                             'border-white/30 text-white/70'
                           }`}
                         >
-                          {log.log_type}
+                          {log.operation}
                         </Badge>
                         <p className="text-white/80 text-sm mt-1">{log.message}</p>
-                        {log.log_data && (
+                        {log.details && (
                           <p className="text-white/60 text-xs mt-1">
-                            {typeof log.log_data === 'string' ? log.log_data : JSON.stringify(log.log_data).slice(0, 100)}
+                            {typeof log.details === 'string' 
+                              ? log.details.slice(0, 100) 
+                              : JSON.stringify(log.details).slice(0, 100)
+                            }
                           </p>
                         )}
                       </div>
