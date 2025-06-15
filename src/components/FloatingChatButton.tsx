@@ -64,7 +64,7 @@ export function FloatingChatButton() {
             <div className="w-1.5 h-1.5 bg-white rounded-full" />
           </motion.div>
         </motion.button>
-      </div>
+      </motion.div>
 
       <ChatWidget isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
     </>

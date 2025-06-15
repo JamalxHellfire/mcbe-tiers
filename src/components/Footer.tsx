@@ -15,8 +15,6 @@ export function Footer() {
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-4">
               <Link to="/" className="text-white/60 hover:text-white/80 transition-colors text-sm">Home</Link>
-              <Link to="/about" className="text-white/60 hover:text-white/80 transition-colors text-sm">About</Link>
-              <Link to="/news" className="text-white/60 hover:text-white/80 transition-colors text-sm">News</Link>
             </div>
             
             <div className="flex items-center space-x-3">
