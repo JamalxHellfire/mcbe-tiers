@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
-import { DailyAnalytics } from './DailyAnalytics';
-import { CountryAnalytics } from './CountryAnalytics';
+import DailyAnalytics from './DailyAnalytics';
+import CountryAnalytics from './CountryAnalytics';
 import { BarChart, Calendar, Globe } from 'lucide-react';
 
 type AnalyticsView = 'overview' | 'daily' | 'countries';
