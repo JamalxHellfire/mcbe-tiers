@@ -33,6 +33,7 @@ export function ManagePlayersTab() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    console.log('ManagePlayersTab mounted, loading initial players...');
     refreshPlayers();
   }, []);
 
@@ -42,20 +43,32 @@ export function ManagePlayersTab() {
   );
 
   const handleDeletePlayer = async (playerId: string, playerIGN: string) => {
+    console.log(`Delete button clicked for player: ${playerId} (${playerIGN})`);
+    
     if (window.confirm(`Are you sure you want to delete player "${playerIGN}"? This action cannot be undone.`)) {
       setIsDeleting(playerId);
+      
       try {
-        console.log(`Attempting to delete player: ${playerId} (${playerIGN})`);
+        console.log(`Starting deletion process for player: ${playerId} (${playerIGN})`);
+        
         const result = await deletePlayer(playerId);
+        console.log('Delete result:', result);
         
         if (result?.success) {
+          console.log(`Player ${playerIGN} deleted successfully, refreshing list...`);
+          
           toast({
             title: "Player Deleted",
             description: `Player "${playerIGN}" has been successfully deleted.`,
           });
-          // Force refresh the players list
+          
+          // Force a complete refresh to ensure UI is updated
+          console.log('Forcing complete refresh after deletion...');
           await handleRefresh();
+          
+          console.log(`Current players count after deletion: ${players.length}`);
         } else {
+          console.error('Delete failed:', result?.error);
           toast({
             title: "Delete Failed",
             description: result?.error || "Failed to delete player",
@@ -63,7 +76,7 @@ export function ManagePlayersTab() {
           });
         }
       } catch (error) {
-        console.error('Delete error:', error);
+        console.error('Exception during delete operation:', error);
         toast({
           title: "Delete Error",
           description: "An unexpected error occurred while deleting the player",
@@ -71,14 +84,22 @@ export function ManagePlayersTab() {
         });
       } finally {
         setIsDeleting(null);
+        console.log('Delete operation completed, clearing loading state');
       }
+    } else {
+      console.log('User cancelled deletion');
     }
   };
 
   const handleRefresh = async () => {
+    console.log('Manual refresh triggered');
     setIsRefreshing(true);
+    
     try {
+      console.log('Calling refreshPlayers...');
       await refreshPlayers();
+      console.log(`Players refreshed successfully. Current count: ${players.length}`);
+      
       toast({
         title: "Data Refreshed",
         description: "Player data has been updated successfully.",
@@ -92,6 +113,7 @@ export function ManagePlayersTab() {
       });
     } finally {
       setIsRefreshing(false);
+      console.log('Refresh operation completed');
     }
   };
 
@@ -130,6 +152,8 @@ export function ManagePlayersTab() {
       </div>
     );
   }
+
+  console.log(`Rendering ManagePlayersTab with ${players.length} total players, ${filteredPlayers.length} filtered`);
 
   return (
     <div className="space-y-6">
@@ -298,6 +322,9 @@ export function ManagePlayersTab() {
             {/* Debug Info */}
             <div className="text-xs text-gray-500 mt-4">
               Total players: {players.length} | Filtered: {filteredPlayers.length}
+              {isDeleting && (
+                <span className="ml-2 text-red-400">Deleting player: {isDeleting}</span>
+              )}
             </div>
           </div>
         </CardContent>

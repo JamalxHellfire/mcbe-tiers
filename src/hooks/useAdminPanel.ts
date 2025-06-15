@@ -23,6 +23,7 @@ export const useAdminPanel = () => {
     setError(null);
     
     try {
+      console.log('Starting refreshPlayers...');
       deepSeekService.logDatabaseOperation('SELECT', 'players', null, null, null);
       
       const { data, error } = await supabase
@@ -37,7 +38,7 @@ export const useAdminPanel = () => {
         setError(error.message);
         deepSeekService.logDatabaseOperation('SELECT', 'players', null, null, error, duration);
       } else {
-        console.log('Fetched players:', data);
+        console.log(`Fetched ${data?.length || 0} players successfully`);
         setPlayers(data || []);
         deepSeekService.logDatabaseOperation('SELECT', 'players', null, { data }, null, duration);
       }
@@ -207,15 +208,16 @@ export const useAdminPanel = () => {
     setError(null);
     
     try {
-      console.log(`Deleting player with ID: ${playerId} (IGN: ${playerIGN})`);
+      console.log(`Starting deletion process for player ID: ${playerId} (IGN: ${playerIGN})`);
       deepSeekService.logUserAction('delete_player', 'player', { playerId, playerIGN });
       
-      // First delete gamemode scores
-      console.log('Deleting gamemode scores...');
+      // Step 1: Delete gamemode scores first
+      console.log('Step 1: Deleting gamemode scores...');
       deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId });
-      const { error: scoresError } = await supabase
+      
+      const { error: scoresError, count: deletedScoresCount } = await supabase
         .from('gamemode_scores')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('player_id', playerId);
 
       if (scoresError) {
@@ -224,14 +226,15 @@ export const useAdminPanel = () => {
         throw new Error(`Failed to delete gamemode scores: ${scoresError.message}`);
       }
 
-      console.log('Gamemode scores deleted successfully');
+      console.log(`Successfully deleted ${deletedScoresCount} gamemode score records`);
 
-      // Then delete player
-      console.log('Deleting player...');
+      // Step 2: Delete the player record
+      console.log('Step 2: Deleting player record...');
       deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId });
-      const { error: playerError } = await supabase
+      
+      const { error: playerError, count: deletedPlayerCount } = await supabase
         .from('players')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', playerId);
 
       const duration = Date.now() - startTime;
@@ -242,32 +245,39 @@ export const useAdminPanel = () => {
         throw new Error(`Failed to delete player: ${playerError.message}`);
       }
 
-      console.log('Player deleted successfully');
+      if (deletedPlayerCount === 0) {
+        console.warn('No player was deleted - player may not exist');
+        throw new Error('Player not found in database');
+      }
 
-      // Update local state immediately
+      console.log(`Successfully deleted player record. Total deleted: ${deletedPlayerCount}`);
+
+      // Step 3: Update local state immediately
+      console.log('Step 3: Updating local state...');
       setPlayers(prevPlayers => {
         const newPlayers = prevPlayers.filter(player => player.id !== playerId);
-        console.log(`Updated local state: removed player ${playerId}, ${newPlayers.length} players remaining`);
+        console.log(`Local state updated: removed player ${playerId}, ${newPlayers.length} players remaining`);
         return newPlayers;
       });
 
-      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId }, { success: true }, null, duration);
+      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId }, { 
+        success: true, 
+        deletedScores: deletedScoresCount,
+        deletedPlayer: deletedPlayerCount 
+      }, null, duration);
       
-      console.log(`Player ${playerIGN} (${playerId}) deleted successfully`);
+      console.log(`✅ Player ${playerIGN} (${playerId}) successfully deleted from database and UI`);
       return { success: true };
+      
     } catch (err: any) {
       const duration = Date.now() - startTime;
-      console.error('Exception in deletePlayer:', err);
+      console.error('❌ Exception in deletePlayer:', err);
       setError(err.message);
       deepSeekService.logError(err, { operation: 'deletePlayer', playerId, playerIGN });
-      toast({
-        title: "Error",
-        description: `Failed to delete player: ${err.message}`,
-        variant: "destructive"
-      });
       return { success: false, error: err.message };
     } finally {
       setLoading(false);
+      console.log('Delete operation completed, loading state cleared');
     }
   };
 
