@@ -3,8 +3,8 @@
  * Formats a Minecraft avatar URL with multiple fallback options
  */
 export const getAvatarUrl = (ign: string, javaUsername?: string | null): string => {
-  // Use java username if provided, otherwise use "itzrealme" as fallback
-  const username = javaUsername || "itzrealme";
+  // Use java username if provided, otherwise use IGN
+  const username = javaUsername || ign;
   
   // Primary: Visage Bust API (3D renders) - most reliable
   return `https://visage.surgeplay.com/bust/128/${username}`;
@@ -14,7 +14,7 @@ export const getAvatarUrl = (ign: string, javaUsername?: string | null): string 
  * Get fallback avatar URLs in order of preference
  */
 export const getAvatarFallbacks = (ign: string, javaUsername?: string | null): string[] => {
-  const username = javaUsername || "itzrealme";
+  const username = javaUsername || ign;
   
   return [
     `https://visage.surgeplay.com/bust/128/${username}`,

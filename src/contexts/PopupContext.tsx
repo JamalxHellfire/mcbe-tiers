@@ -36,13 +36,11 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   const [popupData, setPopupData] = useState<ResultPopupData | null>(null);
 
   const openPopup = (data: ResultPopupData) => {
-    console.log('PopupContext: Opening popup with data:', data);
     setPopupData(data);
     setShowPopup(true);
   };
 
   const closePopup = () => {
-    console.log('PopupContext: Closing popup');
     setShowPopup(false);
     setPopupData(null);
   };

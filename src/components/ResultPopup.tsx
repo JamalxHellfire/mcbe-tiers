@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trophy, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
@@ -58,6 +57,30 @@ const getRegionStyling = (regionCode: string = 'NA') => {
       gradientTo: 'to-rose-500/10',
       glowColor: 'shadow-red-500/30',
       hexColor: '#ef4444'
+    },
+    'SA': { 
+      name: 'South America', 
+      borderColor: 'border-orange-500',
+      gradientFrom: 'from-orange-500/20',
+      gradientTo: 'to-amber-500/10',
+      glowColor: 'shadow-orange-500/30',
+      hexColor: '#f97316'
+    },
+    'AF': { 
+      name: 'Africa', 
+      borderColor: 'border-fuchsia-500',
+      gradientFrom: 'from-fuchsia-500/20',
+      gradientTo: 'to-pink-500/10',
+      glowColor: 'shadow-fuchsia-500/30',
+      hexColor: '#ec4899'
+    },
+    'OCE': { 
+      name: 'Oceania', 
+      borderColor: 'border-teal-500',
+      gradientFrom: 'from-teal-500/20',
+      gradientTo: 'to-cyan-500/10',
+      glowColor: 'shadow-teal-500/30',
+      hexColor: '#06b6d4'
     }
   };
   
@@ -96,40 +119,16 @@ const formatTierDisplay = (tier: string): { code: string, label: string } => {
 
 export function ResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Prevent body scroll when popup is open
-  useEffect(() => {
-    if (showPopup) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+  // Click outside to close
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      closePopup();
     }
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showPopup]);
-
-  // Close on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showPopup) {
-        closePopup();
-      }
-    };
-
-    if (showPopup) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [showPopup, closePopup]);
+  };
   
   if (!showPopup || !popupData) return null;
-  
-  console.log('ResultPopup: Rendering with data:', popupData);
   
   // Get region styling
   const region = popupData.player.region || 'NA';
@@ -148,30 +147,21 @@ export function ResultPopup() {
     <AnimatePresence>
       {showPopup && (
         <motion.div
-          className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
-          style={{ zIndex: 50 }}
+          className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closePopup();
-          }}
+          onClick={handleOverlayClick}
         >
           <motion.div 
             className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl w-full max-w-md border-2 ${regionStyling.borderColor} shadow-2xl overflow-hidden`}
             style={{
-              boxShadow: `0 0 30px ${regionStyling.hexColor}40, 0 8px 32px rgba(0, 0, 0, 0.4)`,
+              boxShadow: `0 0 30px ${regionStyling.hexColor}40, 0 8px 32px rgba(0, 0, 0, 0.4)`
             }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
           >
             {/* Region-based gradient overlay */}
             <div className={`absolute inset-0 bg-gradient-to-br ${regionStyling.gradientFrom} ${regionStyling.gradientTo} opacity-50`}></div>
@@ -183,7 +173,6 @@ export function ResultPopup() {
               {/* Close button */}
               <button 
                 onClick={(e) => {
-                  e.preventDefault();
                   e.stopPropagation();
                   closePopup();
                 }}

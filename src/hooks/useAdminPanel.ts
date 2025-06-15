@@ -290,10 +290,10 @@ export const useAdminPanel = () => {
         ? (region as typeof regionAllowed[number])
         : 'NA';
 
-      // Use "itzrealme" as fallback java username if not provided
+      // Auto-fill java_username with IGN if not provided
       const finalJavaUsername = java_username && java_username.trim() 
         ? java_username.trim() 
-        : "itzrealme";
+        : ign.trim();
 
       const playerInsertObj = {
         ign: ign.trim(),

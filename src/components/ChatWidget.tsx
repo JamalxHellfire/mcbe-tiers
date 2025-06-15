@@ -50,9 +50,23 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      knowledgeBaseService.clearConversation();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) {
       console.log('Cannot send message: empty input or loading');
+      return;
+    }
+
+    if (!hasKnowledgeBase) {
+      setError('Please upload a document first in Admin Panel → Admin Tools');
       return;
     }
 
@@ -72,7 +86,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
       setMessages(updatedHistory);
     } catch (error) {
       console.error('Error sending message:', error);
-      setError('Had a small hiccup, but I\'m still here! Try again! 😊');
+      setError('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,15 +108,18 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               boxShadow: '0 20px 40px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset'
             }}
           >
+            {/* Gradient Background Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-pink-600/20 opacity-50" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             
+            {/* Header */}
             <ChatHeader 
               hasKnowledgeBase={hasKnowledgeBase}
               onClose={onToggle}
               onRefresh={refreshKnowledgeBaseStatus}
             />
 
+            {/* Error Display */}
             {error && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
@@ -114,6 +131,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               </motion.div>
             )}
 
+            {/* Chat Messages */}
             <div className="relative flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="p-3 space-y-3">
@@ -153,6 +171,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               </ScrollArea>
             </div>
 
+            {/* Input Area */}
             <ChatInput
               value={inputValue}
               onChange={setInputValue}

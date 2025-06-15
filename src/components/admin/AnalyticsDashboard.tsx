@@ -1,219 +1,309 @@
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, MessageSquare, Activity, Eye } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { TrendingUp, Users, Database, Activity, Globe, Smartphone } from 'lucide-react';
 
-export function AnalyticsDashboard() {
-  // Fetch system logs
-  const { data: systemLogs = [], isLoading: logsLoading } = useQuery({
-    queryKey: ['systemLogs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('system_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
+interface AnalyticsData {
+  totalPlayers: number;
+  totalGlobalPoints: number;
+  playersByRegion: { region: string; count: number }[];
+  playersByDevice: { device: string; count: number }[];
+  recentActivity: { date: string; registrations: number; updates: number }[];
+  topGamemodes: { gamemode: string; players: number }[];
+}
 
-  // Fetch visitor analytics from system logs
-  const { data: visitorData, isLoading: visitorsLoading } = useQuery({
-    queryKey: ['visitorAnalytics'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('system_logs')
-        .select('*')
-        .eq('operation', 'page_visit')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
+export const AnalyticsDashboard: React.FC = () => {
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate visitor stats
-  const totalVisits = visitorData?.length || 0;
-  const uniquePages = new Set(visitorData?.map(log => {
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
     try {
-      const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-      return details?.path || 'Unknown';
-    } catch {
-      return 'Unknown';
+      setLoading(true);
+
+      // Fetch total players and points
+      const { data: playersData } = await supabase
+        .from('players')
+        .select('region, device, global_points, created_at')
+        .eq('banned', false);
+
+      if (!playersData) return;
+
+      const totalPlayers = playersData.length;
+      const totalGlobalPoints = playersData.reduce((sum, p) => sum + (p.global_points || 0), 0);
+
+      // Calculate regional distribution
+      const regionCounts = playersData.reduce((acc, player) => {
+        const region = player.region || 'Unknown';
+        acc[region] = (acc[region] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const playersByRegion = Object.entries(regionCounts).map(([region, count]) => ({
+        region,
+        count
+      }));
+
+      // Calculate device distribution
+      const deviceCounts = playersData.reduce((acc, player) => {
+        const device = player.device || 'Unknown';
+        acc[device] = (acc[device] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const playersByDevice = Object.entries(deviceCounts).map(([device, count]) => ({
+        device,
+        count
+      }));
+
+      // Calculate recent activity (last 7 days)
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      const recentActivity = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const registrations = playersData.filter(p => 
+          p.created_at && p.created_at.startsWith(dateStr)
+        ).length;
+
+        recentActivity.push({
+          date: dateStr,
+          registrations,
+          updates: Math.floor(Math.random() * 10) // Placeholder for updates
+        });
+      }
+
+      // Fetch gamemode statistics
+      const { data: gamemodeData } = await supabase
+        .from('gamemode_scores')
+        .select('gamemode');
+
+      const gamemodeCounts = (gamemodeData || []).reduce((acc, score) => {
+        const gamemode = score.gamemode;
+        acc[gamemode] = (acc[gamemode] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const topGamemodes = Object.entries(gamemodeCounts)
+        .map(([gamemode, players]) => ({ gamemode, players }))
+        .sort((a, b) => b.players - a.players)
+        .slice(0, 8);
+
+      setAnalytics({
+        totalPlayers,
+        totalGlobalPoints,
+        playersByRegion,
+        playersByDevice,
+        recentActivity,
+        topGamemodes
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setLoading(false);
     }
-  }) || []).size;
-  
-  const recentVisits = visitorData?.filter(log => {
-    const logTime = new Date(log.created_at);
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    return logTime > oneHourAgo;
-  }).length || 0;
+  };
 
-  // Group visits by page
-  const pageVisits = {};
-  visitorData?.forEach(log => {
-    try {
-      const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-      const path = details?.path || 'Unknown';
-      pageVisits[path] = (pageVisits[path] || 0) + 1;
-    } catch {
-      const path = 'Unknown';
-      pageVisits[path] = (pageVisits[path] || 0) + 1;
-    }
-  });
-
-  // Get chat logs
-  const chatLogs = systemLogs.filter(log => 
-    log.operation === 'chat_message' || 
-    log.operation === 'chat_error' ||
-    log.operation === 'knowledge_base'
-  );
-
-  // Get error logs
-  const errorLogs = systemLogs.filter(log => 
-    log.level === 'error'
-  );
-
-  if (logsLoading || visitorsLoading) {
+  if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-white/10 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-white/10 rounded"></div>
-            ))}
-          </div>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-2"></div>
+          <p className="text-white">Loading analytics...</p>
         </div>
       </div>
     );
   }
 
+  if (!analytics) {
+    return (
+      <div className="text-center text-gray-400 p-8">
+        Failed to load analytics data
+      </div>
+    );
+  }
+
+  const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#6366F1', '#84CC16'];
+
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
-      
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-dark-surface border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Total Visits</CardTitle>
-            <Eye className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{totalVisits}</div>
-            <p className="text-xs text-white/60">Page visits tracked</p>
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
+        <p className="text-gray-400">Platform insights and statistics</p>
+      </div>
+
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Total Players</p>
+                <p className="text-2xl font-bold text-white">{analytics.totalPlayers.toLocaleString()}</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-400" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-dark-surface border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Recent Visits</CardTitle>
-            <Activity className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{recentVisits}</div>
-            <p className="text-xs text-white/60">In the last hour</p>
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Global Points</p>
+                <p className="text-2xl font-bold text-white">{analytics.totalGlobalPoints.toLocaleString()}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-400" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-dark-surface border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Unique Pages</CardTitle>
-            <Users className="h-4 w-4 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{uniquePages}</div>
-            <p className="text-xs text-white/60">Different pages visited</p>
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Active Gamemodes</p>
+                <p className="text-2xl font-bold text-white">{analytics.topGamemodes.length}</p>
+              </div>
+              <Database className="h-8 w-8 text-purple-400" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-dark-surface border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-white/80">Chat Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-orange-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{chatLogs.length}</div>
-            <p className="text-xs text-white/60">Total chat interactions</p>
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Avg Points/Player</p>
+                <p className="text-2xl font-bold text-white">
+                  {analytics.totalPlayers > 0 
+                    ? Math.round(analytics.totalGlobalPoints / analytics.totalPlayers)
+                    : 0
+                  }
+                </p>
+              </div>
+              <Activity className="h-8 w-8 text-orange-400" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Page Visits */}
-        <Card className="bg-dark-surface border-white/10">
+        {/* Regional Distribution */}
+        <Card className="bg-gray-900/50 border-gray-700/50">
           <CardHeader>
-            <CardTitle className="text-white">Page Visits</CardTitle>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Players by Region
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-64">
-              <div className="space-y-2">
-                {Object.entries(pageVisits)
-                  .sort(([,a], [,b]) => (b as number) - (a as number))
-                  .map(([path, count]) => (
-                    <div key={path} className="flex justify-between items-center p-2 rounded bg-white/5">
-                      <span className="text-white/80 text-sm">{path}</span>
-                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
-                        {count as number}
-                      </Badge>
-                    </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={analytics.playersByRegion}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                  label={({ region, count }) => `${region}: ${count}`}
+                >
+                  {analytics.playersByRegion.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
-              </div>
-            </ScrollArea>
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
-        <Card className="bg-dark-surface border-white/10">
+        {/* Device Distribution */}
+        <Card className="bg-gray-900/50 border-gray-700/50">
           <CardHeader>
-            <CardTitle className="text-white">Recent Activity</CardTitle>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Players by Device
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-64">
-              <div className="space-y-2">
-                {systemLogs.slice(0, 20).map((log) => (
-                  <div key={log.id} className="p-2 rounded bg-white/5">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            log.level === 'error' ? 'border-red-500 text-red-400' :
-                            log.operation === 'chat_message' ? 'border-blue-500 text-blue-400' :
-                            log.operation === 'page_visit' ? 'border-green-500 text-green-400' :
-                            'border-white/30 text-white/70'
-                          }`}
-                        >
-                          {log.operation}
-                        </Badge>
-                        <p className="text-white/80 text-sm mt-1">{log.message}</p>
-                        {log.details && (
-                          <p className="text-white/60 text-xs mt-1">
-                            {typeof log.details === 'string' 
-                              ? log.details.slice(0, 100) 
-                              : JSON.stringify(log.details).slice(0, 100)
-                            }
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-white/60 text-xs">
-                        {new Date(log.created_at).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={analytics.playersByDevice}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="device" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px'
+                  }} 
+                />
+                <Bar dataKey="count" fill="#8B5CF6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Gamemode Popularity */}
+        <Card className="bg-gray-900/50 border-gray-700/50 lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-white">Gamemode Popularity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={analytics.topGamemodes}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="gamemode" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px'
+                  }} 
+                />
+                <Bar dataKey="players" fill="#06B6D4" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Activity */}
+      <Card className="bg-gray-900/50 border-gray-700/50">
+        <CardHeader>
+          <CardTitle className="text-white">Recent Activity (Last 7 Days)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={analytics.recentActivity}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1F2937', 
+                  border: '1px solid #374151',
+                  borderRadius: '8px'
+                }} 
+              />
+              <Bar dataKey="registrations" fill="#10B981" name="New Registrations" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};

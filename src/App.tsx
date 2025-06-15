@@ -1,54 +1,45 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from '@/components/theme-provider';
-import { PopupProvider } from '@/contexts/PopupContext';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { useVisitorTracking } from '@/hooks/useVisitorTracking';
-import Index from './pages/Index';
-import AdminPanel from './pages/AdminPanel';
-import SubcategoryPage from './pages/SubcategoryPage';
-import { FloatingChatButton } from './components/FloatingChatButton';
-import NotFound from './pages/NotFound';
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import SubcategoryPage from "./pages/SubcategoryPage";
+import AdminPanel from "./pages/AdminPanel";
+import NotFound from "./pages/NotFound";
+import { PopupProvider } from "./contexts/PopupContext";
+import { ModernResultPopup } from "./components/ModernResultPopup";
+import { useErrorHandler } from "./hooks/useErrorHandler";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  useErrorHandler();
-  useVisitorTracking();
+  useErrorHandler(); // Move the hook call inside a proper React component
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/crystal" element={<SubcategoryPage />} />
-        <Route path="/sword" element={<SubcategoryPage />} />
-        <Route path="/smp" element={<SubcategoryPage />} />
-        <Route path="/uhc" element={<SubcategoryPage />} />
-        <Route path="/axe" element={<SubcategoryPage />} />
-        <Route path="/nethpot" element={<SubcategoryPage />} />
-        <Route path="/bedwars" element={<SubcategoryPage />} />
-        <Route path="/mace" element={<SubcategoryPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <FloatingChatButton />
-    </div>
+    <>
+      <Toaster />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/:category" element={<SubcategoryPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+      <ModernResultPopup />
+    </>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <TooltipProvider>
         <PopupProvider>
-          <Router>
-            <AppContent />
-            <Toaster />
-          </Router>
+          <AppContent />
         </PopupProvider>
-      </ThemeProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

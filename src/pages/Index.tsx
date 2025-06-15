@@ -14,7 +14,6 @@ import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { usePointsCalculation } from '@/hooks/usePointsCalculation';
 import { FloatingChatButton } from '../components/FloatingChatButton';
-import { ResultPopup } from '../components/ResultPopup';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,8 +26,6 @@ const Index = () => {
   usePointsCalculation();
 
   const handlePlayerClick = (player: Player) => {
-    console.log('Player clicked:', player.ign);
-    
     const rankInfo = getPlayerRank(player.global_points || 0);
     
     const tierAssignments = (player.tierAssignments || []).map(assignment => ({
@@ -37,22 +34,19 @@ const Index = () => {
       score: assignment.score
     }));
     
-    const popupData = {
+    openPopup({
       player,
       tierAssignments,
       combatRank: {
         title: rankInfo.title,
         points: player.global_points || 0,
         color: rankInfo.color,
-        effectType: 'general' as const,
+        effectType: 'general',
         rankNumber: player.overall_rank || 1,
         borderColor: rankInfo.borderColor
       },
       timestamp: new Date().toISOString()
-    };
-    
-    console.log('Opening popup with data:', popupData);
-    openPopup(popupData);
+    });
   };
 
   const handleSelectMode = (mode: string) => {
@@ -112,9 +106,6 @@ const Index = () => {
       
       {/* Floating Chat Button */}
       <FloatingChatButton />
-      
-      {/* Result Popup */}
-      <ResultPopup />
     </div>
   );
 };

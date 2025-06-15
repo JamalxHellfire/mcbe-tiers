@@ -6,7 +6,6 @@ import { ChevronRight, Trophy, Monitor, Smartphone, Gamepad } from 'lucide-react
 import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
-import { getPlayerRank } from '@/utils/rankUtils';
 
 interface TierResultButtonProps {
   player: Player;
@@ -32,17 +31,10 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
   const { openPopup } = usePopup();
   const playerPoints = player.global_points || 0;
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('TierResultButton: Button clicked for player:', player.ign);
-    
+  const handleClick = () => {
     if (onClick) {
       onClick(player);
     }
-    
-    const rankInfo = getPlayerRank(playerPoints);
     
     // Convert tierAssignments to match expected interface
     const tierAssignments = (player.tierAssignments || []).map(assignment => ({
@@ -51,22 +43,19 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
       score: assignment.score
     }));
     
-    const popupData = {
+    openPopup({
       player,
       tierAssignments,
       combatRank: {
-        title: rankInfo.title,
+        title: 'Combat Rank',
         points: playerPoints,
-        color: rankInfo.color,
+        color: 'text-white',
         effectType: 'general',
         rankNumber: player.overall_rank || 1,
-        borderColor: rankInfo.borderColor
+        borderColor: 'border-white'
       },
       timestamp: new Date().toISOString()
-    };
-    
-    console.log('TierResultButton: Opening popup with data:', popupData);
-    openPopup(popupData);
+    });
   };
 
   return (
