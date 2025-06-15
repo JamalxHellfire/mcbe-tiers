@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
   UploadCloud, 
@@ -13,8 +12,7 @@ import {
   Terminal,
   UserCog,
   Shield,
-  Globe,
-  Settings
+  Globe
 } from 'lucide-react';
 
 export type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications' | 'country-analytics';
@@ -101,8 +99,8 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
           if (isMobile) setMobileMenuOpen(false);
         }}
         className={cn(
-          "group relative p-3 rounded-xl transition-all duration-200",
-          "border backdrop-blur-sm text-left w-full",
+          "group relative p-3 rounded-lg transition-all duration-200",
+          "border backdrop-blur-sm text-left w-full hover:scale-[1.02]",
           activeTab === tab.id
             ? "bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/50 shadow-lg shadow-purple-500/25"
             : "bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-gray-600/50"
@@ -139,7 +137,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
         "transition-all duration-300 overflow-hidden",
         mobileMenuOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="space-y-4 p-4 bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl">
+        <div className="space-y-4 p-4 bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl shadow-2xl">
           {navCategories.map((category) => {
             const visibleCategoryTabs = category.tabs.filter(tab => visibleTabs.includes(tab.id));
             if (visibleCategoryTabs.length === 0) return null;
@@ -164,19 +162,19 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
   }
 
   return (
-    <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl p-4 shadow-2xl">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {navCategories.map((category) => {
           const visibleCategoryTabs = category.tabs.filter(tab => visibleTabs.includes(tab.id));
           if (visibleCategoryTabs.length === 0) return null;
 
           return (
-            <div key={category.title} className="space-y-4">
-              <div className="flex items-center space-x-3 pb-2 border-b border-gray-700/30">
-                <div className="p-2 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30">
-                  <category.icon className="h-5 w-5 text-purple-400" />
+            <div key={category.title} className="space-y-3">
+              <div className="flex items-center space-x-2 pb-2 border-b border-gray-700/30">
+                <div className="p-1.5 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30">
+                  <category.icon className="h-4 w-4 text-purple-400" />
                 </div>
-                <h3 className="text-lg font-bold text-white">{category.title}</h3>
+                <h3 className="text-base font-bold text-white">{category.title}</h3>
               </div>
               <div className="space-y-2">
                 {visibleCategoryTabs.map((tab) => (

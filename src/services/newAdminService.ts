@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
-interface AdminApplication {
+export interface AdminApplication {
   id: string;
   discord: string;
   ip_address: string;
@@ -34,7 +35,7 @@ export const newAdminService = {
         .select('*')
         .eq('secret_key', secretKey)
         .eq('ip_address', ipAddress)
-        .eq('status', 'pending')
+        .eq('status', 'approved')
         .single();
 
       if (applicationError) {
@@ -43,34 +44,14 @@ export const newAdminService = {
       }
 
       if (!application) {
-        return { success: false, error: 'No pending application found.' };
-      }
-
-      // Mark application as approved and get the requested role
-      const requestedRole = application.requested_role;
-      const applicationId = application.id;
-
-      // Fetch the admin user to get the role
-      const { data: adminUser, error: adminUserError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('id', applicationId)
-        .single();
-
-      if (adminUserError) {
-        console.error('Admin user fetch error:', adminUserError);
-        return { success: false, error: 'Failed to fetch admin user.' };
-      }
-
-      if (!adminUser) {
-        return { success: false, error: 'Admin user not found.' };
+        return { success: false, error: 'No approved application found.' };
       }
 
       const sessionToken = this.generateSessionToken();
       localStorage.setItem('admin_session_token', sessionToken);
-      localStorage.setItem('admin_user_role', adminUser.role);
+      localStorage.setItem('admin_user_role', application.requested_role);
 
-      return { success: true, sessionToken: sessionToken, role: adminUser.role };
+      return { success: true, sessionToken: sessionToken, role: application.requested_role };
     } catch (error: any) {
       console.error('Admin login error:', error);
       return { success: false, error: error.message };
@@ -89,6 +70,53 @@ export const newAdminService = {
   async clearAllAuthState(): Promise<void> {
     localStorage.removeItem('admin_session_token');
     localStorage.removeItem('admin_user_role');
+  },
+
+  async checkAdminAccess(): Promise<{ hasAccess: boolean; role?: string }> {
+    const token = localStorage.getItem('admin_session_token');
+    const role = localStorage.getItem('admin_user_role');
+    
+    if (!token || !role) {
+      return { hasAccess: false };
+    }
+
+    const isValid = await this.validateSession(token);
+    return { hasAccess: isValid, role: isValid ? role : undefined };
+  },
+
+  async submitOnboardingApplication(discord: string, secretKey: string, requestedRole: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const ipAddress = 'unknown'; // Since we can't get real IP in browser
+      
+      const { error } = await supabase
+        .from('admin_applications')
+        .insert({
+          discord,
+          ip_address: ipAddress,
+          secret_key: secretKey,
+          requested_role: requestedRole,
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('Submit application error:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Submit application error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async authenticateAdmin(secretKey: string): Promise<LoginResult> {
+    const ipAddress = 'unknown'; // Since we can't get real IP in browser
+    return this.adminLogin(secretKey, ipAddress);
+  },
+
+  async aggressiveManualRecheck(): Promise<{ hasAccess: boolean; role?: string }> {
+    return this.checkAdminAccess();
   },
 
   generateSessionToken(): string {
@@ -118,10 +146,8 @@ export const newAdminService = {
 
   async clearAllAdminSessions(): Promise<{ success: boolean; error?: string }> {
     try {
-      // No direct way to invalidate sessions in localStorage, so this is a mock clear
       localStorage.removeItem('admin_session_token');
       localStorage.removeItem('admin_user_role');
-
       return { success: true };
     } catch (error: any) {
       console.error('Clear sessions error:', error);
@@ -129,7 +155,6 @@ export const newAdminService = {
     }
   },
 
-  // Review application with role assignment
   async reviewApplicationWithRole(
     applicationId: string, 
     action: 'approve' | 'deny', 
@@ -140,16 +165,26 @@ export const newAdminService = {
       console.log(`Reviewing application ${applicationId} with action: ${action}, role: ${assignedRole}`);
       
       if (action === 'approve' && assignedRole) {
-        // Type assertion to ensure role is valid
-        const validRole = assignedRole as 'owner' | 'admin' | 'moderator' | 'tester';
-        
-        // Insert into admin_users table with proper role type
+        // Get application data first
+        const { data: application, error: appError } = await supabase
+          .from('admin_applications')
+          .select('*')
+          .eq('id', applicationId)
+          .single();
+
+        if (appError || !application) {
+          console.error('Application fetch error:', appError);
+          return { success: false, error: 'Application not found' };
+        }
+
+        // Insert into admin_users table
         const { error: insertError } = await supabase
           .from('admin_users')
           .insert({
-            approved_by: 'owner', // Since only owners can review
-            role: validRole,
-            approved_at: new Date().toISOString()
+            approved_by: reviewerRole,
+            role: assignedRole,
+            approved_at: new Date().toISOString(),
+            ip_address: application.ip_address
           });
 
         if (insertError) {
