@@ -5,6 +5,7 @@ import { X, Trophy } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RankBadgeEffects, RankText, PositionBadge } from './RankBadgeEffects';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
@@ -57,168 +58,6 @@ export function ResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Setup canvas for rank-specific effects
-  useEffect(() => {
-    if (!showPopup || !popupData || !canvasRef.current) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Set canvas dimensions to match container
-    const resizeCanvas = () => {
-      if (canvas.parentElement) {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-      }
-    };
-    
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    
-    // Effect configurations based on rank
-    const effectType = popupData.combatRank.effectType;
-    
-    // Particle configurations for different ranks
-    const particleConfigs = {
-      'general': {
-        colors: ['#ff4d4d', '#ff7f50', '#ffcc00', '#ff9966'],
-        size: { min: 2, max: 5 },
-        speed: 1.5,
-        count: 80,
-        opacity: { min: 0.4, max: 0.8 }
-      },
-      'marshal': {
-        colors: ['#ffd700', '#ffcc00', '#ffec99', '#fff9c4'],
-        size: { min: 1.5, max: 4 },
-        speed: 1.2,
-        count: 60,
-        opacity: { min: 0.3, max: 0.7 }
-      },
-      'ace': {
-        colors: ['#C0C0C0', '#E8E8E8', '#A9A9A9', '#D3D3D3'],
-        size: { min: 1, max: 3 },
-        speed: 1,
-        count: 50,
-        opacity: { min: 0.2, max: 0.6 }
-      },
-      'cadet': {
-        colors: ['#4169E1', '#1E90FF', '#87CEEB', '#00BFFF'],
-        size: { min: 0.8, max: 2.5 },
-        speed: 0.8,
-        count: 40,
-        opacity: { min: 0.2, max: 0.5 }
-      },
-      'rookie': {
-        colors: ['#FFFFFF', '#F8F8FF', '#F0F8FF'],
-        size: { min: 0.5, max: 1.5 },
-        speed: 0.5,
-        count: 30,
-        opacity: { min: 0.1, max: 0.3 }
-      }
-    };
-    
-    const config = particleConfigs[effectType as keyof typeof particleConfigs] || particleConfigs.rookie;
-    const particles: Array<{
-      x: number;
-      y: number;
-      size: number;
-      color: string;
-      speedX: number;
-      speedY: number;
-      opacity: number;
-      life: number;
-      maxLife: number;
-    }> = [];
-    
-    // Avatar position (center of the avatar)
-    const avatarX = canvas.width / 2;
-    const avatarY = canvas.height / 4;
-    const avatarRadius = 40;
-    
-    // Create particles around the avatar
-    const createParticle = () => {
-      if (particles.length > config.count) return;
-      
-      // Create particle at random position around avatar
-      const angle = Math.random() * Math.PI * 2;
-      const distance = avatarRadius + Math.random() * 10;
-      
-      const x = avatarX + Math.cos(angle) * distance;
-      const y = avatarY + Math.sin(angle) * distance;
-      
-      const size = config.size.min + Math.random() * (config.size.max - config.size.min);
-      const color = config.colors[Math.floor(Math.random() * config.colors.length)];
-      
-      // Random direction
-      const speedX = (Math.random() - 0.5) * config.speed;
-      const speedY = (Math.random() - 0.5) * config.speed;
-      
-      const opacity = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
-      
-      // Add to particles array
-      particles.push({
-        x,
-        y,
-        size,
-        color,
-        speedX,
-        speedY,
-        opacity,
-        life: 0,
-        maxLife: 50 + Math.random() * 50
-      });
-    };
-    
-    // Animation loop
-    let animationId: number;
-    
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Create new particles
-      if (Math.random() > 0.8) {
-        createParticle();
-      }
-      
-      // Update and draw particles
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        
-        p.x += p.speedX;
-        p.y += p.speedY;
-        p.life++;
-        
-        // Fade out as life increases
-        const opacity = p.opacity * (1 - (p.life / p.maxLife));
-        
-        // Draw particle
-        ctx.globalAlpha = opacity;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Remove dead particles
-        if (p.life >= p.maxLife) {
-          particles.splice(i, 1);
-          i--;
-        }
-      }
-      
-      ctx.globalAlpha = 1;
-      animationId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    // Cleanup
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, [showPopup, popupData]);
-  
   // Click outside to close
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -231,9 +70,8 @@ export function ResultPopup() {
   // Get region info for styling
   const region = popupData.player.region || 'NA';
   const regionInfo = getRegionInfo(region);
-  
-  // Rank CSS class
-  const rankColorClass = `rank-color-${popupData.combatRank.effectType}`;
+  const playerPoints = popupData.player.global_points || 0;
+  const position = popupData.player.overall_rank || 1;
   
   // Ordered gamemode layout
   const orderedGamemodes: GameMode[] = [
@@ -253,18 +91,12 @@ export function ResultPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div 
-            className={`popup-container ${rankColorClass}`}
+            className="popup-container relative"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
-            {/* Canvas for particle effects */}
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 pointer-events-none z-10"
-            />
-            
             {/* Region-based gradient overlay */}
             <div className={`region-gradient ${regionInfo.cssClass}`}></div>
             
@@ -286,10 +118,10 @@ export function ResultPopup() {
             </div>
             
             <div className="p-6 relative z-20">
-              {/* Avatar section */}
+              {/* Avatar section with enhanced rank badge */}
               <div className="flex flex-col sm:flex-row items-center mb-6">
                 <div className="relative mb-4 sm:mb-0 sm:mr-6">
-                  <div className={`avatar-effect-wrapper`}>
+                  <div className="relative">
                     <Avatar className="h-24 w-24 border-4 border-white/20 shadow-lg">
                       <AvatarImage 
                         src={`https://crafatar.com/avatars/${popupData.player.ign}?size=128&overlay=true`}
@@ -298,8 +130,14 @@ export function ResultPopup() {
                       <AvatarFallback>{popupData.player.ign.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     
-                    {/* Rank-based effect */}
-                    <div className={`avatar-effect effect-${popupData.combatRank.effectType}`}></div>
+                    {/* Enhanced rank badge positioned at bottom right of avatar */}
+                    <div className="absolute -bottom-2 -right-2">
+                      <RankBadgeEffects 
+                        points={playerPoints} 
+                        size="md" 
+                        animated={true}
+                      />
+                    </div>
                   </div>
                 </div>
                 
@@ -326,20 +164,19 @@ export function ResultPopup() {
                   
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                     <Trophy className="h-4 w-4 text-yellow-400" />
-                    <span className="text-yellow-200 font-medium">{popupData.combatRank.points} points</span>
+                    <span className="text-yellow-200 font-medium">{playerPoints} points</span>
                   </div>
                   
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${popupData.combatRank.color} bg-black/40 border ${popupData.combatRank.borderColor}`}>
-                    <span>{popupData.combatRank.title}</span>
+                  <div className="mb-3">
+                    <RankText points={playerPoints} className="text-white text-lg" />
                   </div>
                 </div>
               </div>
               
-              {/* Rank & Device information */}
+              {/* Enhanced Rank & Device information */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-black/40 border border-white/10 rounded-lg p-3 text-center">
-                  <span className="text-gray-400 text-xs block mb-1">Rank</span>
-                  <span className="text-white text-lg font-bold">#{popupData.combatRank.rankNumber}</span>
+                <div className="flex items-center justify-center">
+                  <PositionBadge position={position} points={playerPoints} />
                 </div>
                 
                 <div className="bg-black/40 border border-white/10 rounded-lg p-3 text-center">
