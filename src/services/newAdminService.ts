@@ -25,7 +25,30 @@ interface LoginResult {
   sessionToken?: string;
   error?: string;
   role?: string;
+  needsOnboarding?: boolean;
+  debug?: any[];
 }
+
+// Clear all authentication state
+export const clearAllAuthState = (): void => {
+  localStorage.removeItem('admin_session_token');
+  localStorage.removeItem('admin_user_role');
+  localStorage.removeItem('admin_role');
+  localStorage.removeItem('admin_ip');
+  localStorage.removeItem('admin_session_active');
+  
+  Object.keys(localStorage).forEach(key => {
+    if (key.includes('admin') || key.includes('auth')) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  sessionStorage.clear();
+  
+  document.cookie.split(";").forEach(function(c) { 
+    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+  });
+};
 
 export const newAdminService = {
   async adminLogin(secretKey: string, ipAddress: string): Promise<LoginResult> {
@@ -68,33 +91,36 @@ export const newAdminService = {
   },
 
   async clearAllAuthState(): Promise<void> {
-    localStorage.removeItem('admin_session_token');
-    localStorage.removeItem('admin_user_role');
+    clearAllAuthState();
   },
 
-  async checkAdminAccess(): Promise<{ hasAccess: boolean; role?: string }> {
+  async checkAdminAccess(): Promise<{ hasAccess: boolean; role?: string; detail?: any[] }> {
     const token = localStorage.getItem('admin_session_token');
-    const role = localStorage.getItem('admin_user_role');
+    const role = localStorage.getItem('admin_user_role') || localStorage.getItem('admin_role');
     
     if (!token || !role) {
-      return { hasAccess: false };
+      return { hasAccess: false, detail: ['No token or role found in localStorage'] };
     }
 
     const isValid = await this.validateSession(token);
-    return { hasAccess: isValid, role: isValid ? role : undefined };
+    return { 
+      hasAccess: isValid, 
+      role: isValid ? role : undefined,
+      detail: isValid ? ['Valid session found'] : ['Invalid session']
+    };
   },
 
-  async submitOnboardingApplication(discord: string, secretKey: string, requestedRole: string): Promise<{ success: boolean; error?: string }> {
+  async submitOnboardingApplication(data: { discord: string; secretKey: string; requestedRole: string }): Promise<{ success: boolean; error?: string }> {
     try {
       const ipAddress = 'unknown'; // Since we can't get real IP in browser
       
       const { error } = await supabase
         .from('admin_applications')
         .insert({
-          discord,
+          discord: data.discord,
           ip_address: ipAddress,
-          secret_key: secretKey,
-          requested_role: requestedRole,
+          secret_key: data.secretKey,
+          requested_role: data.requestedRole as 'admin' | 'moderator' | 'tester',
           status: 'pending'
         });
 
@@ -110,12 +136,40 @@ export const newAdminService = {
     }
   },
 
-  async authenticateAdmin(secretKey: string): Promise<LoginResult> {
-    const ipAddress = 'unknown'; // Since we can't get real IP in browser
-    return this.adminLogin(secretKey, ipAddress);
+  async authenticateAdmin(secretKey: string, debug?: boolean): Promise<LoginResult> {
+    try {
+      // Check if it's the owner password
+      if (secretKey === "$$nullnox911$$") {
+        localStorage.setItem('admin_role', 'owner');
+        localStorage.setItem('admin_session_token', this.generateSessionToken());
+        return { 
+          success: true, 
+          role: 'owner',
+          debug: debug ? ['Owner password matched'] : undefined
+        };
+      }
+
+      // Check for general password that needs onboarding
+      if (secretKey === "admin123") {
+        return { 
+          success: true, 
+          needsOnboarding: true,
+          debug: debug ? ['General password matched - needs onboarding'] : undefined
+        };
+      }
+
+      const ipAddress = 'unknown';
+      return this.adminLogin(secretKey, ipAddress);
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.message,
+        debug: debug ? ['Authentication error: ' + error.message] : undefined
+      };
+    }
   },
 
-  async aggressiveManualRecheck(): Promise<{ hasAccess: boolean; role?: string }> {
+  async aggressiveManualRecheck(): Promise<{ hasAccess: boolean; role?: string; detail?: any[] }> {
     return this.checkAdminAccess();
   },
 
@@ -182,7 +236,7 @@ export const newAdminService = {
           .from('admin_users')
           .insert({
             approved_by: reviewerRole,
-            role: assignedRole,
+            role: assignedRole as 'admin' | 'moderator' | 'tester',
             approved_at: new Date().toISOString(),
             ip_address: application.ip_address
           });

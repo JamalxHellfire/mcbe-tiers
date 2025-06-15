@@ -26,11 +26,10 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [manualAccessCheckRunning, setManualAccessCheckRunning] = useState(false);
 
-  // -- Handle Onboarding Submit (MISSING HANDLER)
+  // Handle Onboarding Submit
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onboardingData.discord || !onboardingData.requestedRole || !onboardingData.secretKey) {
-      // Optionally, log afield error, but do not show to user
       console.warn('[ADMIN DEBUG] Onboarding: Required field missing');
       return;
     }
@@ -40,22 +39,19 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
       if (result.success) {
         setStep('pending');
       } else {
-        // Silently fail (log only)
         console.warn('[ADMIN DEBUG] Onboarding submission failed', result.error);
       }
     } catch (error) {
       console.error('[ADMIN DEBUG] Onboarding error:', error);
-      // Do not show to user
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Authentication submit (allow owner shortcut bypass)
+  // Authentication submit
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim()) {
-      // Do not show toast, per requirements; just log
       console.warn('[ADMIN DEBUG] No password entered');
       return;
     }
@@ -77,7 +73,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
         return;
       }
 
-      // Behavioral: Only call remote if not shortcut
+      // Only call remote if not shortcut
       const result = await newAdminService.authenticateAdmin(password, true);
 
       if (result.success) {
@@ -92,7 +88,6 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
           return;
         }
       } else {
-        // Fail silently for wrong password (no UI toast), log only
         setDebugInfo(result.debug || []);
         if (result.error) {
           console.warn("[ADMIN DEBUG] Login error/detail:", result.error);
@@ -100,7 +95,6 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
       }
     } catch (error) {
       console.error('[ADMIN DEBUG] Login error (frontend):', error);
-      // No UI feedback
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +103,6 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
   // ENTER key triggers login form submit
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
-      // "as any" is typesafe for React onSubmit; delegate event
       handlePasswordSubmit(e as any);
     }
   };
@@ -127,7 +120,6 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
           window.location.reload();
         }, 120);
       } else {
-        // Fail silently, log only
         console.warn("[ADMIN DEBUG] Manual access force-check failed.");
       }
     } finally {
@@ -292,9 +284,6 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             </Button>
           </form>
 
-          {/* AGGRESSIVE TROUBLESHOOT UI */}
-          {/* No auth errors output per requirements */}
-
           {debugInfo && debugInfo.length > 0 && (
             <div className="mt-2 max-h-40 overflow-y-auto p-2 text-xs rounded bg-gray-900/60 text-sky-200 border border-sky-400/20">
               <b>Debug Trace:</b>
@@ -333,4 +322,3 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
     </div>
   );
 };
-
