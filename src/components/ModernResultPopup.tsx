@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -269,21 +268,25 @@ export function ModernResultPopup() {
                           style={{
                             width: isMobile ? 36 : 44,
                             height: isMobile ? 36 : 44,
-                            border: `2px solid ${tier.color}`,
+                            border: `2px solid ${regionStyling.borderColor}`,
                             background: `rgba(255,255,255,0.1)`,
-                            backdropFilter: 'blur(4px)'
+                            backdropFilter: 'blur(4px)',
+                            boxShadow: `0 0 15px ${regionStyling.hexColor}40, 0 4px 8px rgba(0, 0, 0, 0.3)`
                           }}
                         >
                           <GameModeIcon mode={mode.toLowerCase()} className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
                         </div>
                         <div
-                          className={`font-bold rounded-md py-1 px-2 bg-white/10 border border-white/20 shadow-sm backdrop-blur-sm ${
+                          className={`font-bold rounded-md py-1 px-2 border shadow-sm backdrop-blur-sm ${
                             isMobile ? 'text-xs px-1.5 py-0.5' : 'text-xs px-2 py-1'
                           }`}
                           style={{
                             color: tier.color,
                             fontSize: isMobile ? '0.6rem' : '0.65rem',
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.05em',
+                            background: `rgba(255,255,255,0.1)`,
+                            borderColor: `${regionStyling.borderColor}60`,
+                            boxShadow: `0 0 8px ${regionStyling.hexColor}20`
                           }}
                         >
                           {tier.code}
