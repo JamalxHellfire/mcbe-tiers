@@ -129,26 +129,26 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
   if (step === 'pending') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
-          <CardHeader className="text-center space-y-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-3">
+        <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+          <CardHeader className="text-center space-y-3 pb-4">
             <div className="flex justify-center">
-              <div className="p-3 bg-gradient-to-br from-green-600 to-blue-600 rounded-full">
-                <CheckCircle className="h-8 w-8 text-white" />
+              <div className="p-2 md:p-3 bg-gradient-to-br from-green-600 to-blue-600 rounded-full">
+                <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-white via-green-200 to-blue-200 bg-clip-text text-transparent">
+            <CardTitle className="text-lg md:text-2xl font-bold bg-gradient-to-r from-white via-green-200 to-blue-200 bg-clip-text text-transparent">
               Application Submitted
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-400 text-sm">
               Your application has been submitted successfully. You'll get access if approved by the owner.
             </CardDescription>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="pt-0">
             <Button 
               onClick={() => window.location.reload()}
-              className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
+              className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300"
             >
               Check Status
             </Button>
@@ -160,23 +160,23 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
   if (step === 'onboarding') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
-          <CardHeader className="text-center space-y-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-3">
+        <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+          <CardHeader className="text-center space-y-3 pb-4">
             <div className="flex justify-center">
-              <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full">
-                <UserPlus className="h-8 w-8 text-white" />
+              <div className="p-2 md:p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full">
+                <UserPlus className="h-6 w-6 md:h-8 md:w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+            <CardTitle className="text-lg md:text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
               Admin Application
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-400 text-sm">
               Please complete your application for admin access
             </CardDescription>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="pt-0">
             <form onSubmit={handleOnboardingSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">
@@ -185,10 +185,10 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
                 <Select value={onboardingData.requestedRole} onValueChange={(value) => 
                   setOnboardingData(prev => ({ ...prev, requestedRole: value }))
                 }>
-                  <SelectTrigger className="bg-gray-800/50 border-gray-600/50 text-white">
+                  <SelectTrigger className="bg-gray-800/50 border-gray-600/50 text-white h-10">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-gray-800 border-gray-600 z-50">
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="moderator">Moderator</SelectItem>
                     <SelectItem value="tester">Tester</SelectItem>
@@ -198,35 +198,35 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">
-                  What is your Discord username?
+                  Discord username
                 </label>
                 <Input
                   type="text"
                   value={onboardingData.discord}
                   onChange={(e) => setOnboardingData(prev => ({ ...prev, discord: e.target.value }))}
                   placeholder="your_discord_username"
-                  className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500"
+                  className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 h-10"
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">
-                  Enter the secret key you got from the owner
+                  Secret key from owner
                 </label>
                 <Input
                   type="password"
                   value={onboardingData.secretKey}
                   onChange={(e) => setOnboardingData(prev => ({ ...prev, secretKey: e.target.value }))}
                   placeholder="Secret key"
-                  className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500"
+                  className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 h-10"
                   disabled={isLoading}
                 />
               </div>
               
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300 h-10"
                 disabled={isLoading}
               >
                 {isLoading ? 'Submitting...' : 'Submit Application'}
@@ -239,22 +239,23 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
-        <CardHeader className="text-center space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-3">
+      <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+        <CardHeader className="text-center space-y-3 pb-4">
           <div className="flex justify-center">
-            <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full">
-              <Shield className="h-8 w-8 text-white" />
+            <div className="p-2 md:p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full">
+              <Shield className="h-6 w-6 md:h-8 md:w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+          <CardTitle className="text-lg md:text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
             Admin Access
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-gray-400 text-sm">
             Enter your admin password to access the dashboard
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        
+        <CardContent className="pt-0">
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-gray-300">
@@ -269,7 +270,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder="Enter admin password"
-                  className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/25"
+                  className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/25 h-10"
                   disabled={isLoading}
                   autoComplete="off"
                 />
@@ -277,7 +278,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             </div>
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300 h-10"
               disabled={isLoading}
             >
               {isLoading ? 'Authenticating...' : 'Access Admin Panel'}
@@ -285,16 +286,16 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
           </form>
 
           {debugInfo && debugInfo.length > 0 && (
-            <div className="mt-2 max-h-40 overflow-y-auto p-2 text-xs rounded bg-gray-900/60 text-sky-200 border border-sky-400/20">
+            <div className="mt-3 max-h-32 overflow-y-auto p-2 text-xs rounded bg-gray-900/60 text-sky-200 border border-sky-400/20">
               <b>Debug Trace:</b>
-              <pre className="whitespace-pre-wrap break-words">{JSON.stringify(debugInfo, null, 2)}</pre>
+              <pre className="whitespace-pre-wrap break-words text-xs">{JSON.stringify(debugInfo, null, 2)}</pre>
             </div>
           )}
 
-          <div className="flex flex-col gap-2 mt-3">
+          <div className="flex flex-col gap-2 mt-4">
             <Button 
               variant="ghost"
-              className="w-full border border-purple-400/20 text-purple-300 hover:bg-purple-800/30"
+              className="w-full border border-purple-400/20 text-purple-300 hover:bg-purple-800/30 h-9 text-sm"
               onClick={handleManualRecheck}
               disabled={isLoading || manualAccessCheckRunning}
               type="button"
@@ -303,7 +304,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             </Button>
             <Button
               variant="ghost"
-              className="w-full border border-gray-400/30 text-gray-300 hover:bg-gray-700/40"
+              className="w-full border border-gray-400/30 text-gray-300 hover:bg-gray-700/40 h-9 text-sm"
               onClick={() => window.location.reload()}
               type="button"
               disabled={isLoading || manualAccessCheckRunning}

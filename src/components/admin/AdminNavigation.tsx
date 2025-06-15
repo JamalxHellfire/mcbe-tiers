@@ -3,7 +3,6 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { 
   Users, 
-  Wrench, 
   BarChart3, 
   Database,
   UserCheck,
@@ -12,7 +11,7 @@ import {
   Shield
 } from 'lucide-react';
 
-export type AdminTab = 'submit' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'applications';
+export type AdminTab = 'submit' | 'console' | 'analytics' | 'database' | 'users' | 'applications';
 
 interface AdminNavigationProps {
   activeTab: AdminTab;
@@ -27,11 +26,11 @@ interface AdminNavigationProps {
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
+      return ['submit', 'console', 'analytics', 'database', 'users', 'applications'];
     case 'admin':
-      return ['submit', 'tools', 'analytics', 'database', 'users', 'blackbox'];
+      return ['submit', 'console', 'analytics', 'database', 'users'];
     case 'moderator':
-      return ['submit', 'analytics', 'blackbox'];
+      return ['submit', 'analytics', 'console'];
     case 'tester':
       return ['submit'];
     default:
@@ -68,17 +67,16 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
       title: "Management",
       icon: Shield,
       tabs: [
-        { id: 'users' as AdminTab, label: 'Users & Players', icon: UserCheck, description: 'User moderation and player management' },
+        { id: 'users' as AdminTab, label: 'Users & Players', icon: UserCheck, description: 'Unified user moderation and player management' },
         { id: 'applications' as AdminTab, label: 'Staff Apps', icon: UserCog, description: 'Staff applications and members' }
       ]
     },
     {
       title: "System",
-      icon: Wrench,
+      icon: Terminal,
       tabs: [
-        { id: 'tools' as AdminTab, label: 'System Tools', icon: Wrench, description: 'Mass tools, logs, and monitoring' },
-        { id: 'database' as AdminTab, label: 'Database', icon: Database, description: 'Database management' },
-        { id: 'blackbox' as AdminTab, label: 'Monitor', icon: Terminal, description: 'Live system monitor' }
+        { id: 'console' as AdminTab, label: 'System Console', icon: Terminal, description: 'Unified console with logs, monitoring & mass tools' },
+        { id: 'database' as AdminTab, label: 'Database', icon: Database, description: 'Database management' }
       ]
     }
   ];
