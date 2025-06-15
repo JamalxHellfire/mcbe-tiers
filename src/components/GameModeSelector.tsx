@@ -31,11 +31,11 @@ export function GameModeSelector({ selectedMode = 'overall', onSelectMode }: Gam
           key={mode.id}
           onClick={() => onSelectMode(mode.id)}
           className={cn(
-            // Responsive px/py/font for mobile, tablet (md), desktop (lg)
+            // Slightly smaller than before, but still larger than the original
             "flex items-center justify-center rounded-lg whitespace-nowrap border transition-colors duration-150",
-            "text-xs px-3 py-1.5", // default: mobile
-            "md:text-base md:px-4 md:py-2", // tablet
-            "lg:text-lg lg:px-5 lg:py-2.5", // desktop
+            "text-[0.85rem] px-2.5 py-1", // mobile: 13.6px font, 10px x 4px padding
+            "md:text-[1rem] md:px-3 md:py-1.5", // tablet: 16px font, 12px x 6px padding
+            "lg:text-[1.12rem] lg:px-4 lg:py-2", // desktop: 18px font, 16px x 8px padding
             "font-semibold",
             mode.id === 'overall' ? "" : "",
             currentMode === mode.id 
@@ -46,8 +46,8 @@ export function GameModeSelector({ selectedMode = 'overall', onSelectMode }: Gam
           {mode.id !== 'overall' && (
             <GameModeIcon 
               mode={mode.id} 
-              // Icon 20px mobile, 28px tablet, 32px desktop
-              className="h-4 w-4 mr-1 md:h-7 md:w-7 md:mr-2 lg:h-8 lg:w-8 lg:mr-2.5" 
+              // Slightly smaller icons than before
+              className="h-3.5 w-3.5 mr-1 md:h-6 md:w-6 md:mr-2 lg:h-7 lg:w-7 lg:mr-2" 
             />
           )}
           {mode.label}
@@ -56,4 +56,3 @@ export function GameModeSelector({ selectedMode = 'overall', onSelectMode }: Gam
     </div>
   );
 }
-
