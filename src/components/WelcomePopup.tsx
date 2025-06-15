@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, Users } from 'lucide-react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface WelcomePopupProps {
   isOpen: boolean;
@@ -14,6 +15,10 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({ isOpen, onClose, visitorNum
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md w-[95vw] mx-auto bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 border border-purple-500/30 backdrop-blur-lg">
+        <VisuallyHidden>
+          <DialogTitle>Welcome to MCBE Tiers</DialogTitle>
+        </VisuallyHidden>
+        
         <div className="relative p-6 text-center">
           {/* Close button */}
           <Button

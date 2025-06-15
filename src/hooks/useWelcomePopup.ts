@@ -36,7 +36,9 @@ export const useWelcomePopup = () => {
         localStorage.setItem(VISITOR_COUNT_KEY, currentVisitorNumber);
       }
       
-      setVisitorNumber(parseInt(currentVisitorNumber));
+      const visitorNum = parseInt(currentVisitorNumber);
+      console.log('Setting visitor number:', visitorNum);
+      setVisitorNumber(visitorNum);
       
       // Show welcome popup after a brief delay for smooth loading
       const timer = setTimeout(() => {
@@ -44,6 +46,12 @@ export const useWelcomePopup = () => {
       }, 1000);
 
       return () => clearTimeout(timer);
+    } else {
+      // Even if welcome was shown before, we should still set the visitor number for display
+      const storedVisitorNumber = localStorage.getItem(VISITOR_COUNT_KEY);
+      if (storedVisitorNumber) {
+        setVisitorNumber(parseInt(storedVisitorNumber));
+      }
     }
   }, []);
 
