@@ -10,56 +10,63 @@ import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
 
-// Helper to get region colors and styling
+// Helper to get region colors and styling with proper hex colors for borders
 const getRegionStyling = (regionCode: string = 'NA') => {
   const regions: Record<string, { 
     name: string, 
     borderColor: string, 
     gradientFrom: string, 
     gradientTo: string,
-    glowColor: string 
+    glowColor: string,
+    hexColor: string
   }> = {
     'NA': { 
       name: 'North America', 
-      borderColor: 'border-green-500/80',
+      borderColor: 'border-green-500',
       gradientFrom: 'from-green-500/20',
       gradientTo: 'to-emerald-500/10',
-      glowColor: 'shadow-green-500/20'
+      glowColor: 'shadow-green-500/30',
+      hexColor: '#10b981'
     },
     'EU': { 
       name: 'Europe', 
-      borderColor: 'border-purple-500/80',
+      borderColor: 'border-purple-500',
       gradientFrom: 'from-purple-500/20',
       gradientTo: 'to-violet-500/10',
-      glowColor: 'shadow-purple-500/20'
+      glowColor: 'shadow-purple-500/30',
+      hexColor: '#8b5cf6'
     },
     'ASIA': { 
       name: 'Asia', 
-      borderColor: 'border-red-500/80',
+      borderColor: 'border-red-500',
       gradientFrom: 'from-red-500/20',
       gradientTo: 'to-rose-500/10',
-      glowColor: 'shadow-red-500/20'
+      glowColor: 'shadow-red-500/30',
+      hexColor: '#ef4444'
     },
     'SA': { 
       name: 'South America', 
-      borderColor: 'border-orange-500/80',
+      borderColor: 'border-orange-500',
       gradientFrom: 'from-orange-500/20',
       gradientTo: 'to-amber-500/10',
-      glowColor: 'shadow-orange-500/20'
+      glowColor: 'shadow-orange-500/30',
+      hexColor: '#f97316'
     },
     'AF': { 
       name: 'Africa', 
-      borderColor: 'border-fuchsia-500/80',
+      borderColor: 'border-fuchsia-500',
       gradientFrom: 'from-fuchsia-500/20',
       gradientTo: 'to-pink-500/10',
-      glowColor: 'shadow-fuchsia-500/20'
+      glowColor: 'shadow-fuchsia-500/30',
+      hexColor: '#ec4899'
     },
     'OCE': { 
       name: 'Oceania', 
-      borderColor: 'border-teal-500/80',
+      borderColor: 'border-teal-500',
       gradientFrom: 'from-teal-500/20',
       gradientTo: 'to-cyan-500/10',
-      glowColor: 'shadow-teal-500/20'
+      glowColor: 'shadow-teal-500/30',
+      hexColor: '#06b6d4'
     }
   };
   
@@ -133,7 +140,10 @@ export function ResultPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div 
-            className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl w-full max-w-md border-2 ${regionStyling.borderColor} ${regionStyling.glowColor} shadow-2xl overflow-hidden`}
+            className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl w-full max-w-md border-2 ${regionStyling.borderColor} shadow-2xl overflow-hidden`}
+            style={{
+              boxShadow: `0 0 30px ${regionStyling.hexColor}40, 0 8px 32px rgba(0, 0, 0, 0.4)`
+            }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -188,7 +198,13 @@ export function ResultPopup() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className={`px-3 py-0.5 rounded-full text-xs font-medium border ${regionStyling.borderColor} bg-gradient-to-r ${regionStyling.gradientFrom} ${regionStyling.gradientTo}`}>
+                          <span 
+                            className={`px-3 py-0.5 rounded-full text-xs font-medium border ${regionStyling.borderColor} bg-gradient-to-r ${regionStyling.gradientFrom} ${regionStyling.gradientTo}`}
+                            style={{
+                              borderColor: regionStyling.hexColor,
+                              boxShadow: `0 0 10px ${regionStyling.hexColor}30`
+                            }}
+                          >
                             {region}
                           </span>
                         </TooltipTrigger>
@@ -246,7 +262,13 @@ export function ResultPopup() {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className={`flex flex-col items-center p-3 bg-black/40 rounded-lg border ${regionStyling.borderColor} hover:border-white/20 transition-all cursor-help`}>
+                            <div 
+                              className={`flex flex-col items-center p-3 bg-black/40 rounded-lg border hover:border-white/20 transition-all cursor-help`}
+                              style={{
+                                borderColor: `${regionStyling.hexColor}60`,
+                                boxShadow: `0 0 5px ${regionStyling.hexColor}20`
+                              }}
+                            >
                               <div className="mb-2">
                                 <GameModeIcon mode={mode.toLowerCase()} className="h-8 w-8" />
                               </div>
