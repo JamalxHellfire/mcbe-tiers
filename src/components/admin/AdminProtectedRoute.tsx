@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AdminAuth } from './AdminAuth';
 import { adminService } from '@/services/adminService';
@@ -14,21 +13,30 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   useEffect(() => {
     const checkAccess = async () => {
       try {
+        // Prefer local session method:
+        const sessionActive = localStorage.getItem('admin_session_active');
+        const storedRole = localStorage.getItem('admin_role');
+        if (sessionActive === "true" && storedRole) {
+          setUserRole(storedRole);
+          setIsLoading(false);
+          return;
+        }
+        // fallback to DB if no local session
         console.log('AdminProtectedRoute: Checking access...');
         
         // First check local storage for existing session
         const sessionToken = localStorage.getItem('admin_session_token');
-        const storedRole = localStorage.getItem('admin_role');
+        const storedRoleFallback = localStorage.getItem('admin_role');
         
         console.log('Stored session token:', !!sessionToken);
-        console.log('Stored role:', storedRole);
+        console.log('Stored role:', storedRoleFallback);
         
-        if (sessionToken && storedRole) {
+        if (sessionToken && storedRoleFallback) {
           console.log('Found existing session, verifying...');
           const isValid = await adminService.verifyAdminSession(sessionToken);
           if (isValid) {
-            console.log('Session valid, setting role:', storedRole);
-            setUserRole(storedRole);
+            console.log('Session valid, setting role:', storedRoleFallback);
+            setUserRole(storedRoleFallback);
             setIsLoading(false);
             return;
           } else {
@@ -59,25 +67,28 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
         setIsLoading(false);
       }
     };
-
     checkAccess();
   }, []);
 
   const handleAuthSuccess = async () => {
     console.log('Auth success callback triggered');
-    
-    // Small delay to ensure database update is complete
-    setTimeout(async () => {
-      try {
-        const result = await adminService.checkAdminAccess();
-        if (result.hasAccess && result.role) {
-          console.log('Setting user role after auth success:', result.role);
-          setUserRole(result.role);
+    // Instead of DB check, read role from localStorage immediately
+    const storedRole = localStorage.getItem('admin_role');
+    if (storedRole) {
+      setUserRole(storedRole);
+    } else {
+      // fallback, but this should be rare
+      setTimeout(async () => {
+        try {
+          const result = await adminService.checkAdminAccess();
+          if (result.hasAccess && result.role) {
+            setUserRole(result.role);
+          }
+        } catch (error) {
+          console.error('Error in auth success callback:', error);
         }
-      } catch (error) {
-        console.error('Error in auth success callback:', error);
-      }
-    }, 500);
+      }, 250);
+    }
   };
 
   if (isLoading) {

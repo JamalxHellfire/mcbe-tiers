@@ -27,6 +27,7 @@ export const clearAllAuthState = (): void => {
   localStorage.removeItem('admin_session_token');
   localStorage.removeItem('admin_role');
   localStorage.removeItem('admin_ip');
+  localStorage.removeItem('admin_session_active');
   
   Object.keys(localStorage).forEach(key => {
     if (key.includes('admin') || key.includes('auth')) {
@@ -41,22 +42,14 @@ export const clearAllAuthState = (): void => {
   });
 };
 
-// Generate a consistent user IP for this session
-const getUserIP = async (): Promise<string> => {
-  // Try to get existing IP from localStorage first
-  let userIp = localStorage.getItem('admin_ip');
-  
-  if (!userIp) {
-    // Generate a new unique identifier
-    userIp = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem('admin_ip', userIp);
-  }
-  
-  return userIp;
-};
-
-// Check if user has existing access based on IP
+// Updated checkAdminAccess: just return false if not owner in localStorage session, skip IP logic
 export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string }> => {
+  const localRole = localStorage.getItem('admin_role');
+  const localActive = localStorage.getItem('admin_session_active');
+  if (localActive === 'true' && localRole) {
+    return { hasAccess: true, role: localRole };
+  }
+  // fallback to DB (for migration compatibility)
   try {
     console.log('Checking admin access via database...');
     const { data, error } = await supabase.rpc('check_admin_access');
@@ -144,7 +137,7 @@ const initializeAuthConfig = async () => {
   }
 };
 
-// Admin login with improved error handling
+// Update adminLogin: store admin_session_active on success, skip getUserIP
 export const adminLogin = async (password: string): Promise<AdminLoginResult> => {
   try {
     console.log('Starting admin login process...');
@@ -171,46 +164,12 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
     console.log('Passwords match:', password === ownerPassword);
 
     if (password === ownerPassword) {
-      console.log('Owner login successful - creating admin user entry');
-      
-      // Get consistent IP
-      const userIp = await getUserIP();
-      console.log('Using user IP:', userIp);
-      
-      // Delete any existing entry for this IP first to avoid conflicts
-      const { error: deleteError } = await supabase
-        .from('admin_users')
-        .delete()
-        .eq('ip_address', userIp);
-
-      if (deleteError) {
-        console.log('Note: No existing entry to delete or delete failed:', deleteError);
-      }
-
-      // Insert new admin user entry
-      const { error: insertError } = await supabase
-        .from('admin_users')
-        .insert({
-          ip_address: userIp,
-          role: 'owner',
-          approved_by: 'system',
-          approved_at: new Date().toISOString(),
-          last_access: new Date().toISOString()
-        });
-
-      if (insertError) {
-        console.error('Error inserting admin user:', insertError);
-        throw insertError;
-      }
-
+      console.log('Owner login successful');
+      // Remove IP logic: just set role in localStorage
       const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Store in localStorage
       localStorage.setItem('admin_session_token', sessionToken);
       localStorage.setItem('admin_role', 'owner');
-      localStorage.setItem('admin_ip', userIp);
-
-      console.log('Owner session created successfully');
+      localStorage.setItem('admin_session_active', 'true');
       return { 
         success: true, 
         sessionToken, 
@@ -298,6 +257,20 @@ export const getAdminUser = async (sessionToken: string): Promise<AdminUser | nu
     console.error('Get admin user error:', error);
     return null;
   }
+};
+
+// Generate a consistent user IP for this session
+const getUserIP = async (): Promise<string> => {
+  // Try to get existing IP from localStorage first
+  let userIp = localStorage.getItem('admin_ip');
+  
+  if (!userIp) {
+    // Generate a new unique identifier
+    userIp = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('admin_ip', userIp);
+  }
+  
+  return userIp;
 };
 
 export const adminService = {

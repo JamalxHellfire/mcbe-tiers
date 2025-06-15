@@ -46,6 +46,8 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
           console.log('Needs onboarding, switching to onboarding step');
           setStep('onboarding');
         } else if (result.role) {
+          // Mark session as active for this login
+          localStorage.setItem('admin_session_active', 'true');
           console.log('Login successful with role:', result.role);
           toast({
             title: "Login Successful",
