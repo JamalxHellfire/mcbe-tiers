@@ -11,6 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Search, Edit, Save, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GAME_MODES, TIER_LEVELS } from '@/lib/constants';
+import { supabase } from '@/integrations/supabase/client';
+
+interface EditingPlayer {
+  playerId: string;
+  field: 'ign' | 'java_username';
+  value: string;
+}
 
 export function ManagePlayersTab() {
   const {
@@ -29,8 +36,10 @@ export function ManagePlayersTab() {
     gamemode: GameMode;
     currentTier: TierLevel;
   } | null>(null);
+  const [editingPlayer, setEditingPlayer] = useState<EditingPlayer | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUpdatingPlayer, setIsUpdatingPlayer] = useState(false);
 
   useEffect(() => {
     console.log('ManagePlayersTab mounted, loading initial players...');
@@ -41,6 +50,59 @@ export function ManagePlayersTab() {
     player.ign.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (player.java_username && player.java_username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleUpdatePlayerInfo = async (playerId: string, field: 'ign' | 'java_username', newValue: string) => {
+    if (!newValue.trim()) {
+      toast({
+        title: "Invalid Value",
+        description: `${field === 'ign' ? 'IGN' : 'Java Username'} cannot be empty`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdatingPlayer(true);
+    
+    try {
+      console.log(`Updating player ${playerId} ${field} to: ${newValue}`);
+      
+      const updateData = { [field]: newValue.trim() };
+      
+      const { error } = await supabase
+        .from('players')
+        .update(updateData)
+        .eq('id', playerId);
+
+      if (error) {
+        console.error('Error updating player info:', error);
+        toast({
+          title: "Update Failed",
+          description: `Failed to update ${field === 'ign' ? 'IGN' : 'Java Username'}: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: `${field === 'ign' ? 'IGN' : 'Java Username'} updated successfully`,
+      });
+
+      // Refresh players to show updated data
+      await handleRefresh();
+      setEditingPlayer(null);
+      
+    } catch (error: any) {
+      console.error('Exception updating player info:', error);
+      toast({
+        title: "Update Error",
+        description: `Failed to update ${field === 'ign' ? 'IGN' : 'Java Username'}: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingPlayer(false);
+    }
+  };
 
   const handleDeletePlayer = async (playerId: string, playerIGN: string) => {
     console.log(`Delete button clicked for player: ${playerId} (${playerIGN})`);
@@ -131,6 +193,58 @@ export function ManagePlayersTab() {
     return tierAssignment?.tier || 'Not Ranked';
   };
 
+  const renderEditableCell = (value: string, playerId: string, field: 'ign' | 'java_username') => {
+    const isEditing = editingPlayer?.playerId === playerId && editingPlayer?.field === field;
+    
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={editingPlayer.value}
+            onChange={(e) => setEditingPlayer({ ...editingPlayer, value: e.target.value })}
+            className="h-6 text-xs bg-gray-700 border-gray-600 text-white"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleUpdatePlayerInfo(playerId, field, editingPlayer.value);
+              } else if (e.key === 'Escape') {
+                setEditingPlayer(null);
+              }
+            }}
+            autoFocus
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-green-400 hover:bg-green-400/20"
+            onClick={() => handleUpdatePlayerInfo(playerId, field, editingPlayer.value)}
+            disabled={isUpdatingPlayer}
+          >
+            <Save className="h-3 w-3" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-red-400 hover:bg-red-400/20"
+            onClick={() => setEditingPlayer(null)}
+            disabled={isUpdatingPlayer}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className="flex items-center gap-1 cursor-pointer hover:bg-gray-700/50 rounded px-1 group"
+        onClick={() => setEditingPlayer({ playerId, field, value: value || '' })}
+      >
+        <span className="text-white">{value || (field === 'java_username' ? 'N/A' : '')}</span>
+        <Edit className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
+  };
+
   if (loading && !isRefreshing) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -161,7 +275,7 @@ export function ManagePlayersTab() {
         <CardHeader>
           <CardTitle className="text-white">Player Management</CardTitle>
           <CardDescription className="text-gray-400">
-            Manage player accounts, tiers, and information. Search works with Enter key.
+            Manage player accounts, tiers, and information. Click on IGN or Java Username to edit. Search works with Enter key.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -211,8 +325,12 @@ export function ManagePlayersTab() {
                 <TableBody>
                   {filteredPlayers.map((player) => (
                     <TableRow key={player.id} className="border-gray-700/50 hover:bg-gray-800/30">
-                      <TableCell className="font-medium text-white">{player.ign}</TableCell>
-                      <TableCell className="text-gray-300">{player.java_username || 'N/A'}</TableCell>
+                      <TableCell className="font-medium">
+                        {renderEditableCell(player.ign, player.id, 'ign')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(player.java_username || '', player.id, 'java_username')}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-gray-600 text-gray-300">{player.region}</Badge>
                       </TableCell>
@@ -324,6 +442,9 @@ export function ManagePlayersTab() {
               Total players: {players.length} | Filtered: {filteredPlayers.length}
               {isDeleting && (
                 <span className="ml-2 text-red-400">Deleting player: {isDeleting}</span>
+              )}
+              {isUpdatingPlayer && (
+                <span className="ml-2 text-blue-400">Updating player info...</span>
               )}
             </div>
           </div>
