@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
@@ -40,38 +39,20 @@ export function ManagePlayersTab() {
   );
 
   const handleDeletePlayer = async (playerId: string) => {
-    // Validate player ID
-    const playerIdNum = parseInt(playerId);
-    if (isNaN(playerIdNum)) {
-      toast({
-        title: "Error",
-        description: "Invalid player ID",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (window.confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
-      await deletePlayer(playerIdNum);
-      await refreshPlayers();
+      const result = await deletePlayer(playerId);
+      if (result?.success) {
+        await refreshPlayers();
+      }
     }
   };
 
   const handleUpdateTier = async (playerId: string, gamemode: GameMode, newTier: TierLevel) => {
-    // Validate player ID
-    const playerIdNum = parseInt(playerId);
-    if (isNaN(playerIdNum)) {
-      toast({
-        title: "Error",
-        description: "Invalid player ID",
-        variant: "destructive"
-      });
-      return;
+    const result = await updatePlayerTier(playerId, gamemode, newTier);
+    if (result?.success) {
+      setEditingGamemode(null);
+      await refreshPlayers();
     }
-
-    await updatePlayerTier(playerIdNum, gamemode, newTier);
-    setEditingGamemode(null);
-    await refreshPlayers();
   };
 
   const getPlayerTier = (player: Player, gamemode: GameMode): TierLevel => {
@@ -108,7 +89,7 @@ export function ManagePlayersTab() {
         <CardHeader>
           <CardTitle className="text-white">Player Management</CardTitle>
           <CardDescription className="text-gray-400">
-            Manage player accounts, tiers, and information
+            Manage player accounts, tiers, and information. Search works with Enter key.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -118,9 +99,15 @@ export function ManagePlayersTab() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search players by IGN or Java username..."
+                  placeholder="Search players by IGN or Java username... (Press Enter to search)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      // Trigger search on Enter - this is already happening with onChange
+                      console.log('Search triggered for:', searchTerm);
+                    }
+                  }}
                   className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
                 />
               </div>

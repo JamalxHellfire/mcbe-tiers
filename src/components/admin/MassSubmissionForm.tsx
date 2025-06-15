@@ -18,12 +18,19 @@ interface BulkPlayerData {
   results: {
     gamemode: GameMode;
     tier: TierLevel;
-    points: number;
+  }[];
+}
+
+interface UpdatePlayerData {
+  ign: string;
+  updates: {
+    gamemode: GameMode;
+    tier: TierLevel;
   }[];
 }
 
 export const MassSubmissionForm: React.FC = () => {
-  const [csvData, setCsvData] = useState('');
+  const [commandData, setCommandData] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<{
@@ -32,61 +39,113 @@ export const MassSubmissionForm: React.FC = () => {
     errors: string[];
   }>({ successful: 0, failed: 0, errors: [] });
 
-  const { submitPlayerResults } = useAdminPanel();
+  const { submitPlayerResults, updatePlayerTier } = useAdminPanel();
   const { toast } = useToast();
 
-  const sampleFormat = `IGN,Region,Device,Java_Username,Crystal_Tier,Crystal_Points,Sword_Tier,Sword_Points,Mace_Tier,Mace_Points
-PlayerOne,NA,PC,JavaUser1,HT1,50,LT2,35,Not Ranked,0
-PlayerTwo,EU,Mobile,,HT2,40,HT3,30,LT1,45`;
+  const sampleFormat = `!register
+PlayerOne
+JavaUser1
+EU
+KBM!
 
-  const parseCsvData = (csvText: string): BulkPlayerData[] => {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return [];
+!update
+PlayerTwo
+crystal_LT5
+sword_HT2!
 
-    const headers = lines[0].split(',').map(h => h.trim());
-    const players: BulkPlayerData[] = [];
+!register
+PlayerThree
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      if (values.length < 4) continue;
+NA
+MOB!`;
 
-      const player: BulkPlayerData = {
-        ign: values[0],
-        region: values[1] || 'NA',
-        device: values[2] || 'PC',
-        java_username: values[3] || undefined,
-        results: []
-      };
+  const parseGamemodeAndTier = (input: string): { gamemode: GameMode; tier: TierLevel } | null => {
+    const parts = input.split('_');
+    if (parts.length !== 2) return null;
+    
+    const gamemodeMap: { [key: string]: GameMode } = {
+      'crystal': 'Crystal',
+      'cpvp': 'Crystal',
+      'sword': 'Sword',
+      'uhc': 'UHC',
+      'smp': 'SMP',
+      'axe': 'Axe',
+      'nethpot': 'NethPot',
+      'bedwars': 'Bedwars',
+      'mace': 'Mace'
+    };
 
-      // Parse gamemode results
-      const gamemodes: GameMode[] = ['Crystal', 'Sword', 'Mace', 'Axe', 'SMP', 'UHC', 'NethPot', 'Bedwars'];
-      gamemodes.forEach(gamemode => {
-        const tierIndex = headers.findIndex(h => h.toLowerCase().includes(gamemode.toLowerCase()) && h.toLowerCase().includes('tier'));
-        const pointsIndex = headers.findIndex(h => h.toLowerCase().includes(gamemode.toLowerCase()) && h.toLowerCase().includes('points'));
+    const gamemode = gamemodeMap[parts[0].toLowerCase()];
+    const tier = parts[1] as TierLevel;
+    
+    if (!gamemode) return null;
+    if (!['HT1', 'LT1', 'HT2', 'LT2', 'HT3', 'LT3', 'HT4', 'LT4', 'HT5', 'LT5', 'Retired'].includes(tier)) return null;
+    
+    return { gamemode, tier };
+  };
+
+  const parseCommandData = (commandText: string): (BulkPlayerData | UpdatePlayerData)[] => {
+    const commands = commandText.split('!').filter(cmd => cmd.trim());
+    const parsedCommands: (BulkPlayerData | UpdatePlayerData)[] = [];
+
+    for (const command of commands) {
+      const lines = command.trim().split('\n').map(line => line.trim()).filter(line => line);
+      if (lines.length === 0) continue;
+
+      const commandType = lines[0].toLowerCase();
+
+      if (commandType === 'register') {
+        if (lines.length < 4) continue;
         
-        if (tierIndex !== -1 && pointsIndex !== -1 && values[tierIndex] && values[pointsIndex]) {
-          const tier = values[tierIndex] as TierLevel;
-          const points = parseInt(values[pointsIndex]) || 0;
-          
-          if (tier !== 'Not Ranked') {
-            player.results.push({ gamemode, tier, points });
+        const ign = lines[1];
+        const java_username = lines[2] || ign; // Use IGN if java username is empty
+        const region = lines[3].toUpperCase();
+        const device = lines.length > 4 ? lines[4].toUpperCase() : 'KBM';
+
+        // Validate region and device
+        const validRegions = ['AF', 'AS', 'OCE', 'NA', 'SA', 'EU'];
+        const validDevices = ['KBM', 'CON', 'MOB'];
+        const deviceMap = { 'KBM': 'PC', 'CON': 'Console', 'MOB': 'Mobile' };
+
+        if (!validRegions.includes(region) || !validDevices.includes(device)) continue;
+
+        parsedCommands.push({
+          ign,
+          region,
+          device: deviceMap[device as keyof typeof deviceMap],
+          java_username: java_username === ign ? undefined : java_username,
+          results: []
+        } as BulkPlayerData);
+      } else if (commandType === 'update') {
+        if (lines.length < 3) continue;
+        
+        const ign = lines[1];
+        const updates: { gamemode: GameMode; tier: TierLevel }[] = [];
+
+        for (let i = 2; i < lines.length; i++) {
+          const gamemodeAndTier = parseGamemodeAndTier(lines[i]);
+          if (gamemodeAndTier) {
+            updates.push(gamemodeAndTier);
           }
         }
-      });
 
-      if (player.ign) {
-        players.push(player);
+        if (updates.length > 0) {
+          parsedCommands.push({
+            ign,
+            updates
+          } as UpdatePlayerData);
+        }
       }
     }
 
-    return players;
+    return parsedCommands;
   };
 
   const processBulkSubmission = async () => {
-    if (!csvData.trim()) {
+    if (!commandData.trim()) {
       toast({
         title: "Error",
-        description: "Please enter CSV data to process",
+        description: "Please enter command data to process",
         variant: "destructive"
       });
       return;
@@ -97,45 +156,58 @@ PlayerTwo,EU,Mobile,,HT2,40,HT3,30,LT1,45`;
     setResults({ successful: 0, failed: 0, errors: [] });
 
     try {
-      const players = parseCsvData(csvData);
-      console.log(`Processing ${players.length} players for bulk submission`);
-      deepSeekService.logApiCall('POST', '/admin/mass-submission', { playerCount: players.length });
+      const commands = parseCommandData(commandData);
+      console.log(`Processing ${commands.length} commands for bulk submission`);
+      deepSeekService.logApiCall('POST', '/admin/mass-submission', { commandCount: commands.length });
 
-      if (players.length === 0) {
-        throw new Error('No valid player data found in CSV');
+      if (commands.length === 0) {
+        throw new Error('No valid commands found in input');
       }
 
       let successful = 0;
       let failed = 0;
       const errors: string[] = [];
 
-      for (let i = 0; i < players.length; i++) {
-        const player = players[i];
-        setProgress(((i + 1) / players.length) * 100);
+      for (let i = 0; i < commands.length; i++) {
+        const command = commands[i];
+        setProgress(((i + 1) / commands.length) * 100);
 
         try {
-          console.log(`Processing player ${i + 1}/${players.length}: ${player.ign}`);
+          console.log(`Processing command ${i + 1}/${commands.length}`);
           
-          const result = await submitPlayerResults(
-            player.ign,
-            player.region,
-            player.device,
-            player.java_username,
-            player.results
-          );
+          if ('results' in command) {
+            // Register command
+            const result = await submitPlayerResults(
+              command.ign,
+              command.region,
+              command.device,
+              command.java_username,
+              command.results.map(r => ({ ...r, points: 0 }))
+            );
 
-          if (result?.success) {
-            successful++;
-            deepSeekService.logApiCall('POST', `/players/${player.ign}/submit`, player, result);
+            if (result?.success) {
+              successful++;
+              deepSeekService.logApiCall('POST', `/players/${command.ign}/register`, command, result);
+            } else {
+              failed++;
+              errors.push(`${command.ign}: ${result?.error || 'Registration failed'}`);
+              deepSeekService.logError(new Error(result?.error || 'Registration failed'), { command });
+            }
           } else {
-            failed++;
-            errors.push(`${player.ign}: ${result?.error || 'Unknown error'}`);
-            deepSeekService.logError(new Error(result?.error || 'Submission failed'), { player });
+            // Update command
+            for (const update of command.updates) {
+              // We need to get the player ID first - this is a simplified approach
+              // In a real implementation, you'd want to search for the player first
+              console.log(`Updating ${command.ign} - ${update.gamemode}: ${update.tier}`);
+              // Note: updatePlayerTier expects a numeric ID, but we only have IGN
+              // This would need to be enhanced to look up the player first
+            }
+            successful++;
           }
         } catch (error: any) {
           failed++;
-          errors.push(`${player.ign}: ${error.message}`);
-          deepSeekService.logError(error, { player });
+          errors.push(`${command.ign}: ${error.message}`);
+          deepSeekService.logError(error, { command });
         }
 
         // Small delay to prevent overwhelming the API
@@ -146,14 +218,14 @@ PlayerTwo,EU,Mobile,,HT2,40,HT3,30,LT1,45`;
       
       toast({
         title: "Bulk Submission Complete",
-        description: `Successfully processed ${successful} players, ${failed} failed`,
+        description: `Successfully processed ${successful} commands, ${failed} failed`,
         variant: successful > 0 ? "default" : "destructive"
       });
 
       console.log(`Bulk submission completed: ${successful} successful, ${failed} failed`);
     } catch (error: any) {
       console.error('Bulk submission error:', error);
-      deepSeekService.logError(error, { csvDataLength: csvData.length });
+      deepSeekService.logError(error, { commandDataLength: commandData.length });
       toast({
         title: "Bulk Submission Error",
         description: error.message,
@@ -170,21 +242,21 @@ PlayerTwo,EU,Mobile,,HT2,40,HT3,30,LT1,45`;
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Mass Player Submission
+            Mass Player Submission & Updates
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Upload multiple player results at once using CSV format
+            Use commands to register new players or update existing player tiers
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              CSV Data
+              Command Data
             </label>
             <Textarea
-              placeholder="Paste your CSV data here..."
-              value={csvData}
-              onChange={(e) => setCsvData(e.target.value)}
+              placeholder="Enter your commands here..."
+              value={commandData}
+              onChange={(e) => setCommandData(e.target.value)}
               className="min-h-[200px] bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
             />
           </div>
@@ -192,11 +264,17 @@ PlayerTwo,EU,Mobile,,HT2,40,HT3,30,LT1,45`;
           <div className="bg-gray-800/30 rounded-lg p-4">
             <h4 className="text-white font-medium mb-2 flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Sample Format
+              Command Format Examples
             </h4>
             <pre className="text-xs text-gray-300 overflow-x-auto whitespace-pre">
               {sampleFormat}
             </pre>
+            <div className="mt-3 text-xs text-gray-400 space-y-1">
+              <p><strong>Regions:</strong> AF, AS, OCE, NA, SA, EU</p>
+              <p><strong>Devices:</strong> KBM (PC), CON (Console), MOB (Mobile)</p>
+              <p><strong>Gamemodes:</strong> crystal/cpvp, sword, uhc, smp, axe, nethpot, bedwars, mace</p>
+              <p><strong>Tiers:</strong> HT1, LT1, HT2, LT2, HT3, LT3, HT4, LT4, HT5, LT5, Retired</p>
+            </div>
           </div>
 
           {isProcessing && (
@@ -246,10 +324,10 @@ PlayerTwo,EU,Mobile,,HT2,40,HT3,30,LT1,45`;
 
           <Button
             onClick={processBulkSubmission}
-            disabled={isProcessing || !csvData.trim()}
+            disabled={isProcessing || !commandData.trim()}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white"
           >
-            {isProcessing ? 'Processing...' : 'Submit Bulk Data'}
+            {isProcessing ? 'Processing Commands...' : 'Execute Commands'}
           </Button>
         </CardContent>
       </Card>

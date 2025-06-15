@@ -51,17 +51,56 @@ export const useAdminPanel = () => {
     }
   };
 
-  const updatePlayerTier = async (playerId: number, gamemode: GameMode, tier: TierLevel) => {
+  const findPlayerByIGN = async (ign: string): Promise<{ id: string; ign: string } | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, ign')
+        .ilike('ign', ign)
+        .single();
+
+      if (error || !data) {
+        console.log(`Player not found: ${ign}`);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error finding player by IGN:', error);
+      return null;
+    }
+  };
+
+  const updatePlayerTier = async (playerIdOrIGN: number | string, gamemode: GameMode, tier: TierLevel) => {
     const startTime = Date.now();
     
-    // Validate inputs
-    if (!playerId || isNaN(playerId)) {
-      toast({
-        title: "Invalid Player ID",
-        description: "Player ID must be a valid number",
-        variant: "destructive"
-      });
-      return;
+    let playerId: string;
+    
+    // Handle both player ID and IGN
+    if (typeof playerIdOrIGN === 'string' && isNaN(Number(playerIdOrIGN))) {
+      // It's an IGN, find the player
+      const player = await findPlayerByIGN(playerIdOrIGN);
+      if (!player) {
+        toast({
+          title: "Player Not Found",
+          description: `Could not find player with IGN: ${playerIdOrIGN}`,
+          variant: "destructive"
+        });
+        return { success: false, error: "Player not found" };
+      }
+      playerId = player.id;
+    } else {
+      // It's a player ID
+      const numericId = typeof playerIdOrIGN === 'string' ? parseInt(playerIdOrIGN) : playerIdOrIGN;
+      if (!numericId || isNaN(numericId)) {
+        toast({
+          title: "Invalid Player ID",
+          description: "Player ID must be a valid number",
+          variant: "destructive"
+        });
+        return { success: false, error: "Invalid player ID" };
+      }
+      playerId = numericId.toString();
     }
 
     if (tier === 'Not Ranked') {
@@ -70,7 +109,7 @@ export const useAdminPanel = () => {
         description: "Cannot set tier to 'Not Ranked'",
         variant: "destructive"
       });
-      return;
+      return { success: false, error: "Invalid tier" };
     }
 
     setLoading(true);
@@ -81,7 +120,7 @@ export const useAdminPanel = () => {
       deepSeekService.logUserAction('update_tier', 'player', { playerId, gamemode, tier });
       
       const upsertData = { 
-        player_id: playerId.toString(), 
+        player_id: playerId, 
         gamemode: gamemode, 
         display_tier: tier,
         internal_tier: tier,
@@ -92,16 +131,7 @@ export const useAdminPanel = () => {
       
       const { error } = await supabase
         .from('gamemode_scores')
-        .upsert(
-          { 
-            player_id: playerId.toString(), 
-            gamemode: gamemode, 
-            display_tier: tier,
-            internal_tier: tier,
-            score: 0
-          },
-          { onConflict: 'player_id,gamemode' }
-        );
+        .upsert(upsertData, { onConflict: 'player_id,gamemode' });
 
       const duration = Date.now() - startTime;
 
@@ -114,13 +144,15 @@ export const useAdminPanel = () => {
           description: `Failed to update tier: ${error.message}`,
           variant: "destructive"
         });
+        return { success: false, error: error.message };
       } else {
-        await updatePlayerGlobalPoints(playerId.toString());
+        await updatePlayerGlobalPoints(playerId);
         deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', upsertData, { success: true }, null, duration);
         toast({
           title: "Success",
-          description: `Tier updated successfully for player ID ${playerId} in ${gamemode}. Global points recalculated.`,
+          description: `Tier updated successfully for player ${playerId} in ${gamemode}. Global points recalculated.`,
         });
+        return { success: true };
       }
     } catch (err: any) {
       const duration = Date.now() - startTime;
@@ -132,22 +164,42 @@ export const useAdminPanel = () => {
         description: `Failed to update tier: ${err.message}`,
         variant: "destructive"
       });
+      return { success: false, error: err.message };
     } finally {
       setLoading(false);
     }
   };
 
-  const deletePlayer = async (playerId: number) => {
+  const deletePlayer = async (playerIdOrIGN: number | string) => {
     const startTime = Date.now();
     
-    // Validate player ID
-    if (!playerId || isNaN(playerId)) {
-      toast({
-        title: "Invalid Player ID",
-        description: "Cannot delete player with invalid ID",
-        variant: "destructive"
-      });
-      return;
+    let playerId: string;
+    
+    // Handle both player ID and IGN
+    if (typeof playerIdOrIGN === 'string' && isNaN(Number(playerIdOrIGN))) {
+      // It's an IGN, find the player
+      const player = await findPlayerByIGN(playerIdOrIGN);
+      if (!player) {
+        toast({
+          title: "Player Not Found",
+          description: `Could not find player with IGN: ${playerIdOrIGN}`,
+          variant: "destructive"
+        });
+        return { success: false, error: "Player not found" };
+      }
+      playerId = player.id;
+    } else {
+      // It's a player ID
+      const numericId = typeof playerIdOrIGN === 'string' ? parseInt(playerIdOrIGN) : playerIdOrIGN;
+      if (!numericId || isNaN(numericId)) {
+        toast({
+          title: "Invalid Player ID",
+          description: "Cannot delete player with invalid ID",
+          variant: "destructive"
+        });
+        return { success: false, error: "Invalid player ID" };
+      }
+      playerId = numericId.toString();
     }
 
     setLoading(true);
@@ -158,39 +210,40 @@ export const useAdminPanel = () => {
       deepSeekService.logUserAction('delete_player', 'player', { playerId });
       
       // First delete gamemode scores
-      deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId.toString() });
+      deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId });
       const { error: scoresError } = await supabase
         .from('gamemode_scores')
         .delete()
-        .eq('player_id', playerId.toString());
+        .eq('player_id', playerId);
 
       if (scoresError) {
         console.error('Error deleting gamemode scores:', scoresError);
-        deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId.toString() }, null, scoresError);
+        deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId }, null, scoresError);
         throw new Error(`Failed to delete gamemode scores: ${scoresError.message}`);
       }
 
       // Then delete the player
-      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId.toString() });
+      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId });
       const { error: playerError } = await supabase
         .from('players')
         .delete()
-        .eq('id', playerId.toString());
+        .eq('id', playerId);
 
       const duration = Date.now() - startTime;
 
       if (playerError) {
         console.error('Error deleting player:', playerError);
-        deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId.toString() }, null, playerError, duration);
+        deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId }, null, playerError, duration);
         throw new Error(`Failed to delete player: ${playerError.message}`);
       }
 
-      setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId.toString()));
-      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId.toString() }, { success: true }, null, duration);
+      setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId));
+      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId }, { success: true }, null, duration);
       toast({
         title: "Success",
-        description: `Player ID ${playerId} deleted successfully.`,
+        description: `Player ${playerId} deleted successfully.`,
       });
+      return { success: true };
     } catch (err: any) {
       const duration = Date.now() - startTime;
       console.error('Exception in deletePlayer:', err);
@@ -201,6 +254,7 @@ export const useAdminPanel = () => {
         description: `Failed to delete player: ${err.message}`,
         variant: "destructive"
       });
+      return { success: false, error: err.message };
     } finally {
       setLoading(false);
     }
@@ -344,6 +398,7 @@ export const useAdminPanel = () => {
     submitPlayerResults,
     updatePlayerTier,
     refreshPlayers,
-    deletePlayer
+    deletePlayer,
+    findPlayerByIGN
   };
 };

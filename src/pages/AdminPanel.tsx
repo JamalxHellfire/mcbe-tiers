@@ -5,11 +5,12 @@ import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
 import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
 import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
+import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { UploadCloud, Users, Wrench, Settings, Shield, LogOut } from 'lucide-react';
+import { UploadCloud, Users, Wrench, Settings, Shield, LogOut, BarChart3 } from 'lucide-react';
 
-type AdminTab = 'submit' | 'manage' | 'tools';
+type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('submit');
@@ -35,6 +36,8 @@ const AdminPanel = () => {
             </div>
           </div>
         );
+      case 'analytics':
+        return <AnalyticsDashboard />;
       default:
         return null;
     }
@@ -128,7 +131,7 @@ const AdminPanel = () => {
                 <p className="text-gray-400">Choose your administrative action</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <TabButton 
                   tabName="submit" 
                   label="Submit Results" 
@@ -145,7 +148,13 @@ const AdminPanel = () => {
                   tabName="tools" 
                   label="Admin Tools" 
                   icon={Wrench}
-                  description="Advanced administrative utilities"
+                  description="Mass submission and system monitoring"
+                />
+                <TabButton 
+                  tabName="analytics" 
+                  label="Analytics" 
+                  icon={BarChart3}
+                  description="Platform insights and statistics"
                 />
               </div>
             </div>
