@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, RefreshCw, Sparkles } from 'lucide-react';
+import { X, RefreshCw, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ChatHeaderProps {
@@ -12,27 +12,27 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ hasKnowledgeBase, onClose, onRefresh }: ChatHeaderProps) {
   return (
-    <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-4">
+    <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <motion.div 
             className="relative"
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
             <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-              <Sparkles className="w-4 h-4 text-white" />
+              <Bot className="w-4 h-4 text-white" />
             </div>
             <motion.div 
-              className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full ${hasKnowledgeBase ? 'bg-green-400' : 'bg-red-400'} shadow-lg`}
+              className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full ${hasKnowledgeBase ? 'bg-green-400' : 'bg-orange-400'} shadow-lg`}
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
           </motion.div>
           <div>
-            <h3 className="text-white font-semibold text-sm">AI Assistant</h3>
+            <h3 className="text-white font-semibold text-sm">MCBE Tiers Assistant</h3>
             <p className="text-white/90 text-xs">
-              {hasKnowledgeBase ? 'Ready to help' : 'Upload document first'}
+              {hasKnowledgeBase ? 'Document-enhanced support' : 'General assistance available'}
             </p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function ChatHeader({ hasKnowledgeBase, onClose, onRefresh }: ChatHeaderP
             variant="ghost"
             size="sm"
             className="text-white hover:bg-white/20 h-7 w-7 p-0 rounded-full"
-            title="Refresh status"
+            title="Refresh knowledge base status"
           >
             <RefreshCw className="w-3 h-3" />
           </Button>

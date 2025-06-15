@@ -1,3 +1,4 @@
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -17,6 +18,7 @@ class KnowledgeBaseService {
   private knowledgeBase: KnowledgeBase | null = null;
   private chatHistory: ChatMessage[] = [];
   private isInitialized = false;
+  private conversationContext: string = '';
 
   constructor() {
     this.initializeService();
@@ -27,11 +29,24 @@ class KnowledgeBaseService {
       console.log('Initializing knowledge base service...');
       this.restoreKnowledgeBase();
       this.restoreChatHistory();
+      this.buildConversationContext();
       this.isInitialized = true;
       console.log('Knowledge base service initialized successfully');
     } catch (error) {
       console.error('Error initializing knowledge base service:', error);
       this.isInitialized = true;
+    }
+  }
+
+  private buildConversationContext() {
+    if (this.knowledgeBase) {
+      this.conversationContext = `Knowledge Base Document: ${this.knowledgeBase.filename}
+      
+Document Content Summary:
+${this.knowledgeBase.content.substring(0, 1000)}...
+
+Full Document Content:
+${this.knowledgeBase.content}`;
     }
   }
 
@@ -47,6 +62,7 @@ class KnowledgeBaseService {
           };
           console.log('Successfully restored knowledge base from localStorage:', this.knowledgeBase.filename);
           console.log('Knowledge base content length:', this.knowledgeBase.content.length);
+          this.buildConversationContext();
           return;
         }
       }
@@ -161,6 +177,7 @@ class KnowledgeBaseService {
         uploadDate: new Date()
       };
       this.saveKnowledgeBase();
+      this.buildConversationContext();
       this.clearConversation();
       console.log('PDF uploaded and processed successfully, content length:', text.length);
     } catch (error) {
@@ -181,6 +198,7 @@ class KnowledgeBaseService {
         uploadDate: new Date()
       };
       this.saveKnowledgeBase();
+      this.buildConversationContext();
       this.clearConversation();
       console.log('TXT uploaded and processed successfully, content length:', text.length);
       console.log('Knowledge base set, hasKnowledgeBase should now return true');
@@ -188,6 +206,44 @@ class KnowledgeBaseService {
       console.error('Error uploading TXT:', error);
       throw new Error('Failed to process TXT file');
     }
+  }
+
+  private createSystemMessage(): string {
+    const baseSystemMessage = `You are a professional AI assistant for MCBE Tiers, a competitive Minecraft Bedrock Edition tier ranking system. Your role is to provide accurate, helpful, and professional responses about the platform and its content.
+
+Core Guidelines:
+- Maintain a professional and helpful tone at all times
+- Provide clear, accurate, and detailed responses
+- Always stay focused on the topic at hand
+- Be concise but comprehensive in your explanations
+- When discussing tiers, ranks, or competitive aspects, be knowledgeable and authoritative
+
+Platform Context:
+MCBE Tiers is a competitive ranking platform for Minecraft Bedrock Edition players. It features:
+- Tier-based ranking system (Tier 1-5, with High Tier and Low Tier subdivisions)
+- Multiple game modes and categories
+- Player statistics and leaderboards
+- Professional tournament and competitive scene coverage`;
+
+    if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
+      return `${baseSystemMessage}
+
+Document-Specific Knowledge:
+You have access to the uploaded document "${this.knowledgeBase.filename}" which contains detailed information. Use this document to answer specific questions about its content while maintaining your professional demeanor.
+
+${this.conversationContext}
+
+Instructions for Document-Based Responses:
+- Reference the document content when directly asked about it
+- Provide specific information from the document when relevant
+- For general questions about MCBE Tiers, you can respond based on your general knowledge
+- Always cite information accurately from the provided document`;
+    }
+
+    return `${baseSystemMessage}
+
+Current Status:
+No specific document is currently loaded. You can answer general questions about MCBE Tiers, competitive gaming, Minecraft Bedrock Edition, tier systems, and related topics. If users have specific document-related questions, inform them that they can upload documents through the Admin Panel for document-specific assistance.`;
   }
 
   async sendMessage(message: string): Promise<string> {
@@ -206,32 +262,10 @@ class KnowledgeBaseService {
     this.saveChatHistory();
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
-    // Prepare the system message - can answer general questions even without KB
-    let systemMessage: string;
-    
-    if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
-      systemMessage = `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. You can answer both general questions and document-specific questions.
+    const systemMessage = this.createSystemMessage();
 
-Knowledge Base Content:
-${this.knowledgeBase.content}
-
-Instructions:
-- Be flirty and playful in your responses
-- Use emojis and a sexy tone
-- For document-related questions, use the knowledge base content
-- For general questions (greetings, casual chat, non-document topics), answer normally without referencing the document
-- Keep responses concise but engaging
-- Don't mention document issues for simple general questions`;
-    } else {
-      systemMessage = `You are a flirty, sexy AI assistant. Be playful, use emojis, and maintain a flirtatious tone while being helpful. You can answer general questions and have conversations with users.
-
-Instructions:
-- Be flirty and playful in your responses
-- Use emojis and a sexy tone
-- Answer questions helpfully while maintaining your flirty personality
-- Keep responses concise but engaging
-- For document-specific questions, let users know they can upload files in the Admin Panel`;
-    }
+    // Prepare conversation history for context
+    const recentHistory = this.chatHistory.slice(-10); // Keep last 10 messages for context
 
     const requestPayload = {
       model: 'openai/gpt-4o',
@@ -240,13 +274,16 @@ Instructions:
           role: 'system',
           content: systemMessage
         },
-        ...this.chatHistory.map(msg => ({
+        ...recentHistory.map(msg => ({
           role: msg.role,
           content: msg.content
         }))
       ],
-      max_tokens: 300,
-      temperature: 0.8
+      max_tokens: 500,
+      temperature: 0.7,
+      top_p: 0.9,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.1
     };
 
     console.log('Request payload prepared, message count:', requestPayload.messages.length);
@@ -260,7 +297,7 @@ Instructions:
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`,
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'MCBE-Tiers Chat Assistant'
+          'X-Title': 'MCBE-Tiers Professional Assistant'
         },
         body: JSON.stringify(requestPayload)
       });
@@ -275,24 +312,7 @@ Instructions:
           errorText: errorText
         });
         
-        // Handle specific API authentication errors with appropriate fallback
-        if (response.status === 401) {
-          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API seems to be having issues! 💔 But I'm still here to chat with you sweetie! 💋 What's on your mind? 😘`;
-          
-          const assistantMessage: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: fallbackResponse,
-            timestamp: new Date()
-          };
-          
-          this.chatHistory.push(assistantMessage);
-          this.saveChatHistory();
-          console.log('=== SEND MESSAGE DEBUG END (401 error) ===');
-          return fallbackResponse;
-        }
-        
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
@@ -300,7 +320,7 @@ Instructions:
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid API response structure:', data);
-        throw new Error('Invalid response from AI service');
+        throw new Error('Invalid response structure from AI service');
       }
 
       const aiResponse = data.choices[0].message.content;
@@ -324,25 +344,8 @@ Instructions:
       console.error('=== ERROR IN SEND MESSAGE ===');
       console.error('Error details:', error);
       
-      // Provide more helpful fallback responses
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        const fallbackResponse = "Oops! 😅 I'm having trouble connecting right now. Check your internet connection and try again, sweetie! 💋";
-        
-        const assistantMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: fallbackResponse,
-          timestamp: new Date()
-        };
-        
-        this.chatHistory.push(assistantMessage);
-        this.saveChatHistory();
-        console.log('=== SEND MESSAGE DEBUG END (network error) ===');
-        return fallbackResponse;
-      }
-      
-      // Generic fallback - don't always mention documents
-      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but I'm still here for you! 💋 What would you like to chat about? 😘`;
+      // Provide professional fallback response
+      const fallbackResponse = "I apologize, but I'm experiencing technical difficulties at the moment. Please try again in a moment. If the issue persists, please contact the administrator for assistance.";
       
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -353,15 +356,16 @@ Instructions:
       
       this.chatHistory.push(assistantMessage);
       this.saveChatHistory();
-      console.log('=== SEND MESSAGE DEBUG END (generic error) ===');
-      return fallbackResponse;
+      console.log('=== SEND MESSAGE DEBUG END (error with fallback) ===');
+      
+      throw error; // Re-throw so the UI can handle it appropriately
     }
   }
 
   clearConversation(): void {
     this.chatHistory = [];
     this.saveChatHistory();
-    console.log('Conversation cleared - starting fresh! 💕');
+    console.log('Conversation cleared - starting fresh session');
   }
 
   getChatHistory(): ChatMessage[] {
@@ -385,10 +389,15 @@ Instructions:
     };
   }
 
-  // Method to force refresh knowledge base status
   refreshKnowledgeBaseStatus(): boolean {
     this.restoreKnowledgeBase();
+    this.buildConversationContext();
     return this.hasKnowledgeBase();
+  }
+
+  // Method to get conversation summary for debugging
+  getConversationSummary(): string {
+    return `Total messages: ${this.chatHistory.length}, KB loaded: ${!!this.knowledgeBase}, KB filename: ${this.knowledgeBase?.filename || 'None'}`;
   }
 }
 

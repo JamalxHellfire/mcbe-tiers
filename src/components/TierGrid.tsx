@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Trophy, Shield, ChevronDown, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -159,10 +160,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                         <div className="grid grid-cols-1 divide-y divide-white/5">
                           <AnimatePresence>
                             {visiblePlayers.map((player, playerIndex) => {
-                              const playerPoints = typeof player.global_points === 'string' 
-                                ? Number(player.global_points) || 0 
-                                : player.global_points || 0;
-                              
                               return (
                                 <motion.div
                                   key={player.id}
@@ -171,37 +168,31 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
                                 >
-                                  <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
-                                    <div className="flex items-center gap-3">
-                                      <div className="relative">
-                                        <Avatar className="w-8 h-8 border border-white/20">
-                                          <AvatarImage 
-                                            src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
-                                            alt={player.ign}
-                                            className="object-cover object-center scale-110"
-                                            onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
-                                          />
-                                          <AvatarFallback className="bg-gray-700 text-white text-xs font-bold">
-                                            {player.ign?.charAt(0) || "?"}
-                                          </AvatarFallback>
-                                        </Avatar>
-                                      </div>
-                                      
-                                      <div className="flex flex-col">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          {getDeviceIcon(player.device)}
-                                          <span className="text-sm font-medium">{player.ign}</span>
-                                        </div>
-                                        <span className={`text-xs ${
-                                          player.subtier === 'High' ? `text-tier-${tier}` : 'text-white/50'
-                                        }`}>
-                                          {player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`}
-                                        </span>
-                                      </div>
+                                  <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
+                                    <div className="relative">
+                                      <Avatar className="w-8 h-8 border border-white/20">
+                                        <AvatarImage 
+                                          src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
+                                          alt={player.ign}
+                                          className="object-cover object-center scale-110"
+                                          onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
+                                        />
+                                        <AvatarFallback className="bg-gray-700 text-white text-xs font-bold">
+                                          {player.ign?.charAt(0) || "?"}
+                                        </AvatarFallback>
+                                      </Avatar>
                                     </div>
-                                    <div className="flex items-center text-xs">
-                                      <Trophy size={12} className="mr-1 text-yellow-400" />
-                                      <span>{playerPoints}</span>
+                                    
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        {getDeviceIcon(player.device)}
+                                        <span className="text-sm font-medium">{player.ign}</span>
+                                      </div>
+                                      <span className={`text-xs ${
+                                        player.subtier === 'High' ? `text-tier-${tier}` : 'text-white/50'
+                                      }`}>
+                                        {player.subtier === 'High' ? `HT${tier} Player` : `LT${tier} Player`}
+                                      </span>
                                     </div>
                                   </div>
                                 </motion.div>
@@ -268,10 +259,6 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                       {tierData["Retired"]
                         .slice(0, tierVisibility.retired.count)
                         .map((player, playerIndex) => {
-                          const playerPoints = typeof player.global_points === 'string' 
-                            ? parseFloat(player.global_points) || 0 
-                            : player.global_points || 0;
-                          
                           return (
                             <motion.div
                               key={player.id}
@@ -280,33 +267,27 @@ export function TierGrid({ selectedMode, onPlayerClick }: TierGridProps) {
                               exit={{ opacity: 0 }}
                               transition={{ duration: 0.3, delay: playerIndex * 0.03 }}
                             >
-                              <div className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
-                                <div className="flex items-center gap-3">
-                                  <div className="relative">
-                                    <Avatar className="w-8 h-8 border border-white/20">
-                                      <AvatarImage 
-                                        src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
-                                        alt={player.ign}
-                                        className="object-cover object-center scale-110"
-                                        onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
-                                      />
-                                      <AvatarFallback className="bg-gray-700 text-white text-xs font-bold">
-                                        {player.ign?.charAt(0) || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  </div>
-                                  
-                                  <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      {getDeviceIcon(player.device)}
-                                      <span className="text-sm font-medium">{player.ign}</span>
-                                    </div>
-                                    <span className="text-xs text-gray-400">Retired Player</span>
-                                  </div>
+                              <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors" onClick={() => onPlayerClick(player)}>
+                                <div className="relative">
+                                  <Avatar className="w-8 h-8 border border-white/20">
+                                    <AvatarImage 
+                                      src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
+                                      alt={player.ign}
+                                      className="object-cover object-center scale-110"
+                                      onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
+                                    />
+                                    <AvatarFallback className="bg-gray-700 text-white text-xs font-bold">
+                                      {player.ign?.charAt(0) || "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
                                 </div>
-                                <div className="flex items-center text-xs">
-                                  <Trophy size={12} className="mr-1 text-yellow-400" />
-                                  <span>{playerPoints}</span>
+                                
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {getDeviceIcon(player.device)}
+                                    <span className="text-sm font-medium">{player.ign}</span>
+                                  </div>
+                                  <span className="text-xs text-gray-400">Retired Player</span>
                                 </div>
                               </div>
                             </motion.div>

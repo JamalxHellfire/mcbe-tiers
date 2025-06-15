@@ -19,7 +19,7 @@ export function ChatInput({ value, onChange, onSend, disabled, hasKnowledgeBase 
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Ask me anything... 😘"
+          placeholder="Ask a question about MCBE Tiers..."
           className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-transparent"
           onKeyPress={(e) => e.key === 'Enter' && onSend()}
           disabled={disabled}
@@ -34,7 +34,7 @@ export function ChatInput({ value, onChange, onSend, disabled, hasKnowledgeBase 
         </Button>
       </div>
       {!hasKnowledgeBase && (
-        <p className="text-xs text-white/60 mt-2 text-center">💡 Upload documents in Admin Tools for document-specific questions</p>
+        <p className="text-xs text-white/50 mt-2 text-center">💡 Upload documents in Admin Tools for document-specific assistance</p>
       )}
     </div>
   );
