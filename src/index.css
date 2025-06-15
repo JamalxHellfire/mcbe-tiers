@@ -66,7 +66,7 @@
   }
 
   .tier-row {
-    @apply p-2 rounded-lg backdrop-blur-sm border transition-colors duration-150 glass;
+    @apply p-2 rounded-lg backdrop-blur-sm border glass;
   }
 
   .tier-header {
@@ -88,7 +88,7 @@
   }
 
   .game-mode-button {
-    @apply px-2 py-1 rounded-md transition-colors duration-150 hover:bg-white/10 
+    @apply px-2 py-1 rounded-md hover:bg-white/10 
            relative text-xs font-medium;
   }
 
@@ -102,7 +102,7 @@
 
   .logo-text {
     @apply text-base font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
-           bg-clip-text text-transparent hover:from-white hover:to-white/80 transition-all;
+           bg-clip-text text-transparent hover:from-white hover:to-white/80;
   }
 
   .navbar {
@@ -120,8 +120,7 @@
   
   .player-result-button {
     @apply flex items-center p-2 bg-dark-surface/70 rounded-lg
-           border border-white/10 hover:border-white/20 transition-colors
-           duration-150;
+           border border-white/10 hover:border-white/20;
   }
   
   .player-avatar-frame {
@@ -134,14 +133,14 @@
   }
   
   .tier-tab {
-    @apply transition-colors duration-150;
+    @apply;
   }
   
   .tier-column {
-    @apply transition-colors duration-150;
+    @apply;
   }
 
-  /* Optimized mobile styles */
+  /* Mobile-first optimizations */
   @media (max-width: 640px) {
     .tier-row {
       @apply p-1.5 rounded-lg;
@@ -167,28 +166,35 @@
       @apply sticky top-0 z-30;
     }
 
-    /* Disable animations on mobile for performance */
+    /* Disable all animations and transitions on mobile */
     * {
-      animation-duration: 0s !important;
-      transition-duration: 0.1s !important;
+      animation: none !important;
+      transition: none !important;
       transform: none !important;
+    }
+    
+    /* Force hardware acceleration for scrolling only */
+    .tier-grid,
+    .leaderboard-container {
+      -webkit-overflow-scrolling: touch;
+      will-change: auto;
     }
   }
 
-  /* Admin panel optimized styles */
+  /* Admin panel styles */
   .admin-card {
     @apply bg-gray-900/30 backdrop-blur-sm border border-gray-700/40 rounded-lg 
-           p-3 transition-colors duration-150 hover:border-gray-600/40;
+           p-3 hover:border-gray-600/40;
   }
 
   .admin-button {
-    @apply px-3 py-2 text-sm rounded-md transition-colors duration-150 font-medium;
+    @apply px-3 py-2 text-sm rounded-md font-medium;
   }
 
   .admin-input {
     @apply w-full px-3 py-2 text-sm bg-gray-800/40 border border-gray-600/40 rounded-md
            focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/20
-           text-white placeholder:text-gray-400 transition-colors duration-150;
+           text-white placeholder:text-gray-400;
   }
 
   .admin-table {
@@ -204,7 +210,7 @@
   }
 }
 
-/* Optimized tier-specific styles */
+/* Tier-specific styles */
 .tier-1 {
   @apply border-tier-1/25;
 }
@@ -245,12 +251,12 @@
   @apply text-tier-5 border-tier-5/40;
 }
 
-/* Optimized dark theme */
+/* Dark theme */
 .bg-gradient-dark {
   @apply bg-gradient-to-br from-[#090912] to-[#0F0F18];
 }
 
-/* Optimized table styles */
+/* Table styles */
 .leaderboard-table th {
   @apply py-2 px-1 text-gray-400 font-medium text-xs;
 }
@@ -269,12 +275,7 @@
   display: none;
 }
 
-/* Optimized animations - minimal for performance */
-@keyframes simple-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.simple-animation {
-  animation: simple-fade 0.2s ease-out;
+/* Remove all transform-related CSS that could cause scaling issues */
+.transform-none {
+  transform: none !important;
 }
