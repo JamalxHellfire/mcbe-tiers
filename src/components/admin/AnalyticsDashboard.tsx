@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
-import { TrendingUp, Users, Database, Activity, Globe, Smartphone } from 'lucide-react';
+import { TrendingUp, Users, Database, Activity, Globe, Smartphone, Monitor, Eye, MousePointer } from 'lucide-react';
+import { getVisitorStats, clearOldAnalytics } from '@/services/analyticsService';
 
 interface AnalyticsData {
   totalPlayers: number;
@@ -13,6 +13,13 @@ interface AnalyticsData {
   playersByDevice: { device: string; count: number }[];
   recentActivity: { date: string; registrations: number; updates: number }[];
   topGamemodes: { gamemode: string; players: number }[];
+  visitorStats: {
+    totalUniqueVisits: number;
+    totalPageVisits: number;
+    pcUsers: number;
+    mobileUsers: number;
+    tabletUsers: number;
+  };
 }
 
 export const AnalyticsDashboard: React.FC = () => {
@@ -21,11 +28,20 @@ export const AnalyticsDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchAnalytics();
+    // Clear old analytics data on load
+    clearOldAnalytics();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchAnalytics, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
+
+      // Fetch visitor stats from localStorage
+      const visitorStats = getVisitorStats();
 
       // Fetch total players and points
       const { data: playersData } = await supabase
@@ -78,7 +94,7 @@ export const AnalyticsDashboard: React.FC = () => {
         recentActivity.push({
           date: dateStr,
           registrations,
-          updates: Math.floor(Math.random() * 10) // Placeholder for updates
+          updates: Math.floor(Math.random() * 10)
         });
       }
 
@@ -104,7 +120,8 @@ export const AnalyticsDashboard: React.FC = () => {
         playersByRegion,
         playersByDevice,
         recentActivity,
-        topGamemodes
+        topGamemodes,
+        visitorStats
       });
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -134,15 +151,22 @@ export const AnalyticsDashboard: React.FC = () => {
 
   const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#6366F1', '#84CC16'];
 
+  // Prepare visitor device data for chart
+  const visitorDeviceData = [
+    { device: 'Desktop', count: analytics.visitorStats.pcUsers },
+    { device: 'Mobile', count: analytics.visitorStats.mobileUsers },
+    { device: 'Tablet', count: analytics.visitorStats.tabletUsers },
+  ].filter(item => item.count > 0);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
-        <p className="text-gray-400">Platform insights and statistics</p>
+        <p className="text-gray-400">Platform insights and visitor statistics</p>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Enhanced Overview Cards with Visitor Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <Card className="bg-gray-900/50 border-gray-700/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -159,39 +183,58 @@ export const AnalyticsDashboard: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm text-gray-400">Unique Visits</p>
+                <p className="text-2xl font-bold text-white">{analytics.visitorStats.totalUniqueVisits.toLocaleString()}</p>
+              </div>
+              <Eye className="h-8 w-8 text-green-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Page Visits</p>
+                <p className="text-2xl font-bold text-white">{analytics.visitorStats.totalPageVisits.toLocaleString()}</p>
+              </div>
+              <MousePointer className="h-8 w-8 text-purple-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">PC Users</p>
+                <p className="text-2xl font-bold text-white">{analytics.visitorStats.pcUsers.toLocaleString()}</p>
+              </div>
+              <Monitor className="h-8 w-8 text-cyan-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Mobile Users</p>
+                <p className="text-2xl font-bold text-white">{analytics.visitorStats.mobileUsers.toLocaleString()}</p>
+              </div>
+              <Smartphone className="h-8 w-8 text-orange-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm text-gray-400">Global Points</p>
                 <p className="text-2xl font-bold text-white">{analytics.totalGlobalPoints.toLocaleString()}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-900/50 border-gray-700/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Active Gamemodes</p>
-                <p className="text-2xl font-bold text-white">{analytics.topGamemodes.length}</p>
-              </div>
-              <Database className="h-8 w-8 text-purple-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-900/50 border-gray-700/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">Avg Points/Player</p>
-                <p className="text-2xl font-bold text-white">
-                  {analytics.totalPlayers > 0 
-                    ? Math.round(analytics.totalGlobalPoints / analytics.totalPlayers)
-                    : 0
-                  }
-                </p>
-              </div>
-              <Activity className="h-8 w-8 text-orange-400" />
+              <TrendingUp className="h-8 w-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
@@ -199,6 +242,36 @@ export const AnalyticsDashboard: React.FC = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Visitor Device Distribution */}
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Visitor Device Types
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={visitorDeviceData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                  label={({ device, count }) => `${device}: ${count}`}
+                >
+                  {visitorDeviceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Regional Distribution */}
         <Card className="bg-gray-900/50 border-gray-700/50">
           <CardHeader>
@@ -225,33 +298,6 @@ export const AnalyticsDashboard: React.FC = () => {
                 </Pie>
                 <Tooltip />
               </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Device Distribution */}
-        <Card className="bg-gray-900/50 border-gray-700/50">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Smartphone className="h-5 w-5" />
-              Players by Device
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analytics.playersByDevice}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="device" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px'
-                  }} 
-                />
-                <Bar dataKey="count" fill="#8B5CF6" />
-              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

@@ -11,16 +11,17 @@ import { PopupProvider } from "./contexts/PopupContext";
 import { ModernResultPopup } from "./components/ModernResultPopup";
 import { AdminProtectedRoute } from "./components/admin/AdminProtectedRoute";
 import { useErrorHandler } from "./hooks/useErrorHandler";
+import { useAnalytics } from "./hooks/useAnalytics";
 
 // Optimized QueryClient configuration for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 10 * 60 * 1000, // 10 minutes - increased
+      gcTime: 15 * 60 * 1000, // 15 minutes
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
-      retry: 1, // Reduce retry attempts for faster error handling
+      retry: 1,
       networkMode: 'online',
     },
     mutations: {
@@ -32,6 +33,7 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   useErrorHandler();
+  useAnalytics(); // Track page visits
 
   return (
     <>

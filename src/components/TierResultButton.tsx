@@ -17,13 +17,13 @@ const getDeviceIcon = (device: string = 'PC') => {
   switch(device?.toLowerCase()) {
     case 'mobile':
     case 'bedrock':
-      return <Smartphone className="w-4 h-4 text-blue-400" />;
+      return <Smartphone className="w-3 h-3 text-blue-400" />;
     case 'console':
-      return <Gamepad className="w-4 h-4 text-green-400" />;
+      return <Gamepad className="w-3 h-3 text-green-400" />;
     case 'pc':
     case 'java':
     default:
-      return <Monitor className="w-4 h-4 text-white/80" />;
+      return <Monitor className="w-3 h-3 text-white/80" />;
   }
 };
 
@@ -61,45 +61,46 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
   return (
     <motion.button
       onClick={handleClick}
-      className="w-full group relative overflow-hidden bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 hover:from-slate-700/90 hover:via-slate-600/90 hover:to-slate-700/90 border-2 border-slate-600/50 rounded-xl px-6 py-4 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.02] backdrop-blur-sm"
-      initial={{ opacity: 0, y: 20 }}
+      className="w-full group relative overflow-hidden bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 hover:from-slate-700/90 hover:via-slate-600/90 hover:to-slate-700/90 border border-slate-600/50 rounded-lg px-3 py-2.5 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.01] backdrop-blur-sm"
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.15 }}
     >
-      <div className="relative flex items-center gap-4 z-10">
-        {/* Avatar */}
+      <div className="relative flex items-center gap-3 z-10">
+        {/* Smaller Avatar */}
         <div className="relative">
-          <Avatar className="w-12 h-12 border-2 border-slate-500/50 transition-all duration-300 shadow-md group-hover:border-white/50">
+          <Avatar className="w-8 h-8 border border-slate-500/50 transition-all duration-200 shadow-sm group-hover:border-white/50">
             <AvatarImage 
               src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
               alt={player.ign}
               className="object-cover object-center scale-110"
               onError={(e) => handleAvatarError(e, player.ign, player.java_username)}
             />
-            <AvatarFallback className="bg-slate-700 text-white text-sm font-bold">
+            <AvatarFallback className="bg-slate-700 text-white text-xs font-bold">
               {player.ign.charAt(0)}
             </AvatarFallback>
           </Avatar>
         </div>
         
-        {/* Player info */}
-        <div className="flex-1 text-left">
-          <div className="flex items-center gap-2 mb-1">
+        {/* Compact Player info */}
+        <div className="flex-1 text-left min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
             {getDeviceIcon(player.device)}
-            <span className="text-white font-bold text-lg group-hover:text-blue-200 transition-colors duration-300">
+            <span className="text-white font-semibold text-sm group-hover:text-blue-200 transition-colors duration-200 truncate">
               {player.ign}
             </span>
           </div>
           
-          <div className="flex items-center gap-3 text-sm text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="flex items-center gap-1">
-              <Trophy className="w-3 h-3" />
-              <span className="font-semibold">{playerPoints} pts</span>
+              <Trophy className="w-2.5 h-2.5" />
+              <span className="font-medium">{playerPoints}</span>
             </span>
             <span className="w-1 h-1 rounded-full bg-slate-500" />
             <span className="flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${
+              <div className={`w-1.5 h-1.5 rounded-full ${
                 player.region === 'NA' ? 'bg-red-500' :
                 player.region === 'EU' ? 'bg-green-500' :
                 player.region === 'ASIA' ? 'bg-blue-500' :
@@ -110,17 +111,17 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
           </div>
         </div>
         
-        {/* Arrow indicator */}
+        {/* Smaller Arrow indicator */}
         <motion.div 
-          className="text-slate-400 group-hover:text-blue-400 transition-colors duration-300"
-          whileHover={{ x: 3 }}
+          className="text-slate-400 group-hover:text-blue-400 transition-colors duration-200"
+          whileHover={{ x: 2 }}
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-4 h-4" />
         </motion.div>
       </div>
       
-      {/* Shine effect on hover */}
-      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+      {/* Reduced shine effect */}
+      <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white/3 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
     </motion.button>
   );
 }
