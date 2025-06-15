@@ -47,12 +47,12 @@
   }
 
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-dark-surface/30;
+    @apply bg-dark-surface/20;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -62,67 +62,67 @@
 
 @layer components {
   .glass {
-    @apply backdrop-blur-sm bg-dark-surface/70 border border-white/10 shadow-lg;
+    @apply backdrop-blur-sm bg-dark-surface/60 border border-white/10 shadow-md;
   }
 
   .tier-row {
-    @apply p-2 md:p-3 lg:p-4 rounded-lg md:rounded-xl backdrop-blur-sm border
-           transition-all duration-200 glass;
+    @apply p-2 md:p-3 rounded-lg backdrop-blur-sm border
+           transition-all duration-150 glass;
   }
 
   .tier-header {
-    @apply font-bold mb-2 md:mb-3 pb-2 md:pb-3 relative;
+    @apply font-semibold mb-2 pb-2 relative text-sm md:text-base;
   }
 
   .tier-section-container {
-    @apply mb-2 md:mb-3;
+    @apply mb-2;
   }
 
   .tier-section {
-    @apply p-2 md:p-3 rounded-lg bg-dark-surface/70 flex-1 
-           min-h-[80px] md:min-h-[100px] border border-white/10 
-           backdrop-blur-sm transition-all duration-200 hover:border-white/20;
+    @apply p-2 rounded-md bg-dark-surface/60 flex-1 
+           min-h-[60px] md:min-h-[80px] border border-white/10 
+           backdrop-blur-sm transition-all duration-150 hover:border-white/20;
   }
 
   .tier-placeholder {
-    @apply text-white/30 text-center py-3 md:py-4 italic text-xs md:text-sm;
+    @apply text-white/30 text-center py-2 md:py-3 italic text-xs;
   }
 
   .game-mode-button {
-    @apply px-2 md:px-3 py-1 md:py-1.5 rounded-md transition-all duration-200 hover:bg-white/10 
-           hover:scale-[1.02] relative text-xs md:text-sm;
+    @apply px-2 py-1 md:px-3 md:py-1.5 rounded-md transition-all duration-150 hover:bg-white/10 
+           hover:scale-[1.02] relative text-xs font-medium;
   }
 
   .game-mode-button.active {
-    @apply font-bold bg-white/10;
+    @apply font-semibold bg-white/10;
   }
 
   .mode-icon {
-    @apply mr-1 md:mr-1.5 text-xs md:text-sm inline-block;
+    @apply mr-1 text-xs inline-block;
   }
 
   .logo-text {
-    @apply text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
+    @apply text-base md:text-lg font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
            bg-clip-text text-transparent hover:from-white hover:to-white/80 transition-all;
   }
 
   .navbar {
-    @apply sticky top-0 z-20 glass border-b border-white/10 shadow-lg;
+    @apply sticky top-0 z-20 glass border-b border-white/10 shadow-md;
   }
 
   .content-container {
-    @apply container mx-auto px-2 md:px-4 lg:px-6 max-w-7xl py-2 md:py-4;
+    @apply container mx-auto px-2 md:px-4 max-w-7xl py-2 md:py-3;
   }
   
   .section-heading {
-    @apply text-lg md:text-xl lg:text-2xl font-bold text-center mb-4 md:mb-6 bg-gradient-to-r 
+    @apply text-lg md:text-xl font-bold text-center mb-3 md:mb-4 bg-gradient-to-r 
            from-white to-white/70 bg-clip-text text-transparent;
   }
   
   .player-result-button {
-    @apply flex items-center p-2 bg-dark-surface/80 rounded-lg
+    @apply flex items-center p-2 bg-dark-surface/70 rounded-lg
            border border-white/10 hover:border-white/20 transition-all
-           duration-200 shadow-sm;
+           duration-150 shadow-sm;
   }
   
   .player-avatar-frame {
@@ -131,21 +131,21 @@
   
   .player-badge {
     @apply absolute -bottom-1 -right-1 bg-yellow-500 text-dark-background
-           rounded-full w-3 h-3 md:w-4 md:h-4 flex items-center justify-center text-xs font-bold;
+           rounded-full w-3 h-3 flex items-center justify-center text-xs font-bold;
   }
   
   .tier-tab {
-    @apply transition-all duration-200 shadow-sm hover:shadow-md;
+    @apply transition-all duration-150 shadow-sm hover:shadow-md;
   }
   
   .tier-column {
-    @apply transition-all duration-200;
+    @apply transition-all duration-150;
   }
 
   /* Optimized mobile styles */
   @media (max-width: 640px) {
     .tier-row {
-      @apply p-2 rounded-lg;
+      @apply p-1.5 rounded-lg;
     }
     
     .tier-header {
@@ -153,11 +153,11 @@
     }
     
     .tier-section {
-      @apply p-2 min-h-[70px];
+      @apply p-1.5 min-h-[50px];
     }
     
     .game-mode-button {
-      @apply px-1.5 py-1 text-xs;
+      @apply px-1.5 py-0.5 text-xs;
     }
     
     .content-container {
@@ -169,91 +169,74 @@
     }
   }
 
-  /* Optimized tablet styles */
-  @media (min-width: 641px) and (max-width: 1024px) {
-    .tier-row {
-      @apply p-3 rounded-xl;
-    }
-    
-    .tier-section {
-      @apply p-3 min-h-[90px];
-    }
-    
-    .content-container {
-      @apply px-3 py-3;
-    }
-  }
-
   /* Admin panel optimized styles */
   .admin-card {
-    @apply bg-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-xl 
-           p-3 md:p-4 shadow-lg transition-all duration-200 hover:border-gray-600/50;
+    @apply bg-gray-900/30 backdrop-blur-sm border border-gray-700/40 rounded-lg 
+           p-3 shadow-md transition-all duration-150 hover:border-gray-600/40;
   }
 
   .admin-button {
-    @apply px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base 
-           rounded-lg transition-all duration-200 font-medium;
+    @apply px-3 py-2 text-sm rounded-md transition-all duration-150 font-medium;
   }
 
   .admin-input {
-    @apply w-full px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base 
-           bg-gray-800/50 border border-gray-600/50 rounded-lg
-           focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20
-           text-white placeholder:text-gray-400 transition-all duration-200;
+    @apply w-full px-3 py-2 text-sm bg-gray-800/40 border border-gray-600/40 rounded-md
+           focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/20
+           text-white placeholder:text-gray-400 transition-all duration-150;
   }
 
   .admin-table {
-    @apply w-full text-sm md:text-base;
+    @apply w-full text-sm;
   }
 
   .admin-table th {
-    @apply py-2 md:py-3 px-2 md:px-3 text-gray-400 font-semibold text-xs md:text-sm;
+    @apply py-2 px-2 text-gray-400 font-medium text-xs;
   }
 
   .admin-table td {
-    @apply py-1.5 md:py-2 px-2 md:px-3 border-t border-white/5 text-xs md:text-sm;
+    @apply py-1.5 px-2 border-t border-white/5 text-xs;
   }
 }
 
 /* Optimized tier-specific styles */
 .tier-1 {
-  @apply border-tier-1/30;
+  @apply border-tier-1/25;
 }
 
 .tier-1 .tier-header {
-  @apply text-tier-1 border-tier-1/50 drop-shadow-sm;
+  @apply text-tier-1 border-tier-1/40;
 }
 
 .tier-2 {
-  @apply border-tier-2/30;
+  @apply border-tier-2/25;
 }
 
 .tier-2 .tier-header {
-  @apply text-tier-2 border-tier-2/50 drop-shadow-sm;
+  @apply text-tier-2 border-tier-2/40;
 }
 
 .tier-3 {
-  @apply border-tier-3/30;
+  @apply border-tier-3/25;
 }
 
 .tier-3 .tier-header {
-  @apply text-tier-3 border-tier-3/50 drop-shadow-sm;
+  @apply text-tier-3 border-tier-3/40;
 }
 
 .tier-4 {
-  @apply border-tier-4/30;
+  @apply border-tier-4/25;
 }
 
 .tier-4 .tier-header {
-  @apply text-tier-4 border-tier-4/50 drop-shadow-sm;
+  @apply text-tier-4 border-tier-4/40;
 }
 
 .tier-5 {
-  @apply border-tier-5/30;
+  @apply border-tier-5/25;
 }
 
 .tier-5 .tier-header {
-  @apply text-tier-5 border-tier-5/50 drop-shadow-sm;
+  @apply text-tier-5 border-tier-5/40;
 }
 
 /* Optimized dark theme */
@@ -263,27 +246,27 @@
 
 /* Optimized table styles */
 .leaderboard-table th {
-  @apply py-2 md:py-3 px-1 md:px-2 text-gray-400 font-semibold text-xs md:text-sm;
+  @apply py-2 px-1 text-gray-400 font-medium text-xs;
 }
 
 .leaderboard-table td {
-  @apply py-1.5 md:py-2 px-1 md:px-2 border-t border-white/5 text-xs md:text-sm;
+  @apply py-1.5 px-1 border-t border-white/5 text-xs;
 }
 
-/* Reduced animations for performance */
+/* Mobile performance optimizations */
 @media (max-width: 768px) {
   .dropdown-content {
-    @apply max-h-48 overflow-y-auto;
+    @apply max-h-40 overflow-y-auto;
   }
 
   .mobile-nav-item {
-    @apply p-2 text-sm;
+    @apply p-1.5 text-sm;
   }
   
-  /* Disable heavy animations on mobile */
+  /* Minimal animations on mobile for performance */
   * {
-    animation-duration: 0.1s !important;
-    transition-duration: 0.1s !important;
+    animation-duration: 0.15s !important;
+    transition-duration: 0.15s !important;
   }
 }
 
@@ -293,15 +276,6 @@
   to { opacity: 1; }
 }
 
-@keyframes optimized-slide-in {
-  from { transform: translateX(-10px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
 .optimized-animation {
-  animation: optimized-fade-in 0.2s ease-out;
-}
-
-.optimized-slide {
-  animation: optimized-slide-in 0.2s ease-out;
+  animation: optimized-fade-in 0.15s ease-out;
 }
