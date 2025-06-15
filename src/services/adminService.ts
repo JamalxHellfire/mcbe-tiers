@@ -45,6 +45,7 @@ export const clearAllAuthState = (): void => {
 // Check if user has existing access based on IP
 export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string }> => {
   try {
+    console.log('Checking admin access via database...');
     const { data, error } = await supabase.rpc('check_admin_access');
     
     if (error) {
@@ -52,9 +53,11 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
       throw error;
     }
     
+    console.log('Database access check result:', data);
+    
     if (data && data.length > 0) {
       const result = data[0];
-      console.log('Admin access check result:', result);
+      console.log('Admin access granted:', result);
       return { hasAccess: result.has_access, role: result.user_role };
     }
     
@@ -68,6 +71,8 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
 // Initialize auth config if it doesn't exist
 const initializeAuthConfig = async () => {
   try {
+    console.log('Initializing auth config...');
+    
     // Check if owner password exists
     const { data: existing, error: checkError } = await supabase
       .from('auth_config')
@@ -91,6 +96,8 @@ const initializeAuthConfig = async () => {
       } else {
         console.log('Owner password initialized');
       }
+    } else {
+      console.log('Owner password already exists');
     }
 
     // Check if general password exists
@@ -116,6 +123,8 @@ const initializeAuthConfig = async () => {
       } else {
         console.log('General password initialized');
       }
+    } else {
+      console.log('General password already exists');
     }
   } catch (error) {
     console.error('Failed to initialize auth config:', error);
@@ -153,13 +162,16 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
     const ownerPassword = configs?.find(c => c.config_key === 'owner_password')?.config_value;
     const generalPassword = configs?.find(c => c.config_key === 'general_password')?.config_value;
 
-    console.log('Checking password against owner password:', password === ownerPassword);
-    console.log('Checking password against general password:', password === generalPassword);
+    console.log('Owner password from DB:', ownerPassword);
+    console.log('Input password:', password);
+    console.log('Passwords match:', password === ownerPassword);
 
     if (password === ownerPassword) {
-      console.log('Owner login successful');
+      console.log('Owner login successful - creating admin user entry');
+      
       // Owner access - auto-approve IP
       const userIp = await getUserIP();
+      console.log('Generated user IP:', userIp);
       
       const { error: insertError } = await supabase
         .from('admin_users')
@@ -169,6 +181,8 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
           approved_by: 'system',
           approved_at: new Date().toISOString(),
           last_access: new Date().toISOString()
+        }, {
+          onConflict: 'ip_address'
         });
 
       if (insertError) {
@@ -177,14 +191,21 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
       }
 
       const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store in localStorage
       localStorage.setItem('admin_session_token', sessionToken);
       localStorage.setItem('admin_role', 'owner');
+      localStorage.setItem('admin_ip', userIp);
 
-      console.log('Owner session created');
-      return { success: true, sessionToken, role: 'owner', adminId: 'owner-1' };
+      console.log('Owner session created successfully');
+      return { 
+        success: true, 
+        sessionToken, 
+        role: 'owner', 
+        adminId: 'owner-1' 
+      };
     } else if (password === generalPassword) {
       console.log('General password matched - needs onboarding');
-      // General admin - needs onboarding
       return { success: true, needsOnboarding: true };
     } else {
       console.log('Invalid password provided');
@@ -192,7 +213,7 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
     }
   } catch (error: any) {
     console.error('Admin authentication error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Authentication failed' };
   }
 };
 
@@ -222,9 +243,14 @@ export const submitOnboardingApplication = async (data: OnboardingData): Promise
 
 export const verifyAdminSession = async (sessionToken: string): Promise<boolean> => {
   try {
+    console.log('Verifying admin session:', sessionToken);
+    
     // Check if user has access via IP
     const result = await checkAdminAccess();
-    return result.hasAccess && sessionToken.startsWith('admin_');
+    const isValid = result.hasAccess && sessionToken.startsWith('admin_');
+    
+    console.log('Session verification result:', isValid);
+    return isValid;
   } catch (error) {
     console.error('Session verification error:', error);
     return false;
@@ -233,6 +259,7 @@ export const verifyAdminSession = async (sessionToken: string): Promise<boolean>
 
 export const adminLogout = async (sessionToken: string): Promise<boolean> => {
   try {
+    console.log('Logging out admin session');
     clearAllAuthState();
     return true;
   } catch (error) {

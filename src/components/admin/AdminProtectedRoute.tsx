@@ -14,11 +14,14 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        console.log('Checking admin access...');
+        console.log('AdminProtectedRoute: Checking access...');
         
-        // First check if there's a session token
+        // First check local storage for existing session
         const sessionToken = localStorage.getItem('admin_session_token');
         const storedRole = localStorage.getItem('admin_role');
+        
+        console.log('Stored session token:', !!sessionToken);
+        console.log('Stored role:', storedRole);
         
         if (sessionToken && storedRole) {
           console.log('Found existing session, verifying...');
@@ -26,25 +29,28 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
           if (isValid) {
             console.log('Session valid, setting role:', storedRole);
             setUserRole(storedRole);
+            setIsLoading(false);
+            return;
           } else {
             console.log('Session invalid, clearing storage');
             adminService.clearAllAuthState();
-            setUserRole(null);
           }
+        }
+        
+        // Check IP-based access as fallback
+        console.log('Checking IP-based access...');
+        const result = await adminService.checkAdminAccess();
+        if (result.hasAccess && result.role) {
+          console.log('IP-based access granted, role:', result.role);
+          setUserRole(result.role);
+          
+          // Create session for this access
+          const newSessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          localStorage.setItem('admin_session_token', newSessionToken);
+          localStorage.setItem('admin_role', result.role);
         } else {
-          console.log('No existing session found');
-          // Check IP-based access
-          const result = await adminService.checkAdminAccess();
-          if (result.hasAccess && result.role) {
-            console.log('IP-based access granted, role:', result.role);
-            setUserRole(result.role);
-            // Set session token for compatibility
-            localStorage.setItem('admin_session_token', `admin_${Date.now()}`);
-            localStorage.setItem('admin_role', result.role);
-          } else {
-            console.log('No access granted');
-            setUserRole(null);
-          }
+          console.log('No access granted');
+          setUserRole(null);
         }
       } catch (error) {
         console.error('Access check error:', error);
@@ -57,15 +63,21 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     checkAccess();
   }, []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     console.log('Auth success callback triggered');
-    // Re-check access after successful auth
-    adminService.checkAdminAccess().then((result) => {
-      if (result.hasAccess && result.role) {
-        console.log('Setting user role after auth success:', result.role);
-        setUserRole(result.role);
+    
+    // Small delay to ensure database update is complete
+    setTimeout(async () => {
+      try {
+        const result = await adminService.checkAdminAccess();
+        if (result.hasAccess && result.role) {
+          console.log('Setting user role after auth success:', result.role);
+          setUserRole(result.role);
+        }
+      } catch (error) {
+        console.error('Error in auth success callback:', error);
       }
-    });
+    }, 500);
   };
 
   if (isLoading) {
@@ -80,6 +92,6 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
   }
 
-  console.log('Rendering admin panel with role:', userRole);
+  console.log('AdminProtectedRoute: Rendering admin panel with role:', userRole);
   return <>{children(userRole)}</>;
 };
