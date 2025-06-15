@@ -25,7 +25,7 @@ export interface Player {
   }[];
 }
 
-// Updated tier points mapping for HT1-LT5 range
+// Updated tier points mapping for HT1-LT5 range with better calculation
 const TIER_POINTS: Record<TierLevel, number> = {
   'HT1': 50,
   'LT1': 45,
@@ -49,32 +49,53 @@ export async function updatePlayerGlobalPoints(playerId: string): Promise<void> 
   try {
     console.log(`Updating global points for player: ${playerId}`);
     
-    // Get all tier assignments for the player
+    // Get all tier assignments for the player with better error handling
     const { data: tierAssignments, error } = await supabase
       .from('gamemode_scores')
-      .select('internal_tier')
-      .eq('player_id', playerId);
+      .select('internal_tier, score')
+      .eq('player_id', playerId)
+      .not('internal_tier', 'is', null);
 
     if (error) {
       console.error('Error fetching tier assignments:', error);
       return;
     }
 
-    if (!tierAssignments) {
+    if (!tierAssignments || tierAssignments.length === 0) {
       console.log('No tier assignments found for player:', playerId);
+      // Set points to 0 if no assignments
+      const { error: updateError } = await supabase
+        .from('players')
+        .update({ 
+          global_points: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', playerId);
+
+      if (updateError) {
+        console.error('Error updating global points to 0:', updateError);
+      }
       return;
     }
 
-    // Calculate total points from all tiers
-    const totalPoints = tierAssignments.reduce((sum, assignment) => {
-      const points = calculateTierPoints(assignment.internal_tier as TierLevel);
-      console.log(`Tier ${assignment.internal_tier} = ${points} points`);
-      return sum + points;
-    }, 0);
+    // Calculate total points from all tiers with validation
+    let totalPoints = 0;
+    let validAssignments = 0;
 
-    console.log(`Total calculated points for player ${playerId}: ${totalPoints}`);
+    tierAssignments.forEach(assignment => {
+      if (assignment.internal_tier && assignment.internal_tier in TIER_POINTS) {
+        const points = calculateTierPoints(assignment.internal_tier as TierLevel);
+        totalPoints += points;
+        validAssignments++;
+        console.log(`Tier ${assignment.internal_tier} = ${points} points (Score: ${assignment.score || 'N/A'})`);
+      } else {
+        console.warn(`Invalid tier found: ${assignment.internal_tier}`);
+      }
+    });
 
-    // Update player's global points
+    console.log(`Total calculated points for player ${playerId}: ${totalPoints} from ${validAssignments} valid assignments`);
+
+    // Update player's global points with validation
     const { error: updateError } = await supabase
       .from('players')
       .update({ 

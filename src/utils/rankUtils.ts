@@ -11,7 +11,7 @@ export interface RankTier {
   borderColor: string;
 }
 
-// Updated rank tiers based on new rank system
+// Updated rank tiers based on new rank system with corrected point ranges
 export const rankTiers: RankTier[] = [
   {
     title: "Rookie",
@@ -79,15 +79,22 @@ export const rankTiers: RankTier[] = [
 ];
 
 /**
- * Get the rank tier based on points
+ * Get the rank tier based on points (fixed logic)
  */
 export function getPlayerRank(points: number): RankTier {
-  const rank = rankTiers.find(tier => 
-    points >= tier.minPoints && 
-    (tier.maxPoints === null || points <= tier.maxPoints)
-  );
+  // Ensure points is a valid number
+  const validPoints = typeof points === 'number' && !isNaN(points) ? Math.max(0, points) : 0;
   
-  return rank || rankTiers[0];
+  // Find the correct rank tier
+  for (let i = rankTiers.length - 1; i >= 0; i--) {
+    const tier = rankTiers[i];
+    if (validPoints >= tier.minPoints && (tier.maxPoints === null || validPoints <= tier.maxPoints)) {
+      return tier;
+    }
+  }
+  
+  // Fallback to Rookie if no match found
+  return rankTiers[0];
 }
 
 /**
@@ -104,9 +111,11 @@ export function formatPointsRange(minPoints: number, maxPoints: number | null): 
  * Get the next rank tier a player is working towards
  */
 export function getNextRank(points: number): RankTier | null {
+  const validPoints = typeof points === 'number' && !isNaN(points) ? Math.max(0, points) : 0;
+  
   const currentRankIndex = rankTiers.findIndex(tier => 
-    points >= tier.minPoints && 
-    (tier.maxPoints === null || points <= tier.maxPoints)
+    validPoints >= tier.minPoints && 
+    (tier.maxPoints === null || validPoints <= tier.maxPoints)
   );
   
   if (currentRankIndex === -1 || currentRankIndex === rankTiers.length - 1) {
@@ -114,4 +123,20 @@ export function getNextRank(points: number): RankTier | null {
   }
   
   return rankTiers[currentRankIndex + 1];
+}
+
+/**
+ * Calculate progress to next rank (0-100)
+ */
+export function getProgressToNextRank(points: number): number {
+  const validPoints = typeof points === 'number' && !isNaN(points) ? Math.max(0, points) : 0;
+  const currentRank = getPlayerRank(validPoints);
+  const nextRank = getNextRank(validPoints);
+  
+  if (!nextRank) return 100; // Already at max rank
+  
+  const progressPoints = validPoints - currentRank.minPoints;
+  const totalPointsNeeded = nextRank.minPoints - currentRank.minPoints;
+  
+  return Math.round((progressPoints / totalPointsNeeded) * 100);
 }

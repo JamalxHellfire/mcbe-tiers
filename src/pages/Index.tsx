@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -13,6 +12,7 @@ import { motion } from 'framer-motion';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { usePointsCalculation } from '@/hooks/usePointsCalculation';
+import { FloatingChatButton } from '../components/FloatingChatButton';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -100,6 +100,9 @@ const Index = () => {
       </main>
       
       <Footer />
+      
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
     </div>
   );
 };
