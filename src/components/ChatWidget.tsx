@@ -48,14 +48,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   }, [isOpen]);
 
   useEffect(() => {
-    // Refresh KB status periodically when chat is open
-    if (isOpen) {
-      const interval = setInterval(refreshKnowledgeBaseStatus, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -170,21 +162,24 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               </div>
             </div>
 
-            {/* Knowledge Base Status */}
-            {kbInfo && (
+            {/* Knowledge Base Status - Fixed */}
+            {hasKnowledgeBase && kbInfo && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative bg-black/20 backdrop-blur-sm px-6 py-4 text-sm text-white/90 flex items-center justify-between border-b border-white/10"
+                className="relative bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm px-6 py-4 text-sm text-white flex items-center justify-between border-b border-white/10"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/20 rounded-lg">
-                    <FileText className="w-4 h-4 text-blue-300" />
+                  <div className="p-2 bg-green-500/30 rounded-lg">
+                    <FileText className="w-4 h-4 text-green-200" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white">{kbInfo.filename}</span>
-                    <p className="text-xs text-white/70">Document loaded</p>
+                    <span className="font-semibold text-green-100">{kbInfo.filename}</span>
+                    <p className="text-xs text-green-200/80">Document loaded and ready</p>
                   </div>
+                </div>
+                <div className="text-xs text-green-200/60">
+                  {new Date(kbInfo.uploadDate).toLocaleDateString()}
                 </div>
               </motion.div>
             )}
