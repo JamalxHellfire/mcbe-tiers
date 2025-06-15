@@ -7,6 +7,13 @@ import { ChatWidget } from './ChatWidget';
 export function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Chat button clicked, current state:', isOpen);
+    setIsOpen(!isOpen);
+  };
+
   return (
     <>
       <motion.div
@@ -15,11 +22,15 @@ export function FloatingChatButton() {
         whileTap={{ scale: 0.95 }}
       >
         <motion.button
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative w-12 h-12 rounded-full shadow-xl flex items-center justify-center group transition-all duration-300 overflow-hidden"
+          onClick={handleToggle}
+          className="relative w-12 h-12 rounded-full shadow-xl flex items-center justify-center group transition-all duration-300 overflow-hidden touch-manipulation"
           style={{
             background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
-            boxShadow: '0 8px 25px -8px rgba(59, 130, 246, 0.4)'
+            boxShadow: '0 8px 25px -8px rgba(59, 130, 246, 0.4)',
+            WebkitTapHighlightColor: 'transparent',
+            touchAction: 'manipulation',
+            minHeight: '48px',
+            minWidth: '48px'
           }}
         >
           {/* Animated background gradient */}

@@ -55,7 +55,10 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
     return assignment?.tier || 'Not Ranked';
   };
 
-  const handlePlayerRowClick = (player: Player) => {
+  const handlePlayerRowClick = (player: Player, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Player clicked:', player.ign);
     onPlayerClick(player);
   };
 
@@ -73,8 +76,13 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="w-full bg-dark-surface/60 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
-              onClick={() => handlePlayerRowClick(player)}
+              className="w-full bg-dark-surface/60 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all cursor-pointer touch-manipulation"
+              onClick={(e) => handlePlayerRowClick(player, e)}
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation',
+                minHeight: '120px'
+              }}
             >
               {/* Top row: Rank, Avatar, Name, Points */}
               <div className="flex items-center gap-4 mb-3">
@@ -185,8 +193,12 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="grid grid-cols-12 gap-6 px-8 py-5 hover:bg-white/5 cursor-pointer transition-all group"
-              onClick={() => handlePlayerRowClick(player)}
+              className="grid grid-cols-12 gap-6 px-8 py-5 hover:bg-white/5 cursor-pointer transition-all group touch-manipulation"
+              onClick={(e) => handlePlayerRowClick(player, e)}
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
             >
               {/* Rank with styled background */}
               <div className="col-span-1 flex items-center">

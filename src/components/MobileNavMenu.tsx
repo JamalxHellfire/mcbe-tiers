@@ -32,6 +32,7 @@ export function MobileNavMenu({ currentMode = 'overall' }: MobileNavMenuProps) {
   ];
 
   const handleModeChange = (mode: string) => {
+    console.log('Mobile nav mode change:', mode);
     if (mode === 'overall') {
       navigate('/');
     } else {
@@ -53,7 +54,11 @@ export function MobileNavMenu({ currentMode = 'overall' }: MobileNavMenuProps) {
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className="w-full max-w-xs flex items-center justify-between bg-dark-surface/60 border-white/20 text-white hover:bg-dark-surface/80 hover:text-white py-3 h-12"
+            className="w-full max-w-xs flex items-center justify-between bg-dark-surface/60 border-white/20 text-white hover:bg-dark-surface/80 hover:text-white py-3 h-12 touch-manipulation"
+            style={{ 
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
           >
             <div className="flex items-center gap-2">
               <Menu size={18} />
@@ -69,12 +74,20 @@ export function MobileNavMenu({ currentMode = 'overall' }: MobileNavMenuProps) {
           {gameModes.map((mode) => (
             <DropdownMenuItem 
               key={mode.value}
-              className={`text-white hover:bg-white/10 focus:bg-white/10 py-3 text-base cursor-pointer ${
+              className={`text-white hover:bg-white/10 focus:bg-white/10 py-3 text-base cursor-pointer touch-manipulation min-h-[48px] ${
                 (currentMode?.toLowerCase() || 'overall') === mode.value 
                   ? "bg-white/20 font-semibold" 
                   : ""
               }`}
-              onClick={() => handleModeChange(mode.value)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleModeChange(mode.value);
+              }}
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
             >
               {mode.label}
             </DropdownMenuItem>
