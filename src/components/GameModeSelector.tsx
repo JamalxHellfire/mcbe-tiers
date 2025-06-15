@@ -25,22 +25,22 @@ export function GameModeSelector({ selectedMode = 'overall', onSelectMode }: Gam
   const currentMode = selectedMode?.toLowerCase() || 'overall';
   
   return (
-    <div className="flex space-x-4 overflow-x-auto pb-2 no-scrollbar">
+    <div className="flex space-x-2 overflow-x-auto pb-1 no-scrollbar">
       {gameModes.map(mode => (
         <button
           key={mode.id}
           onClick={() => onSelectMode(mode.id)}
           className={cn(
-            "flex items-center justify-center px-7 py-4 text-xl font-bold rounded-2xl whitespace-nowrap border-2 transition-colors duration-150 shadow-md gap-3",
-            mode.id === 'overall' ? "text-xl px-9 py-5" : "text-xl",
+            "flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-lg whitespace-nowrap border transition-colors duration-150 shadow gap-1.5",
+            mode.id === 'overall' ? "text-base px-5 py-3" : "text-sm",
             currentMode === mode.id 
               ? "bg-white/15 border-white/30 text-white"
               : "bg-white/10 border-white/10 text-white/70 hover:bg-white/15 hover:text-white"
           )}
-          style={{ minWidth: 92, minHeight: 60 }}
+          style={{ minWidth: 56, minHeight: 36 }}
         >
           {mode.id !== 'overall' && (
-            <GameModeIcon mode={mode.id} className="h-9 w-9 mr-3" />
+            <GameModeIcon mode={mode.id} className="h-5 w-5 mr-2" />
           )}
           {mode.label}
         </button>

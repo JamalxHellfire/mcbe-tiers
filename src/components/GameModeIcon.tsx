@@ -6,7 +6,7 @@ interface GameModeIconProps {
   className?: string;
 }
 
-export function GameModeIcon({ mode, className = "h-9 w-9" }: GameModeIconProps) {
+export function GameModeIcon({ mode, className = "h-5 w-5" }: GameModeIconProps) {
   const getIconPath = () => {
     switch (mode.toLowerCase()) {
       case 'mace':
@@ -41,7 +41,7 @@ export function GameModeIcon({ mode, className = "h-9 w-9" }: GameModeIconProps)
       src={iconPath}
       alt={`${mode} icon`}
       className={className}
-      style={{ minWidth: 36, minHeight: 36 }}
+      style={{ minWidth: 20, minHeight: 20 }}
     />
   );
 }
