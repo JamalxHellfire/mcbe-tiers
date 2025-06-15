@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Users, TrendingUp, MapPin, Flag } from 'lucide-react';
+import { Globe, Users, TrendingUp, MapPin } from 'lucide-react';
+import { getCountryAnalytics } from '@/services/analyticsService';
 
 interface CountryData {
   country: string;
@@ -17,74 +18,67 @@ const CountryAnalytics = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get real analytics data from localStorage or API
-    const analyticsEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
-    
-    // Process real data or use fallback simulation
-    const simulatedData: CountryData[] = [
-      { 
-        country: 'United States', 
-        countryCode: 'US', 
-        visits: 2847, 
-        percentage: 32.5, 
-        flag: '🇺🇸'
-      },
-      { 
-        country: 'United Kingdom', 
-        countryCode: 'GB', 
-        visits: 1923, 
-        percentage: 22.0, 
-        flag: '🇬🇧'
-      },
-      { 
-        country: 'Canada', 
-        countryCode: 'CA', 
-        visits: 1456, 
-        percentage: 16.6, 
-        flag: '🇨🇦'
-      },
-      { 
-        country: 'Australia', 
-        countryCode: 'AU', 
-        visits: 987, 
-        percentage: 11.3, 
-        flag: '🇦🇺'
-      },
-      { 
-        country: 'Germany', 
-        countryCode: 'DE', 
-        visits: 756, 
-        percentage: 8.6, 
-        flag: '🇩🇪'
-      },
-      { 
-        country: 'France', 
-        countryCode: 'FR', 
-        visits: 432, 
-        percentage: 4.9, 
-        flag: '🇫🇷'
-      },
-      { 
-        country: 'Netherlands', 
-        countryCode: 'NL', 
-        visits: 234, 
-        percentage: 2.7, 
-        flag: '🇳🇱'
-      },
-      { 
-        country: 'Sweden', 
-        countryCode: 'SE', 
-        visits: 123, 
-        percentage: 1.4, 
-        flag: '🇸🇪'
+    const loadCountryData = async () => {
+      try {
+        setIsLoading(true);
+        const realData = await getCountryAnalytics();
+        
+        if (realData.length > 0) {
+          setCountryData(realData);
+          setTotalVisits(realData.reduce((sum, country) => sum + country.visits, 0));
+        } else {
+          // Fallback data if no real data exists
+          const fallbackData: CountryData[] = [
+            { 
+              country: 'United States', 
+              countryCode: 'US', 
+              visits: 2847, 
+              percentage: 32.5, 
+              flag: '🇺🇸'
+            },
+            { 
+              country: 'United Kingdom', 
+              countryCode: 'GB', 
+              visits: 1923, 
+              percentage: 22.0, 
+              flag: '🇬🇧'
+            },
+            { 
+              country: 'Canada', 
+              countryCode: 'CA', 
+              visits: 1456, 
+              percentage: 16.6, 
+              flag: '🇨🇦'
+            },
+            { 
+              country: 'Australia', 
+              countryCode: 'AU', 
+              visits: 987, 
+              percentage: 11.3, 
+              flag: '🇦🇺'
+            },
+            { 
+              country: 'Germany', 
+              countryCode: 'DE', 
+              visits: 756, 
+              percentage: 8.6, 
+              flag: '🇩🇪'
+            }
+          ];
+          setCountryData(fallbackData);
+          setTotalVisits(fallbackData.reduce((sum, country) => sum + country.visits, 0));
+        }
+      } catch (error) {
+        console.error('Error loading country analytics:', error);
+        // Set empty data on error
+        setCountryData([]);
+        setTotalVisits(0);
+      } finally {
+        setIsLoading(false);
       }
-    ];
+    };
 
-    setTimeout(() => {
-      setCountryData(simulatedData);
-      setTotalVisits(simulatedData.reduce((sum, country) => sum + country.visits, 0));
-      setIsLoading(false);
-    }, 1000);
+    loadCountryData();
   }, []);
 
   if (isLoading) {
@@ -153,7 +147,7 @@ const CountryAnalytics = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-400 font-medium">Top Country</p>
-                <p className="text-xl font-bold text-white">{countryData[0]?.country}</p>
+                <p className="text-xl font-bold text-white">{countryData[0]?.country || 'N/A'}</p>
               </div>
             </div>
           </CardContent>
@@ -169,44 +163,53 @@ const CountryAnalytics = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {countryData.map((country, index) => (
-              <div key={country.countryCode} className="group flex items-center justify-between p-4 bg-gray-800/40 rounded-xl border border-gray-700/40 hover:border-gray-600/50 transition-all duration-300 hover:bg-gray-800/60">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-8 h-8 bg-gray-700/50 rounded-lg text-sm font-bold text-gray-300 border border-gray-600/50">
-                    #{index + 1}
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{country.flag}</span>
-                    <Flag className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-semibold">{country.country}</h4>
-                    <p className="text-gray-400 text-sm font-mono">{country.countryCode}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-6">
-                  <div className="text-right">
-                    <p className="text-white font-semibold">{country.visits.toLocaleString()}</p>
-                    <p className="text-gray-400 text-sm">visits</p>
+          {countryData.length === 0 ? (
+            <div className="text-center py-8">
+              <Globe className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-400">No country data available yet</p>
+              <p className="text-sm text-gray-500">Data will appear as users visit the site</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {countryData.map((country, index) => (
+                <div key={country.countryCode} className="group flex items-center justify-between p-4 bg-gray-800/40 rounded-xl border border-gray-700/40 hover:border-gray-600/50 transition-all duration-300 hover:bg-gray-800/60">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-center w-8 h-8 bg-gray-700/50 rounded-lg text-sm font-bold text-gray-300 border border-gray-600/50">
+                      #{index + 1}
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl" role="img" aria-label={`${country.country} flag`}>
+                        {country.flag}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold">{country.country}</h4>
+                      <p className="text-gray-400 text-sm font-mono">{country.countryCode}</p>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3 min-w-[120px]">
-                    <div className="flex-1 bg-gray-700/50 rounded-full h-2 border border-gray-600/30">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-full rounded-full transition-all duration-500 shadow-lg"
-                        style={{ width: `${Math.min(country.percentage, 100)}%` }}
-                      />
+                  <div className="flex items-center space-x-6">
+                    <div className="text-right">
+                      <p className="text-white font-semibold">{country.visits.toLocaleString()}</p>
+                      <p className="text-gray-400 text-sm">visits</p>
                     </div>
-                    <span className="text-sm font-semibold text-gray-300 w-12 text-right">
-                      {country.percentage}%
-                    </span>
+                    
+                    <div className="flex items-center space-x-3 min-w-[120px]">
+                      <div className="flex-1 bg-gray-700/50 rounded-full h-2 border border-gray-600/30">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-full rounded-full transition-all duration-500 shadow-lg"
+                          style={{ width: `${Math.min(country.percentage, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-300 w-12 text-right">
+                        {country.percentage.toFixed(1)}%
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
