@@ -6,16 +6,14 @@ import {
   Users, 
   Wrench, 
   BarChart3, 
-  Calendar,
   Database,
   UserCheck,
   Terminal,
   UserCog,
-  Shield,
-  Globe
+  Shield
 } from 'lucide-react';
 
-export type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications' | 'country-analytics';
+export type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'applications';
 
 interface AdminNavigationProps {
   activeTab: AdminTab;
@@ -30,11 +28,11 @@ interface AdminNavigationProps {
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications', 'country-analytics'];
+      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'country-analytics'];
+      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox'];
     case 'moderator':
-      return ['submit', 'manage', 'analytics', 'daily', 'blackbox'];
+      return ['submit', 'manage', 'analytics', 'blackbox'];
     case 'tester':
       return ['submit', 'manage'];
     default:
@@ -65,9 +63,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
       title: "Analytics & Insights",
       icon: BarChart3,
       tabs: [
-        { id: 'analytics' as AdminTab, label: 'System Analytics', icon: BarChart3, description: 'Platform insights and statistics' },
-        { id: 'daily' as AdminTab, label: 'Daily Analytics', icon: Calendar, description: 'Daily visits and user analytics' },
-        { id: 'country-analytics' as AdminTab, label: 'Country Analytics', icon: Globe, description: 'User access by country' }
+        { id: 'analytics' as AdminTab, label: 'Analytics Dashboard', icon: BarChart3, description: 'Combined analytics: overview, daily stats, and country data' }
       ]
     },
     {

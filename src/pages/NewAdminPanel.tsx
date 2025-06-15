@@ -5,14 +5,12 @@ import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
 import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
 import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
-import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { CombinedAnalyticsDashboard } from '@/components/admin/CombinedAnalyticsDashboard';
 import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
-import DailyAnalytics from '@/components/admin/DailyAnalytics';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
 import ApplicationsManager from '@/components/admin/ApplicationsManager';
-import CountryAnalytics from '@/components/admin/CountryAnalytics';
 import AdminNavigation, { AdminTab } from '@/components/admin/AdminNavigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -31,11 +29,11 @@ import { newAdminService } from '@/services/newAdminService';
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications', 'country-analytics'];
+      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'country-analytics'];
+      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox'];
     case 'moderator':
-      return ['submit', 'manage', 'analytics', 'daily', 'blackbox'];
+      return ['submit', 'manage', 'analytics', 'blackbox'];
     case 'tester':
       return ['submit', 'manage'];
     default:
@@ -60,13 +58,11 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
   const isMobile = useIsMobile();
 
   const handleLogout = () => {
-    // Clear all authentication state
     newAdminService.clearAllAuthState();
     toast({
       title: "Logged out",
       description: "You have been logged out and all sessions cleared.",
     });
-    // Force reload to clear any remaining state
     window.location.href = '/';
   };
 
@@ -132,11 +128,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
           </div>
         ) : <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'analytics':
-        return <AnalyticsDashboard />;
-      case 'daily':
-        return <DailyAnalytics />;
-      case 'country-analytics':
-        return <CountryAnalytics />;
+        return <CombinedAnalyticsDashboard />;
       case 'database':
         return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
           <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;

@@ -4,14 +4,12 @@ import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
 import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
 import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
-import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { CombinedAnalyticsDashboard } from '@/components/admin/CombinedAnalyticsDashboard';
 import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
-import DailyAnalytics from '@/components/admin/DailyAnalytics';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
 import ApplicationsManager from '@/components/admin/ApplicationsManager';
-import CountryAnalytics from '@/components/admin/CountryAnalytics';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
@@ -21,27 +19,25 @@ import {
   Users, 
   Wrench, 
   BarChart3, 
-  Calendar,
   Database,
   UserCheck,
   Terminal,
-  UserCog,
-  Globe
+  UserCog
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
 
-type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications' | 'country-analytics';
+type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'applications';
 
 // Role-based tab visibility
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications', 'country-analytics'];
+      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'country-analytics'];
+      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox'];
     case 'moderator':
-      return ['submit', 'manage', 'analytics', 'daily', 'blackbox'];
+      return ['submit', 'manage', 'analytics', 'blackbox'];
     case 'tester':
       return ['submit', 'manage'];
     default:
@@ -94,12 +90,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
     { id: 'manage' as AdminTab, label: 'Players', icon: Users },
     { id: 'tools' as AdminTab, label: 'Tools', icon: Wrench },
     { id: 'analytics' as AdminTab, label: 'Analytics', icon: BarChart3 },
-    { id: 'daily' as AdminTab, label: 'Daily', icon: Calendar },
     { id: 'database' as AdminTab, label: 'Database', icon: Database },
     { id: 'users' as AdminTab, label: 'Users', icon: UserCheck },
     { id: 'blackbox' as AdminTab, label: 'Logs', icon: Terminal },
-    { id: 'applications' as AdminTab, label: 'Apps', icon: UserCog },
-    { id: 'country-analytics' as AdminTab, label: 'Countries', icon: Globe }
+    { id: 'applications' as AdminTab, label: 'Apps', icon: UserCog }
   ].filter(tab => visibleTabs.includes(tab.id));
 
   const renderContent = () => {
@@ -140,11 +134,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
           </div>
         );
       case 'analytics':
-        return <AnalyticsDashboard />;
-      case 'daily':
-        return <DailyAnalytics />;
-      case 'country-analytics':
-        return <CountryAnalytics />;
+        return <CombinedAnalyticsDashboard />;
       case 'database':
         return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
           <div className="flex items-center justify-center min-h-[400px]">
