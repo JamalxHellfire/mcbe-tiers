@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NewAdminProtectedRoute } from '@/components/admin/NewAdminProtectedRoute';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
@@ -11,38 +12,28 @@ import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
 import ApplicationsManager from '@/components/admin/ApplicationsManager';
+import CountryAnalytics from '@/components/admin/CountryAnalytics';
+import AdminNavigation, { AdminTab } from '@/components/admin/AdminNavigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
-  UploadCloud, 
-  Users, 
-  Wrench, 
-  Settings, 
   Shield, 
   LogOut, 
-  BarChart3, 
   Menu, 
-  X, 
-  Calendar,
-  Database,
-  UserCheck,
-  Terminal,
-  UserCog,
+  X,
   Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { newAdminService } from '@/services/newAdminService';
 
-type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications';
-
 // Role-based tab visibility
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications'];
+      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications', 'country-analytics'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox'];
+      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'country-analytics'];
     case 'moderator':
       return ['submit', 'manage', 'analytics', 'daily', 'blackbox'];
     case 'tester':
@@ -144,6 +135,8 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
         return <AnalyticsDashboard />;
       case 'daily':
         return <DailyAnalytics />;
+      case 'country-analytics':
+        return <CountryAnalytics />;
       case 'database':
         return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
           <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
@@ -158,53 +151,6 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
       default:
         return null;
     }
-  };
-
-  const TabButton = ({ tabName, label, icon: Icon, description }: { 
-    tabName: AdminTab; 
-    label: string; 
-    icon: React.ElementType;
-    description: string;
-  }) => {
-    if (!visibleTabs.includes(tabName)) return null;
-    
-    return (
-      <button
-        onClick={() => {
-          setActiveTab(tabName);
-          if (isMobile) setMobileMenuOpen(false);
-        }}
-        className={cn(
-          "group relative p-2 md:p-3 lg:p-4 rounded-lg md:rounded-xl transition-all duration-200",
-          "border backdrop-blur-sm text-left w-full",
-          activeTab === tabName
-            ? "bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/50 shadow-lg shadow-purple-500/25"
-            : "bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-gray-600/50"
-        )}
-      >
-        <div className="flex items-start space-x-2 md:space-x-3">
-          <div className={cn(
-            "p-1.5 md:p-2 rounded-md md:rounded-lg transition-colors",
-            activeTab === tabName
-              ? "bg-purple-500/20 text-purple-400"
-              : "bg-gray-700/50 text-gray-400 group-hover:bg-gray-600/50 group-hover:text-gray-300"
-          )}>
-            <Icon className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className={cn(
-              "font-semibold mb-0.5 transition-colors text-xs md:text-sm lg:text-base",
-              activeTab === tabName ? "text-white" : "text-gray-300 group-hover:text-white"
-            )}>
-              {label}
-            </h3>
-            <p className="text-xs text-gray-400 group-hover:text-gray-300 leading-tight hidden md:block">
-              {description}
-            </p>
-          </div>
-        </div>
-      </button>
-    );
   };
 
   return (
@@ -282,60 +228,40 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
             <div className="space-y-2 md:space-y-3">
               <h2 className="text-base md:text-lg font-bold text-white text-center">Administrative Controls</h2>
               
-              {/* Mobile Navigation Menu */}
-              {isMobile && (
-                <div className={cn(
-                  "transition-all duration-300 overflow-hidden",
-                  mobileMenuOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
-                )}>
-                  <div className="space-y-2 p-3 bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl">
-                    <TabButton tabName="submit" label="Submit Results" icon={UploadCloud} description="Add or update player tier rankings" />
-                    <TabButton tabName="manage" label="Manage Players" icon={Users} description="View and edit player accounts" />
-                    <TabButton tabName="users" label="User Management" icon={UserCheck} description="Ban/unban players and moderation" />
-                    <TabButton tabName="daily" label="Daily Analytics" icon={Calendar} description="Daily visits and user analytics" />
-                    <TabButton tabName="analytics" label="System Analytics" icon={BarChart3} description="Platform insights and statistics" />
-                    <TabButton tabName="database" label="Database Tools" icon={Database} description="Database management and maintenance" />
-                    <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Real-time system activity monitor" />
-                    <TabButton tabName="applications" label="Applications" icon={UserCog} description="Review admin applications" />
-                    <TabButton tabName="tools" label="Admin Tools" icon={Wrench} description="Mass submission and system tools" />
-                    
-                    {userRole === 'owner' && (
-                      <Button 
-                        onClick={handleClearAllSessions}
-                        disabled={isLoading}
-                        className="w-full bg-orange-600/20 border border-orange-500/50 text-orange-400 hover:bg-orange-600/30 mt-3"
-                        size="sm"
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Clear All Sessions
-                      </Button>
-                    )}
-                    
+              <AdminNavigation
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                userRole={userRole}
+                visibleTabs={visibleTabs}
+                isMobile={isMobile}
+                mobileMenuOpen={mobileMenuOpen}
+                setMobileMenuOpen={setMobileMenuOpen}
+              />
+
+              {/* Mobile Action Buttons */}
+              {isMobile && mobileMenuOpen && (
+                <div className="space-y-2 p-3 bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl">
+                  {userRole === 'owner' && (
                     <Button 
-                      onClick={handleLogout}
-                      variant="destructive" 
-                      className="w-full bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 mt-3"
+                      onClick={handleClearAllSessions}
+                      disabled={isLoading}
+                      className="w-full bg-orange-600/20 border border-orange-500/50 text-orange-400 hover:bg-orange-600/30"
                       size="sm"
                     >
-                      <LogOut className="h-3 w-3 mr-1" />
-                      Logout
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Clear All Sessions
                     </Button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Desktop Navigation Grid */}
-              {!isMobile && (
-                <div className="grid grid-cols-4 lg:grid-cols-9 gap-2 md:gap-3">
-                  <TabButton tabName="submit" label="Submit" icon={UploadCloud} description="Add or update player rankings" />
-                  <TabButton tabName="manage" label="Players" icon={Users} description="View and edit accounts" />
-                  <TabButton tabName="users" label="Moderation" icon={UserCheck} description="Ban/unban players" />
-                  <TabButton tabName="daily" label="Daily Stats" icon={Calendar} description="Daily analytics" />
-                  <TabButton tabName="analytics" label="Analytics" icon={BarChart3} description="System insights" />
-                  <TabButton tabName="database" label="Database" icon={Database} description="DB management" />
-                  <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Live system monitor" />
-                  <TabButton tabName="applications" label="Applications" icon={UserCog} description="Review applications" />
-                  <TabButton tabName="tools" label="Tools" icon={Wrench} description="Admin utilities" />
+                  )}
+                  
+                  <Button 
+                    onClick={handleLogout}
+                    variant="destructive" 
+                    className="w-full bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+                    size="sm"
+                  >
+                    <LogOut className="h-3 w-3 mr-1" />
+                    Logout
+                  </Button>
                 </div>
               )}
             </div>
