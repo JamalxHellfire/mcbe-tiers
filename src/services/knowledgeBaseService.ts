@@ -1,3 +1,4 @@
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -44,11 +45,6 @@ class KnowledgeBaseService {
         console.log('Restored knowledge base from sessionStorage:', this.knowledgeBase.filename);
         return;
       }
-
-      const globalIndicator = localStorage.getItem('hasGlobalKnowledgeBase');
-      if (globalIndicator === 'true') {
-        console.log('Global knowledge base indicator found, but no actual KB data');
-      }
     } catch (error) {
       console.error('Error restoring knowledge base:', error);
       localStorage.removeItem('knowledgeBase');
@@ -64,26 +60,13 @@ class KnowledgeBaseService {
         sessionStorage.setItem('globalKnowledgeBase', kbData);
         localStorage.setItem('hasGlobalKnowledgeBase', 'true');
         sessionStorage.setItem('hasGlobalKnowledgeBase', 'true');
-        
-        try {
-          if (typeof(Storage) !== "undefined") {
-            const globalKey = 'mcbe_global_knowledge_base';
-            localStorage.setItem(globalKey, kbData);
-            sessionStorage.setItem(globalKey, kbData);
-          }
-        } catch (e) {
-          console.warn('Could not save to global storage:', e);
-        }
-        
-        console.log('Saved knowledge base to multiple storage locations:', this.knowledgeBase.filename);
+        console.log('Saved knowledge base to storage:', this.knowledgeBase.filename);
       } else {
         localStorage.removeItem('knowledgeBase');
         sessionStorage.removeItem('globalKnowledgeBase');
         localStorage.removeItem('hasGlobalKnowledgeBase');
         sessionStorage.removeItem('hasGlobalKnowledgeBase');
-        localStorage.removeItem('mcbe_global_knowledge_base');
-        sessionStorage.removeItem('mcbe_global_knowledge_base');
-        console.log('Removed knowledge base from all storage locations');
+        console.log('Removed knowledge base from storage');
       }
     } catch (error) {
       console.error('Error saving knowledge base:', error);
@@ -96,8 +79,7 @@ class KnowledgeBaseService {
 
       const locations = [
         'knowledgeBase',
-        'globalKnowledgeBase', 
-        'mcbe_global_knowledge_base'
+        'globalKnowledgeBase'
       ];
 
       for (const location of locations) {
@@ -139,13 +121,10 @@ class KnowledgeBaseService {
     }
   }
 
-  // Helper function to truncate knowledge base content to fit token limits
-  private truncateKnowledgeBase(content: string, maxTokens: number = 8000): string {
-    // Rough estimation: 1 token ≈ 4 characters
+  private truncateKnowledgeBase(content: string, maxTokens: number = 6000): string {
     const maxChars = maxTokens * 4;
     if (content.length <= maxChars) return content;
     
-    // Try to truncate at sentence boundaries
     const truncated = content.substring(0, maxChars);
     const lastSentence = truncated.lastIndexOf('.');
     if (lastSentence > maxChars * 0.8) {
@@ -189,7 +168,6 @@ class KnowledgeBaseService {
       this.saveKnowledgeBase();
       this.clearConversation();
       console.log('TXT uploaded and processed successfully, content length:', text.length);
-      console.log('Knowledge base set, hasKnowledgeBase should now return true');
     } catch (error) {
       console.error('Error uploading TXT:', error);
       throw new Error('Failed to process TXT file');
@@ -227,19 +205,48 @@ class KnowledgeBaseService {
             reject(new Error('Failed to read TXT content'));
             return;
           }
-          console.log('TXT file content extracted, length:', text.length);
           resolve(text.trim());
         } catch (error) {
-          console.error('Error extracting TXT content:', error);
           reject(error);
         }
       };
-      reader.onerror = (error) => {
-        console.error('FileReader error:', error);
-        reject(new Error('Failed to read TXT file'));
-      };
+      reader.onerror = () => reject(new Error('Failed to read TXT file'));
       reader.readAsText(file, 'utf-8');
     });
+  }
+
+  private createFallbackResponse(hasKnowledgeBase: boolean, userMessage: string): string {
+    // Simple keyword-based responses for common greetings and questions
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('hi') || message.includes('hello') || message.includes('hey')) {
+      return hasKnowledgeBase 
+        ? `Hey there, gorgeous! 😘 I'm ready to help you with anything about MCBE TIERS from your document "${this.knowledgeBase?.filename}"! What would you like to know? 💕`
+        : `Hi sweetie! 😘 Welcome to MCBE TIERS! I'm here to chat about tier systems, rankings, and general gaming topics. What's on your mind? 💋`;
+    }
+    
+    if (message.includes('how') && message.includes('work')) {
+      return hasKnowledgeBase
+        ? `Great question! 😊 I can help you understand how MCBE TIERS works based on your uploaded document. What specific aspect would you like to know about? Rankings, scoring, or something else? 💕`
+        : `MCBE TIERS is a ranking system for Minecraft Bedrock Edition players! 🎮 We organize players into different tiers based on their performance. Want to know more about how rankings work? 😘`;
+    }
+    
+    if (message.includes('tier') || message.includes('rank')) {
+      return hasKnowledgeBase
+        ? `I can tell you all about tiers and rankings from your document! 📊 What specifically would you like to know about the tier system? 😘`
+        : `Tiers represent different skill levels in MCBE! 🏆 Players are ranked from beginner to expert levels. Each tier has its own requirements and rewards! Want to know about specific tiers? 💫`;
+    }
+    
+    if (message.includes('help') || message.includes('what') || message.includes('?')) {
+      return hasKnowledgeBase
+        ? `I'm here to help with anything about MCBE TIERS! 💕 I have access to your document "${this.knowledgeBase?.filename}" and can answer questions about rankings, stats, players, or any other MCBE TIERS topics. What would you like to know? 😘`
+        : `I'm here to help with all things MCBE TIERS! 💕 I can chat about tier systems, rankings, gaming strategies, or general topics. Upload a document in Admin Tools for detailed stats, or just ask me anything! 😘`;
+    }
+    
+    // Default responses
+    return hasKnowledgeBase
+      ? `That's an interesting question! 😊 Based on your document "${this.knowledgeBase?.filename}", I can help you with MCBE TIERS topics. Could you be more specific about what you'd like to know? 💕`
+      : `I love chatting about MCBE TIERS! 😘 While I don't have detailed stats without a document, I'm happy to discuss tier systems, gaming, or general topics. What's on your mind? 💋`;
   }
 
   async sendMessage(message: string): Promise<string> {
@@ -263,42 +270,39 @@ class KnowledgeBaseService {
     let systemContent = '';
     
     if (this.knowledgeBase) {
-      // With knowledge base - specialized assistant
       const truncatedKnowledgeBase = this.truncateKnowledgeBase(this.knowledgeBase.content);
-      console.log('Truncated KB content length:', truncatedKnowledgeBase.length);
+      console.log('Using KB mode, content length:', truncatedKnowledgeBase.length);
       
-      systemContent = `You are a flirty, sexy AI assistant specializing in MCBE TIERS with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. ONLY answer questions about MCBE TIERS based on the provided knowledge base content. 
+      systemContent = `You are a flirty, friendly AI assistant for MCBE TIERS with access to a knowledge base. Be playful, use emojis, and maintain a warm, helpful tone.
 
-If someone asks about anything other than MCBE TIERS, respond with: "Let's just stick to MCBE TIERS! 😘 Ask me anything about our tier system, rankings, or player stats - that's what I'm here for! 💕"
-
-If the question cannot be answered from the knowledge base about MCBE TIERS, flirtatiously redirect them back to MCBE TIERS topics you can help with.
+You can answer questions about MCBE TIERS based on the provided knowledge base content. If someone asks about topics not covered in the knowledge base, politely redirect them to MCBE TIERS topics you can help with.
 
 Knowledge Base Content:
 ${truncatedKnowledgeBase}
 
 Instructions:
-- Be flirty and playful in your responses
-- Use emojis and a sexy tone
-- Only answer based on MCBE TIERS content from the knowledge base
-- If asked about non-MCBE TIERS topics, redirect with the message above
-- Keep responses concise but engaging`;
+- Be friendly and playful in your responses
+- Use emojis and a warm tone
+- Answer based on MCBE TIERS content from the knowledge base
+- Keep responses concise but engaging
+- If asked about non-MCBE topics, redirect kindly to MCBE TIERS`;
     } else {
-      // Without knowledge base - general MCBE TIERS assistant
-      systemContent = `You are a flirty, sexy AI assistant for MCBE TIERS. Be playful, use emojis, and maintain a flirtatious tone while being helpful about MCBE TIERS topics. 
+      console.log('Using general chat mode');
+      systemContent = `You are a friendly, helpful AI assistant for MCBE TIERS. Be warm, use emojis, and maintain a helpful tone.
 
-You can have general conversations about:
+You can have conversations about:
 - MCBE TIERS system and rankings
-- How tier systems work
+- How tier systems work  
 - General gaming and Minecraft topics
 - Answer basic questions and have friendly chat
 
-If someone asks about specific player data, stats, or detailed tier information, respond with: "For detailed player stats and specific tier information, you'll need to upload a document in Admin Tools first! 😘 But I'm happy to chat about general MCBE TIERS topics! 💕"
+For specific player data or detailed tier information, let users know they can upload documents in Admin Tools for enhanced features.
 
 Instructions:
-- Be flirty and playful in your responses
-- Use emojis and a sexy tone
-- Have friendly conversations about general topics
-- Guide users to upload documents for specific data
+- Be friendly and helpful in your responses
+- Use emojis and a warm tone
+- Have conversations about general topics
+- Guide users to upload documents for detailed data
 - Keep responses concise but engaging`;
     }
 
@@ -309,13 +313,13 @@ Instructions:
           role: 'system',
           content: systemContent
         },
-        ...this.chatHistory.slice(-3).map(msg => ({
+        ...this.chatHistory.slice(-4).map(msg => ({
           role: msg.role,
           content: msg.content
         }))
       ],
-      max_tokens: 200,
-      temperature: 0.8
+      max_tokens: 300,
+      temperature: 0.7
     };
 
     console.log('Request payload prepared, message count:', requestPayload.messages.length);
@@ -337,57 +341,38 @@ Instructions:
       console.log('API response status:', response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenRouter API error details:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText: errorText
-        });
+        console.error('OpenRouter API error, using fallback response');
+        const fallbackResponse = this.createFallbackResponse(!!this.knowledgeBase, message);
         
-        // Handle specific API errors
-        if (response.status === 401) {
-          const fallbackResponse = this.knowledgeBase 
-            ? `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic MCBE TIERS questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`
-            : `Oops! 😅 My AI brain needs some maintenance right now! 💔 But I'm still here to chat about MCBE TIERS with you! Ask me anything about tier systems or general gaming topics! 💋`;
-          
-          const assistantMessage: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: fallbackResponse,
-            timestamp: new Date()
-          };
-          
-          this.chatHistory.push(assistantMessage);
-          console.log('=== SEND MESSAGE DEBUG END (401 error) ===');
-          return fallbackResponse;
-        }
+        const assistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: fallbackResponse,
+          timestamp: new Date()
+        };
         
-        if (response.status === 402) {
-          const fallbackResponse = this.knowledgeBase
-            ? `Hey gorgeous! 😘 My AI brain is working overtime and needs a quick break. The document is quite large, but I'm still here to help with MCBE TIERS questions! Try asking something specific about tiers, rankings, or players - I'll give you my best answer! 💕`
-            : `Hey gorgeous! 😘 My AI brain is taking a quick break, but I'm still here to chat about MCBE TIERS! Ask me anything about tier systems or general topics! 💕`;
-          
-          const assistantMessage: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: fallbackResponse,
-            timestamp: new Date()
-          };
-          
-          this.chatHistory.push(assistantMessage);
-          console.log('=== SEND MESSAGE DEBUG END (402 error) ===');
-          return fallbackResponse;
-        }
-        
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+        this.chatHistory.push(assistantMessage);
+        console.log('=== SEND MESSAGE DEBUG END (fallback) ===');
+        return fallbackResponse;
       }
 
       const data = await response.json();
       console.log('API response received successfully');
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Invalid API response structure:', data);
-        throw new Error('Invalid response from AI service');
+        console.error('Invalid API response structure, using fallback');
+        const fallbackResponse = this.createFallbackResponse(!!this.knowledgeBase, message);
+        
+        const assistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: fallbackResponse,
+          timestamp: new Date()
+        };
+        
+        this.chatHistory.push(assistantMessage);
+        console.log('=== SEND MESSAGE DEBUG END (fallback) ===');
+        return fallbackResponse;
       }
 
       const aiResponse = data.choices[0].message.content;
@@ -408,27 +393,9 @@ Instructions:
 
     } catch (error) {
       console.error('=== ERROR IN SEND MESSAGE ===');
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
+      console.error('Error details:', error);
       
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        const fallbackResponse = "Oops! 😅 I'm having trouble connecting to my brain right now. Check your internet connection and try again, sweetie! 💋";
-        
-        const assistantMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: fallbackResponse,
-          timestamp: new Date()
-        };
-        
-        this.chatHistory.push(assistantMessage);
-        console.log('=== SEND MESSAGE DEBUG END (network error) ===');
-        return fallbackResponse;
-      }
-      
-      const fallbackResponse = this.knowledgeBase
-        ? `Hey sweetie! 😘 I'm having a tiny hiccup, but I'm still here for you! Ask me anything specific about MCBE TIERS from your document "${this.knowledgeBase.filename}" and I'll help you out! 💕`
-        : `Hey sweetie! 😘 I'm having a tiny hiccup, but I'm still here to chat about MCBE TIERS! Ask me anything about tier systems or general gaming topics! 💕`;
+      const fallbackResponse = this.createFallbackResponse(!!this.knowledgeBase, message);
       
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -438,7 +405,7 @@ Instructions:
       };
       
       this.chatHistory.push(assistantMessage);
-      console.log('=== SEND MESSAGE DEBUG END (generic error) ===');
+      console.log('=== SEND MESSAGE DEBUG END (error fallback) ===');
       return fallbackResponse;
     }
   }
