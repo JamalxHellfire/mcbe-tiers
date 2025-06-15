@@ -47,10 +47,14 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
   try {
     const { data, error } = await supabase.rpc('check_admin_access');
     
-    if (error) throw error;
+    if (error) {
+      console.error('Admin access check error:', error);
+      throw error;
+    }
     
     if (data && data.length > 0) {
       const result = data[0];
+      console.log('Admin access check result:', result);
       return { hasAccess: result.has_access, role: result.user_role };
     }
     
@@ -65,44 +69,73 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
 const initializeAuthConfig = async () => {
   try {
     // Check if owner password exists
-    const { data: existing } = await supabase
+    const { data: existing, error: checkError } = await supabase
       .from('auth_config')
       .select('config_key')
       .eq('config_key', 'owner_password')
-      .single();
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Error checking auth config:', checkError);
+      return;
+    }
 
     if (!existing) {
       // Insert owner password
-      await supabase
+      const { error: insertError } = await supabase
         .from('auth_config')
         .insert({ config_key: 'owner_password', config_value: '$$nullnox911$$' });
       
-      console.log('Owner password initialized');
+      if (insertError) {
+        console.error('Error inserting owner password:', insertError);
+      } else {
+        console.log('Owner password initialized');
+      }
     }
 
     // Check if general password exists
-    const { data: generalExists } = await supabase
+    const { data: generalExists, error: generalCheckError } = await supabase
       .from('auth_config')
       .select('config_key')
       .eq('config_key', 'general_password')
-      .single();
+      .maybeSingle();
+
+    if (generalCheckError) {
+      console.error('Error checking general password:', generalCheckError);
+      return;
+    }
 
     if (!generalExists) {
       // Insert general password
-      await supabase
+      const { error: insertError } = await supabase
         .from('auth_config')
         .insert({ config_key: 'general_password', config_value: 'admin123' });
       
-      console.log('General password initialized');
+      if (insertError) {
+        console.error('Error inserting general password:', insertError);
+      } else {
+        console.log('General password initialized');
+      }
     }
   } catch (error) {
     console.error('Failed to initialize auth config:', error);
   }
 };
 
+// Get user IP (placeholder - in real app this would be server-side)
+const getUserIP = async (): Promise<string> => {
+  try {
+    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  } catch (error) {
+    return `fallback_${Date.now()}`;
+  }
+};
+
 // Admin login with improved error handling
 export const adminLogin = async (password: string): Promise<AdminLoginResult> => {
   try {
+    console.log('Starting admin login process...');
+    
     // Initialize auth config first
     await initializeAuthConfig();
 
@@ -110,14 +143,21 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
       .from('auth_config')
       .select('config_key, config_value');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching auth config:', error);
+      throw error;
+    }
+
+    console.log('Auth configs fetched:', configs?.length || 0, 'entries');
 
     const ownerPassword = configs?.find(c => c.config_key === 'owner_password')?.config_value;
     const generalPassword = configs?.find(c => c.config_key === 'general_password')?.config_value;
 
     console.log('Checking password against owner password:', password === ownerPassword);
+    console.log('Checking password against general password:', password === generalPassword);
 
     if (password === ownerPassword) {
+      console.log('Owner login successful');
       // Owner access - auto-approve IP
       const userIp = await getUserIP();
       
@@ -131,17 +171,23 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
           last_access: new Date().toISOString()
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error inserting admin user:', insertError);
+        throw insertError;
+      }
 
       const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       localStorage.setItem('admin_session_token', sessionToken);
       localStorage.setItem('admin_role', 'owner');
 
+      console.log('Owner session created');
       return { success: true, sessionToken, role: 'owner', adminId: 'owner-1' };
     } else if (password === generalPassword) {
+      console.log('General password matched - needs onboarding');
       // General admin - needs onboarding
       return { success: true, needsOnboarding: true };
     } else {
+      console.log('Invalid password provided');
       return { success: false, error: 'Invalid password' };
     }
   } catch (error: any) {
@@ -212,15 +258,6 @@ export const getAdminUser = async (sessionToken: string): Promise<AdminUser | nu
   } catch (error) {
     console.error('Get admin user error:', error);
     return null;
-  }
-};
-
-// Get user IP (placeholder - in real app this would be server-side)
-const getUserIP = async (): Promise<string> => {
-  try {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  } catch (error) {
-    return `fallback_${Date.now()}`;
   }
 };
 

@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { adminService } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, UserPlus, CheckCircle } from 'lucide-react';
+import { adminService } from '@/services/adminService';
 
 interface AdminAuthProps {
   onAuthSuccess: () => void;
@@ -36,12 +36,16 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
 
     setIsLoading(true);
     try {
+      console.log('Submitting password...');
       const result = await adminService.adminLogin(password);
+      console.log('Login result:', result);
       
       if (result.success) {
         if (result.needsOnboarding) {
+          console.log('Needs onboarding, switching to onboarding step');
           setStep('onboarding');
         } else if (result.role) {
+          console.log('Login successful with role:', result.role);
           toast({
             title: "Login Successful",
             description: `Welcome, ${result.role}!`,
@@ -49,6 +53,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
           onAuthSuccess();
         }
       } else {
+        console.log('Login failed:', result.error);
         toast({
           title: "Login Failed",
           description: result.error || "Invalid password",
@@ -220,11 +225,6 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-48 h-48 md:w-64 md:h-64 bg-purple-600/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 md:w-80 md:h-80 bg-blue-600/5 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
-
       <Card className="w-full max-w-md bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -262,7 +262,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
             
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02]"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300"
               disabled={isLoading}
             >
               {isLoading ? 'Authenticating...' : 'Access Admin Panel'}
