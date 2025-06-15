@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -244,11 +245,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </div>
               </div>
 
-              
-              <div
-                className="col-span-4 flex items-center gap-3 bg-white/5 rounded-lg p-2 shadow-lg backdrop-blur-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-2xl border border-white/10"
-                
-              >
+              <div className="col-span-4 flex items-center gap-4">
                 <Avatar className="w-14 h-14 border-2 border-white/20">
                   <AvatarImage 
                     src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
@@ -276,7 +273,6 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </div>
               </div>
 
-              
               <div className="col-span-2 flex items-center justify-center">
                 <span className={`
                   px-4 py-2 rounded-full text-sm font-bold
