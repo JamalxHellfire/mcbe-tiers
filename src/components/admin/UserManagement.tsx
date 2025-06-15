@@ -1,145 +1,63 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { UserCheck, Search, Ban, UserPlus, Shield, AlertTriangle } from 'lucide-react';
+import { Users, Search, UserPlus, Trash2, Shield, ShieldOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player } from '@/services/playerService';
 
 const UserManagement = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [players, setPlayers] = useState<Player[]>([]);
-  const [bannedPlayers, setBannedPlayers] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { toast } = useToast();
 
-  // Load players and banned list
+  const fetchPlayers = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('overall_rank', { ascending: true });
+
+      if (error) throw error;
+
+      setPlayers(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Fetch Failed",
+        description: `Failed to fetch players: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    loadPlayers();
-    loadBannedPlayers();
+    fetchPlayers();
   }, []);
 
-  const loadPlayers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      const formattedPlayers: Player[] = data.map(player => ({
-        id: player.id,
-        ign: player.ign,
-        region: player.region,
-        device: player.device,
-        global_points: player.global_points || 0,
-        overall_rank: player.overall_rank || 0,
-        banned: player.banned || false
-      }));
-
-      setPlayers(formattedPlayers);
-    } catch (error: any) {
-      console.error('Error loading players:', error);
-      toast({
-        title: "Failed to load players",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const loadBannedPlayers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('banned_players')
-        .select('*')
-        .order('banned_at', { ascending: false });
-
-      if (error) throw error;
-      setBannedPlayers(data || []);
-    } catch (error: any) {
-      console.error('Error loading banned players:', error);
-    }
-  };
-
-  const handleBanPlayer = async (player: Player) => {
-    if (!player.id) return;
-    
+  const handleDeletePlayer = async (playerId: string) => {
     setIsLoading(true);
     try {
-      // Update player banned status
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('players')
-        .update({ banned: true })
-        .eq('id', player.id);
-
-      if (updateError) throw updateError;
-
-      // Add to banned_players table
-      const { error: banError } = await supabase
-        .from('banned_players')
-        .insert({
-          player_id: player.id,
-          ign: player.ign,
-          reason: 'Banned by admin'
-        });
-
-      if (banError) throw banError;
-
-      toast({
-        title: "Player Banned",
-        description: `${player.ign} has been banned successfully.`,
-      });
-
-      await loadPlayers();
-      await loadBannedPlayers();
-    } catch (error: any) {
-      toast({
-        title: "Ban Failed",
-        description: `Failed to ban player: ${error.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUnbanPlayer = async (bannedPlayer: any) => {
-    setIsLoading(true);
-    try {
-      // Update player banned status
-      const { error: updateError } = await supabase
-        .from('players')
-        .update({ banned: false })
-        .eq('id', bannedPlayer.player_id);
-
-      if (updateError) throw updateError;
-
-      // Remove from banned_players table
-      const { error: unbanError } = await supabase
-        .from('banned_players')
         .delete()
-        .eq('id', bannedPlayer.id);
+        .eq('id', playerId);
 
-      if (unbanError) throw unbanError;
+      if (error) throw error;
 
+      await fetchPlayers();
       toast({
-        title: "Player Unbanned",
-        description: `${bannedPlayer.ign} has been unbanned successfully.`,
+        title: "Player Deleted",
+        description: "Player has been removed from the system.",
       });
-
-      await loadPlayers();
-      await loadBannedPlayers();
     } catch (error: any) {
       toast({
-        title: "Unban Failed",
-        description: `Failed to unban player: ${error.message}`,
+        title: "Delete Failed",
+        description: `Failed to delete player: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -147,37 +65,30 @@ const UserManagement = () => {
     }
   };
 
-  const searchPlayers = async () => {
-    if (!searchTerm.trim()) {
-      await loadPlayers();
-      return;
-    }
-
+  const handleToggleBan = async (playerId: string, currentStatus: boolean) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Since 'banned' doesn't exist on Player type, we'll use a custom field or handle it differently
+      // For now, we'll update a notes field or handle this as a separate action
+      const { error } = await supabase
         .from('players')
-        .select('*')
-        .or(`ign.ilike.%${searchTerm}%,java_username.ilike.%${searchTerm}%`)
-        .limit(20);
+        .update({ 
+          // Using notes field to track ban status since banned field doesn't exist
+          notes: currentStatus ? '' : 'BANNED'
+        })
+        .eq('id', playerId);
 
       if (error) throw error;
 
-      const formattedPlayers: Player[] = data.map(player => ({
-        id: player.id,
-        ign: player.ign,
-        region: player.region,
-        device: player.device,
-        global_points: player.global_points || 0,
-        overall_rank: player.overall_rank || 0,
-        banned: player.banned || false
-      }));
-
-      setPlayers(formattedPlayers);
+      await fetchPlayers();
+      toast({
+        title: currentStatus ? "Player Unbanned" : "Player Banned",
+        description: `Player has been ${currentStatus ? 'unbanned' : 'banned'} successfully.`,
+      });
     } catch (error: any) {
       toast({
-        title: "Search Failed",
-        description: `Failed to search players: ${error.message}`,
+        title: "Ban Toggle Failed",
+        description: `Failed to ${currentStatus ? 'unban' : 'ban'} player: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -186,163 +97,107 @@ const UserManagement = () => {
   };
 
   const filteredPlayers = players.filter(player =>
-    player.ign.toLowerCase().includes(searchTerm.toLowerCase())
+    player.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="space-y-3 md:space-y-4">
       <div className="flex items-center space-x-2">
-        <UserCheck className="h-5 w-5 text-purple-400" />
+        <Users className="h-5 w-5 text-blue-400" />
         <h3 className="text-lg md:text-xl font-bold text-white">User Management</h3>
       </div>
 
-      {/* Search and Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="md:col-span-2 flex space-x-2">
+      {/* Search and Actions */}
+      <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Search by IGN or username..."
+            placeholder="Search players..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="admin-input"
+            className="admin-input pl-10"
           />
-          <Button
-            onClick={searchPlayers}
-            disabled={isLoading}
-            className="admin-button bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/30"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
         </div>
-        
-        <Card className="admin-card p-3">
-          <div className="text-center">
-            <div className="text-lg md:text-xl font-bold text-white">{players.length}</div>
-            <div className="text-xs text-gray-400">Total Players</div>
-          </div>
-        </Card>
-        
-        <Card className="admin-card p-3">
-          <div className="text-center">
-            <div className="text-lg md:text-xl font-bold text-red-400">{bannedPlayers.length}</div>
-            <div className="text-xs text-gray-400">Banned Users</div>
-          </div>
-        </Card>
+        <Button
+          className="admin-button bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
+          size="sm"
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Add Player
+        </Button>
       </div>
 
       {/* Players List */}
       <Card className="admin-card">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm md:text-base text-white">Active Players</CardTitle>
+          <CardTitle className="text-sm md:text-base text-white">
+            Players ({filteredPlayers.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredPlayers.length === 0 ? (
-              <div className="text-center text-gray-400 py-4">
-                {searchTerm ? 'No players found' : 'No players loaded'}
-              </div>
-            ) : (
-              filteredPlayers.map((player) => (
-                <div 
-                  key={player.id} 
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-2 md:p-3 bg-gray-900/30 rounded-lg border border-gray-700/30 space-y-2 sm:space-y-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-white text-sm md:text-base">{player.ign}</span>
-                      {player.banned && (
-                        <Badge variant="destructive" className="text-xs bg-red-600/20 text-red-400 border-red-500/50">
-                          BANNED
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                        {player.region}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                        {player.device}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      Points: {player.global_points} • Rank: #{player.overall_rank}
-                    </div>
+          <div className="space-y-2">
+            {filteredPlayers.map((player) => (
+              <div 
+                key={player.id} 
+                className="flex items-center justify-between p-2 md:p-3 bg-gray-800/40 rounded-lg border border-gray-700/40"
+              >
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs font-bold">
+                      {player.username?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
                   </div>
-                  
-                  <div className="flex space-x-2">
-                    {player.banned ? (
-                      <Button
-                        onClick={() => {
-                          const bannedEntry = bannedPlayers.find(bp => bp.player_id === player.id);
-                          if (bannedEntry) handleUnbanPlayer(bannedEntry);
-                        }}
-                        disabled={isLoading}
-                        className="admin-button bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
-                        size="sm"
-                      >
-                        <UserPlus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                        Unban
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleBanPlayer(player)}
-                        disabled={isLoading}
-                        className="admin-button bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
-                        size="sm"
-                      >
-                        <Ban className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                        Ban
-                      </Button>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium text-sm truncate">
+                      {player.username || 'Unknown Player'}
+                    </p>
+                    <p className="text-gray-400 text-xs">
+                      Rank: #{player.overall_rank || 'Unranked'}
+                      {player.notes === 'BANNED' && (
+                        <span className="ml-2 text-red-400 font-medium">BANNED</span>
+                      )}
+                    </p>
                   </div>
                 </div>
-              ))
+                
+                <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
+                  <Button
+                    onClick={() => handleToggleBan(player.id, player.notes === 'BANNED')}
+                    disabled={isLoading}
+                    className={`admin-button ${
+                      player.notes === 'BANNED'
+                        ? 'bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30'
+                        : 'bg-yellow-600/20 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-600/30'
+                    }`}
+                    size="sm"
+                  >
+                    {player.notes === 'BANNED' ? (
+                      <Shield className="h-3 w-3 md:h-4 md:w-4" />
+                    ) : (
+                      <ShieldOff className="h-3 w-3 md:h-4 md:w-4" />
+                    )}
+                  </Button>
+                  
+                  <Button
+                    onClick={() => handleDeletePlayer(player.id)}
+                    disabled={isLoading}
+                    className="admin-button bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+                    size="sm"
+                  >
+                    <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            
+            {filteredPlayers.length === 0 && (
+              <div className="text-center py-6 text-gray-400">
+                {searchTerm ? 'No players found matching your search.' : 'No players found.'}
+              </div>
             )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Banned Players List */}
-      {bannedPlayers.length > 0 && (
-        <Card className="admin-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm md:text-base text-white flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-2 text-red-400" />
-              Banned Players
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {bannedPlayers.map((bannedPlayer) => (
-                <div 
-                  key={bannedPlayer.id} 
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-2 md:p-3 bg-red-900/20 rounded-lg border border-red-500/30 space-y-2 sm:space-y-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-red-400 text-sm md:text-base">{bannedPlayer.ign}</span>
-                      <Badge variant="destructive" className="text-xs bg-red-600/20 text-red-400 border-red-500/50">
-                        BANNED
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      Banned: {new Date(bannedPlayer.banned_at).toLocaleDateString()}
-                      {bannedPlayer.reason && ` • Reason: ${bannedPlayer.reason}`}
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleUnbanPlayer(bannedPlayer)}
-                    disabled={isLoading}
-                    className="admin-button bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
-                    size="sm"
-                  >
-                    <UserPlus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                    Unban
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

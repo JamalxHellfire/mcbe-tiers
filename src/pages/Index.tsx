@@ -12,6 +12,8 @@ import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { usePointsCalculation } from '@/hooks/usePointsCalculation';
 import { FloatingChatButton } from '../components/FloatingChatButton';
+import WelcomePopup from '../components/WelcomePopup';
+import { useWelcomePopup } from '../hooks/useWelcomePopup';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const Index = () => {
   
   const { players, loading: leaderboardLoading, error: leaderboardError } = useLeaderboard();
   const { openPopup } = usePopup();
+  const { showWelcome, visitorNumber, closeWelcome } = useWelcomePopup();
   
   // Enable automatic points calculation
   usePointsCalculation();
@@ -114,6 +117,13 @@ const Index = () => {
       
       {/* Floating Chat Button */}
       <FloatingChatButton />
+      
+      {/* Welcome Popup - One time only */}
+      <WelcomePopup 
+        isOpen={showWelcome}
+        onClose={closeWelcome}
+        visitorNumber={visitorNumber}
+      />
     </div>
   );
 };
