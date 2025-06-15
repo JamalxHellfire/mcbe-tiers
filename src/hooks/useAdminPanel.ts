@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel, updatePlayerGlobalPoints } from '@/services/playerService';
@@ -76,9 +77,7 @@ export const useAdminPanel = () => {
     
     let playerId: string;
     
-    // Handle both player ID and IGN
     if (typeof playerIdOrIGN === 'string' && isNaN(Number(playerIdOrIGN))) {
-      // It's an IGN, find the player
       const player = await findPlayerByIGN(playerIdOrIGN);
       if (!player) {
         toast({
@@ -90,7 +89,6 @@ export const useAdminPanel = () => {
       }
       playerId = player.id;
     } else {
-      // It's a player ID
       const numericId = typeof playerIdOrIGN === 'string' ? parseInt(playerIdOrIGN) : playerIdOrIGN;
       if (!numericId || isNaN(numericId)) {
         toast({
@@ -175,9 +173,7 @@ export const useAdminPanel = () => {
     
     let playerId: string;
     
-    // Handle both player ID and IGN
     if (typeof playerIdOrIGN === 'string' && isNaN(Number(playerIdOrIGN))) {
-      // It's an IGN, find the player
       const player = await findPlayerByIGN(playerIdOrIGN);
       if (!player) {
         toast({
@@ -189,7 +185,6 @@ export const useAdminPanel = () => {
       }
       playerId = player.id;
     } else {
-      // It's a player ID
       const numericId = typeof playerIdOrIGN === 'string' ? parseInt(playerIdOrIGN) : playerIdOrIGN;
       if (!numericId || isNaN(numericId)) {
         toast({
@@ -209,7 +204,6 @@ export const useAdminPanel = () => {
       console.log(`Deleting player with ID: ${playerId}`);
       deepSeekService.logUserAction('delete_player', 'player', { playerId });
       
-      // First delete gamemode scores
       deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId });
       const { error: scoresError } = await supabase
         .from('gamemode_scores')
@@ -222,7 +216,6 @@ export const useAdminPanel = () => {
         throw new Error(`Failed to delete gamemode scores: ${scoresError.message}`);
       }
 
-      // Then delete the player
       deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId });
       const { error: playerError } = await supabase
         .from('players')
@@ -274,7 +267,6 @@ export const useAdminPanel = () => {
       console.log('Submitting player results:', { ign, region, device, java_username, results });
       deepSeekService.logUserAction('submit_results', 'player', { ign, region, device, resultsCount: results?.length });
 
-      // Validate inputs
       if (!ign || !ign.trim()) {
         throw new Error('IGN is required');
       }
@@ -290,11 +282,16 @@ export const useAdminPanel = () => {
         ? (region as typeof regionAllowed[number])
         : 'NA';
 
+      // Auto-fill java_username with IGN if not provided
+      const finalJavaUsername = java_username && java_username.trim() 
+        ? java_username.trim() 
+        : ign.trim();
+
       const playerInsertObj = {
         ign: ign.trim(),
         region: safeRegion,
         device: safeDevice,
-        java_username: java_username && java_username.trim() ? java_username.trim() : null
+        java_username: finalJavaUsername
       };
 
       console.log('Upserting player:', playerInsertObj);
@@ -324,32 +321,23 @@ export const useAdminPanel = () => {
         console.log('Processing gamemode results:', results);
         
         for (const result of results) {
-          const { gamemode, tier, points } = result;
+          const { gamemode, tier } = result;
           if (tier !== 'Not Ranked') {
-            console.log(`Upserting gamemode score: ${gamemode} - ${tier} - ${points}`);
+            console.log(`Upserting gamemode score: ${gamemode} - ${tier}`);
             
             const gamemodeData = { 
               player_id: playerId, 
               gamemode, 
               display_tier: tier,
               internal_tier: tier,
-              score: points || 0
+              score: 0
             };
             
             deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', gamemodeData);
             
             const { error: gamemodeUpsertError } = await supabase
               .from('gamemode_scores')
-              .upsert(
-                { 
-                  player_id: playerId, 
-                  gamemode, 
-                  display_tier: tier,
-                  internal_tier: tier,
-                  score: points || 0
-                },
-                { onConflict: 'player_id,gamemode' }
-              );
+              .upsert(gamemodeData, { onConflict: 'player_id,gamemode' });
 
             if (gamemodeUpsertError) {
               console.error(`Gamemode ${gamemode} upsert error:`, gamemodeUpsertError);
@@ -372,6 +360,9 @@ export const useAdminPanel = () => {
         title: "Success",
         description: `Player ${ign} results submitted successfully. Global points calculated automatically.`,
       });
+
+      // Refresh players list to show updated data
+      await refreshPlayers();
 
       return { success: true, player: playerData };
     } catch (error: any) {

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, User, Globe, Smartphone, Sparkles } from 'lucide-react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { GameMode, TierLevel } from '@/services/playerService';
@@ -16,14 +16,14 @@ interface TierRankings {
 }
 
 const gameModes = [
-  { key: 'crystal', name: 'Crystal', color: 'from-purple-500 to-purple-600', textColor: 'text-purple-400' },
-  { key: 'sword', name: 'Sword', color: 'from-blue-500 to-blue-600', textColor: 'text-blue-400' },
-  { key: 'smp', name: 'SMP', color: 'from-green-500 to-green-600', textColor: 'text-green-400' },
-  { key: 'uhc', name: 'UHC', color: 'from-red-500 to-red-600', textColor: 'text-red-400' },
-  { key: 'axe', name: 'Axe', color: 'from-cyan-500 to-cyan-600', textColor: 'text-cyan-400' },
-  { key: 'nethpot', name: 'NethPot', color: 'from-orange-500 to-orange-600', textColor: 'text-orange-400' },
-  { key: 'bedwars', name: 'Bedwars', color: 'from-yellow-500 to-yellow-600', textColor: 'text-yellow-400' },
-  { key: 'mace', name: 'Mace', color: 'from-gray-500 to-gray-600', textColor: 'text-gray-400' }
+  { key: 'Crystal', name: 'Crystal', color: 'from-purple-500 to-purple-600', textColor: 'text-purple-400' },
+  { key: 'Sword', name: 'Sword', color: 'from-blue-500 to-blue-600', textColor: 'text-blue-400' },
+  { key: 'SMP', name: 'SMP', color: 'from-green-500 to-green-600', textColor: 'text-green-400' },
+  { key: 'UHC', name: 'UHC', color: 'from-red-500 to-red-600', textColor: 'text-red-400' },
+  { key: 'Axe', name: 'Axe', color: 'from-cyan-500 to-cyan-600', textColor: 'text-cyan-400' },
+  { key: 'NethPot', name: 'NethPot', color: 'from-orange-500 to-orange-600', textColor: 'text-orange-400' },
+  { key: 'Bedwars', name: 'Bedwars', color: 'from-yellow-500 to-yellow-600', textColor: 'text-yellow-400' },
+  { key: 'Mace', name: 'Mace', color: 'from-gray-500 to-gray-600', textColor: 'text-gray-400' }
 ];
 
 export function SubmitResultsForm() {
@@ -125,7 +125,10 @@ export function SubmitResultsForm() {
                 </div>
                 
                 <div className="space-y-3">
-                  <Label htmlFor="java_username" className="text-white font-medium">Java Username</Label>
+                  <Label htmlFor="java_username" className="text-white font-medium">
+                    Java Username 
+                    <span className="text-gray-400 text-sm ml-2">(auto-fills with IGN if empty)</span>
+                  </Label>
                   <Input
                     id="java_username"
                     value={playerData.java_username}
@@ -197,7 +200,7 @@ export function SubmitResultsForm() {
                     <div className="space-y-3 p-4 bg-gray-800/30 rounded-xl border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300">
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
-                          <GameModeIcon mode={mode.key} className="h-6 w-6" />
+                          <GameModeIcon mode={mode.key.toLowerCase()} className="h-6 w-6" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className={`font-bold text-sm ${mode.textColor} truncate`}>
