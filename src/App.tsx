@@ -9,12 +9,13 @@ import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import { PopupProvider } from "./contexts/PopupContext";
 import { ModernResultPopup } from "./components/ModernResultPopup";
+import { AdminProtectedRoute } from "./components/admin/AdminProtectedRoute";
 import { useErrorHandler } from "./hooks/useErrorHandler";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  useErrorHandler(); // Move the hook call inside a proper React component
+  useErrorHandler();
 
   return (
     <>
@@ -22,7 +23,14 @@ function AppContent() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route 
+            path="/admin" 
+            element={
+              <AdminProtectedRoute>
+                <AdminPanel />
+              </AdminProtectedRoute>
+            } 
+          />
           <Route path="/:category" element={<SubcategoryPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
