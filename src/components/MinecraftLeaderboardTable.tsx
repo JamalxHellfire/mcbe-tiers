@@ -60,9 +60,9 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
   };
 
   if (isMobile) {
-    // Mobile card layout
+    // Mobile card layout - full width
     return (
-      <div className="space-y-3 px-4">
+      <div className="w-full space-y-3">
         {players.map((player, index) => {
           const playerPoints = player.global_points || 0;
           const rankInfo = getPlayerRank(playerPoints);
@@ -73,14 +73,14 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-dark-surface/60 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+              className="w-full bg-dark-surface/60 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
               onClick={() => handlePlayerRowClick(player)}
             >
               {/* Top row: Rank, Avatar, Name, Points */}
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-4 mb-3">
                 {/* Rank Badge */}
                 <div className={`
-                  w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold
+                  w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold
                   ${index === 0 ? 'bg-gradient-to-br from-yellow-500 to-orange-500 text-black' :
                     index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black' :
                     index === 2 ? 'bg-gradient-to-br from-amber-600 to-yellow-700 text-black' :
@@ -90,7 +90,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </div>
 
                 {/* Avatar */}
-                <Avatar className="w-10 h-10 border-2 border-white/20">
+                <Avatar className="w-12 h-12 border-2 border-white/20">
                   <AvatarImage 
                     src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
                     alt={player.ign}
@@ -103,13 +103,13 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
 
                 {/* Name and info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-3 mb-1">
                     {getDeviceIcon(player.device)}
-                    <span className="font-semibold text-white text-base truncate">
+                    <span className="font-semibold text-white text-lg truncate">
                       {player.ign}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-3 text-sm">
                     <span className={`font-medium ${rankInfo.color}`}>
                       ◆ {rankInfo.title}
                     </span>
@@ -119,7 +119,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
 
                 {/* Region */}
                 <span className={`
-                  px-2 py-1 rounded-full text-xs font-bold
+                  px-3 py-1.5 rounded-full text-sm font-bold
                   ${player.region === 'NA' ? 'bg-red-600/80 text-white' :
                     player.region === 'EU' ? 'bg-green-600/80 text-white' :
                     player.region === 'ASIA' ? 'bg-blue-600/80 text-white' :
@@ -130,7 +130,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               </div>
 
               {/* Tier icons row */}
-              <div className="flex items-center justify-center gap-2 pt-2 border-t border-white/10">
+              <div className="flex items-center justify-center gap-3 pt-3 border-t border-white/10">
                 {[
                   { mode: 'mace', gamemode: 'Mace' },
                   { mode: 'sword', gamemode: 'Sword' },
@@ -145,10 +145,10 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                   
                   return (
                     <div key={mode} className="flex flex-col items-center">
-                      <div className="w-6 h-6 rounded-full bg-gray-800/80 border border-gray-600/50 flex items-center justify-center mb-1">
-                        <GameModeIcon mode={mode} className="w-3 h-3" />
+                      <div className="w-7 h-7 rounded-full bg-gray-800/80 border border-gray-600/50 flex items-center justify-center mb-1">
+                        <GameModeIcon mode={mode} className="w-4 h-4" />
                       </div>
-                      <div className={`px-1 py-0.5 rounded text-xs font-bold ${getTierBadgeColor(tier)} min-w-[20px] text-center`}>
+                      <div className={`px-1.5 py-0.5 rounded text-xs font-bold ${getTierBadgeColor(tier)} min-w-[24px] text-center`}>
                         {tier === 'Not Ranked' ? 'NR' : tier}
                       </div>
                     </div>
@@ -162,11 +162,11 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
     );
   }
 
-  // Desktop table layout
+  // Desktop table layout - full width
   return (
     <div className="w-full bg-dark-surface/40 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
       {/* Header */}
-      <div className="grid grid-cols-12 gap-4 px-6 py-4 text-sm font-medium text-white/60 border-b border-white/10 bg-dark-surface/70">
+      <div className="grid grid-cols-12 gap-6 px-8 py-5 text-sm font-medium text-white/60 border-b border-white/10 bg-dark-surface/70">
         <div className="col-span-1"></div>
         <div className="col-span-4">PLAYER</div>
         <div className="col-span-2 text-center">REGION</div>
@@ -185,13 +185,13 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-white/5 cursor-pointer transition-all group"
+              className="grid grid-cols-12 gap-6 px-8 py-5 hover:bg-white/5 cursor-pointer transition-all group"
               onClick={() => handlePlayerRowClick(player)}
             >
               {/* Rank with styled background */}
               <div className="col-span-1 flex items-center">
                 <div className={`
-                  w-10 h-10 flex items-center justify-center rounded-lg text-lg font-bold relative
+                  w-12 h-12 flex items-center justify-center rounded-lg text-lg font-bold relative
                   ${index === 0 ? 'bg-gradient-to-br from-yellow-500 to-orange-500 text-black' :
                     index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black' :
                     index === 2 ? 'bg-gradient-to-br from-amber-600 to-yellow-700 text-black' :
@@ -202,9 +202,9 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               </div>
 
               {/* Player Info */}
-              <div className="col-span-4 flex items-center gap-4">
+              <div className="col-span-4 flex items-center gap-5">
                 <div className="relative">
-                  <Avatar className="w-12 h-12 border-2 border-white/20 group-hover:border-white/40 transition-all duration-300">
+                  <Avatar className="w-14 h-14 border-2 border-white/20 group-hover:border-white/40 transition-all duration-300">
                     <AvatarImage 
                       src={player.avatar_url || getAvatarUrl(player.ign, player.java_username)}
                       alt={player.ign}
@@ -217,13 +217,13 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </div>
                 
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-3 mb-2">
                     {getDeviceIcon(player.device)}
-                    <span className="text-white font-semibold text-lg group-hover:text-blue-200 transition-colors">
+                    <span className="text-white font-semibold text-xl group-hover:text-blue-200 transition-colors">
                       {player.ign}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <span className={`text-sm font-medium ${rankInfo.color} group-hover:brightness-110 transition-all`}>
                       ◆ {rankInfo.title}
                     </span>
@@ -235,7 +235,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
               {/* Region */}
               <div className="col-span-2 flex items-center justify-center">
                 <span className={`
-                  px-3 py-1 rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-105
+                  px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-105
                   ${player.region === 'NA' ? 'bg-red-600/80 text-white group-hover:bg-red-500/90' :
                     player.region === 'EU' ? 'bg-green-600/80 text-white group-hover:bg-green-500/90' :
                     player.region === 'ASIA' ? 'bg-blue-600/80 text-white group-hover:bg-blue-500/90' :
@@ -247,7 +247,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
 
               {/* Tier Icons with Badges - Using real data */}
               <div className="col-span-5 flex items-center justify-center">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {[
                     { mode: 'mace', gamemode: 'Mace' },
                     { mode: 'sword', gamemode: 'Sword' },
@@ -263,11 +263,11 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                     return (
                       <div key={mode} className="relative flex flex-col items-center group/tier">
                         {/* Game mode icon */}
-                        <div className="w-8 h-8 rounded-full bg-gray-800/80 border border-gray-600/50 flex items-center justify-center hover:bg-gray-700/80 transition-all duration-300 group-hover/tier:scale-110 group-hover/tier:border-white/30 mb-1">
-                          <GameModeIcon mode={mode} className="w-4 h-4 group-hover/tier:text-white transition-colors" />
+                        <div className="w-9 h-9 rounded-full bg-gray-800/80 border border-gray-600/50 flex items-center justify-center hover:bg-gray-700/80 transition-all duration-300 group-hover/tier:scale-110 group-hover/tier:border-white/30 mb-2">
+                          <GameModeIcon mode={mode} className="w-5 h-5 group-hover/tier:text-white transition-colors" />
                         </div>
                         {/* Tier badge positioned below - using real data */}
-                        <div className={`px-1.5 py-0.5 rounded text-xs font-bold ${getTierBadgeColor(tier)} min-w-[28px] text-center transition-all duration-300 group-hover/tier:scale-105`}>
+                        <div className={`px-2 py-1 rounded text-xs font-bold ${getTierBadgeColor(tier)} min-w-[32px] text-center transition-all duration-300 group-hover/tier:scale-105`}>
                           {tier === 'Not Ranked' ? 'NR' : tier}
                         </div>
                       </div>
