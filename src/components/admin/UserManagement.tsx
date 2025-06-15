@@ -16,9 +16,22 @@ interface BannedPlayer {
   reason: string | null;
 }
 
+interface PlayerWithBanStatus {
+  id: string;
+  ign: string;
+  region: string;
+  device?: string;
+  global_points: number;
+  overall_rank: number;
+  java_username?: string;
+  avatar_url?: string;
+  banned: boolean;
+}
+
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [bannedPlayers, setBannedPlayers] = useState<BannedPlayer[]>([]);
+  const [playersWithBanStatus, setPlayersWithBanStatus] = useState<PlayerWithBanStatus[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -27,7 +40,39 @@ const UserManagement = () => {
 
   useEffect(() => {
     loadBannedPlayers();
+    loadPlayersWithBanStatus();
   }, []);
+
+  const loadPlayersWithBanStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('global_points', { ascending: false });
+
+      if (error) throw error;
+      
+      const playersWithBan: PlayerWithBanStatus[] = (data || []).map(player => ({
+        id: player.id,
+        ign: player.ign,
+        region: player.region || 'NA',
+        device: player.device || 'PC',
+        global_points: player.global_points || 0,
+        overall_rank: player.overall_rank || 0,
+        java_username: player.java_username,
+        avatar_url: player.avatar_url,
+        banned: player.banned || false
+      }));
+      
+      setPlayersWithBanStatus(playersWithBan);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to load players: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
 
   const loadBannedPlayers = async () => {
     try {
@@ -86,6 +131,7 @@ const UserManagement = () => {
       setBanReason('');
       setSelectedPlayer(null);
       await loadBannedPlayers();
+      await loadPlayersWithBanStatus();
       await refreshPlayers();
     } catch (error: any) {
       toast({
@@ -123,6 +169,7 @@ const UserManagement = () => {
       });
 
       await loadBannedPlayers();
+      await loadPlayersWithBanStatus();
       await refreshPlayers();
     } catch (error: any) {
       toast({
@@ -135,7 +182,7 @@ const UserManagement = () => {
     }
   };
 
-  const filteredPlayers = players.filter(player =>
+  const filteredPlayers = playersWithBanStatus.filter(player =>
     player.ign.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (player.java_username && player.java_username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
