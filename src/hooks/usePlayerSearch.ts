@@ -14,6 +14,7 @@ export function usePlayerSearch() {
     const performSearch = async () => {
       if (!debouncedQuery || debouncedQuery.length < 2) {
         setResults([]);
+        setIsLoading(false);
         return;
       }
       
@@ -21,7 +22,9 @@ export function usePlayerSearch() {
       setError(null);
       
       try {
+        console.log('Searching for players with query:', debouncedQuery);
         const data = await searchPlayers(debouncedQuery);
+        console.log('Search results received:', data?.length || 0, 'players');
         setResults(data || []);
       } catch (err) {
         console.error('Player search error:', err);
