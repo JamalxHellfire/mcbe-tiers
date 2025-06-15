@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminLoginResult {
@@ -42,6 +41,20 @@ export const clearAllAuthState = (): void => {
   });
 };
 
+// Generate a consistent user IP for this session
+const getUserIP = async (): Promise<string> => {
+  // Try to get existing IP from localStorage first
+  let userIp = localStorage.getItem('admin_ip');
+  
+  if (!userIp) {
+    // Generate a new unique identifier
+    userIp = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('admin_ip', userIp);
+  }
+  
+  return userIp;
+};
+
 // Check if user has existing access based on IP
 export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string }> => {
   try {
@@ -57,7 +70,7 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
     
     if (data && data.length > 0) {
       const result = data[0];
-      console.log('Admin access granted:', result);
+      console.log('Admin access result:', result);
       return { hasAccess: result.has_access, role: result.user_role };
     }
     
@@ -131,15 +144,6 @@ const initializeAuthConfig = async () => {
   }
 };
 
-// Get user IP (placeholder - in real app this would be server-side)
-const getUserIP = async (): Promise<string> => {
-  try {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  } catch (error) {
-    return `fallback_${Date.now()}`;
-  }
-};
-
 // Admin login with improved error handling
 export const adminLogin = async (password: string): Promise<AdminLoginResult> => {
   try {
@@ -169,20 +173,29 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
     if (password === ownerPassword) {
       console.log('Owner login successful - creating admin user entry');
       
-      // Owner access - auto-approve IP
+      // Get consistent IP
       const userIp = await getUserIP();
-      console.log('Generated user IP:', userIp);
+      console.log('Using user IP:', userIp);
       
+      // Delete any existing entry for this IP first to avoid conflicts
+      const { error: deleteError } = await supabase
+        .from('admin_users')
+        .delete()
+        .eq('ip_address', userIp);
+
+      if (deleteError) {
+        console.log('Note: No existing entry to delete or delete failed:', deleteError);
+      }
+
+      // Insert new admin user entry
       const { error: insertError } = await supabase
         .from('admin_users')
-        .upsert({
+        .insert({
           ip_address: userIp,
           role: 'owner',
           approved_by: 'system',
           approved_at: new Date().toISOString(),
           last_access: new Date().toISOString()
-        }, {
-          onConflict: 'ip_address'
         });
 
       if (insertError) {
@@ -217,7 +230,6 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
   }
 };
 
-// Submit onboarding application
 export const submitOnboardingApplication = async (data: OnboardingData): Promise<{ success: boolean; error?: string }> => {
   try {
     const userIp = await getUserIP();

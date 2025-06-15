@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +24,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!password.trim()) {
       toast({
         title: "Password Required",
@@ -35,9 +35,10 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
     }
 
     setIsLoading(true);
+    
     try {
-      console.log('Submitting password...');
-      const result = await adminService.adminLogin(password);
+      console.log('Submitting password for authentication...');
+      const result = await adminService.adminLogin(password.trim());
       console.log('Login result:', result);
       
       if (result.success) {
@@ -50,7 +51,10 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
             title: "Login Successful",
             description: `Welcome, ${result.role}!`,
           });
-          onAuthSuccess();
+          // Small delay to ensure state is updated
+          setTimeout(() => {
+            onAuthSuccess();
+          }, 100);
         }
       } else {
         console.log('Login failed:', result.error);
@@ -69,6 +73,12 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
+      handlePasswordSubmit(e as any);
     }
   };
 
@@ -253,9 +263,11 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthSuccess }) => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   placeholder="Enter admin password"
                   className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/25"
                   disabled={isLoading}
+                  autoComplete="off"
                 />
               </div>
             </div>
