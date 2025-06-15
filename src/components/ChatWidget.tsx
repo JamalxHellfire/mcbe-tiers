@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, FileText, Bot, AlertCircle, RefreshCw, Sparkles, User } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, AlertCircle, RefreshCw, Sparkles, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -161,28 +160,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 </div>
               </div>
             </div>
-
-            {/* Knowledge Base Status - Fixed */}
-            {hasKnowledgeBase && kbInfo && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm px-6 py-4 text-sm text-white flex items-center justify-between border-b border-white/10"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-500/30 rounded-lg">
-                    <FileText className="w-4 h-4 text-green-200" />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-green-100">{kbInfo.filename}</span>
-                    <p className="text-xs text-green-200/80">Document loaded and ready</p>
-                  </div>
-                </div>
-                <div className="text-xs text-green-200/60">
-                  {new Date(kbInfo.uploadDate).toLocaleDateString()}
-                </div>
-              </motion.div>
-            )}
 
             {/* Error Display */}
             {error && (
