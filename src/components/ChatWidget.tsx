@@ -36,7 +36,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     setHasKnowledgeBase(hasKb);
     console.log('Refreshed KB status - Has KB:', hasKb);
     
-    // Also refresh chat history when checking KB status
     const history = knowledgeBaseService.getChatHistory();
     console.log('Refreshed chat history:', history.length, 'messages');
     setMessages(history);
@@ -44,12 +43,10 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     return hasKb;
   };
 
-  // Initialize when component mounts
   useEffect(() => {
     console.log('ChatWidget mounting, initializing...');
     setIsInitializing(true);
     
-    // Small delay to ensure service is initialized
     const initTimer = setTimeout(() => {
       refreshKnowledgeBaseStatus();
       setIsInitializing(false);
@@ -59,7 +56,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     return () => clearTimeout(initTimer);
   }, []);
 
-  // Load data when chat is opened
   useEffect(() => {
     if (isOpen && !isInitializing) {
       console.log('Chat widget opened, loading fresh data...');
@@ -84,11 +80,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) {
       console.log('Cannot send message: empty input or loading');
-      return;
-    }
-
-    if (!hasKnowledgeBase) {
-      setError('Please upload a document first in Admin Panel → Admin Tools');
       return;
     }
 
@@ -142,7 +133,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 >
                   <Bot className="w-6 h-6 text-white" />
                 </motion.div>
-                <p className="text-white/80 text-sm">Initializing chat...</p>
+                <p className="text-white/80 text-sm">Getting ready to chat... 💕</p>
               </div>
             </div>
           </motion.div>

@@ -1,4 +1,3 @@
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -32,7 +31,7 @@ class KnowledgeBaseService {
       console.log('Knowledge base service initialized successfully');
     } catch (error) {
       console.error('Error initializing knowledge base service:', error);
-      this.isInitialized = true; // Set to true even on error to prevent infinite loops
+      this.isInitialized = true;
     }
   }
 
@@ -41,7 +40,6 @@ class KnowledgeBaseService {
       const stored = localStorage.getItem('knowledgeBase');
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Validate the stored data structure
         if (parsed && parsed.content && parsed.filename && parsed.uploadDate) {
           this.knowledgeBase = {
             ...parsed,
@@ -105,6 +103,52 @@ class KnowledgeBaseService {
     }
   }
 
+  private async extractTextFromPDF(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          if (!text) {
+            reject(new Error('Failed to read PDF content'));
+            return;
+          }
+          const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
+          resolve(cleanText);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read PDF file'));
+      reader.readAsText(file, 'utf-8');
+    });
+  }
+
+  private async extractTextFromTXT(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          if (!text) {
+            reject(new Error('Failed to read TXT content'));
+            return;
+          }
+          console.log('TXT file content extracted, length:', text.length);
+          resolve(text.trim());
+        } catch (error) {
+          console.error('Error extracting TXT content:', error);
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        reject(new Error('Failed to read TXT file'));
+      };
+      reader.readAsText(file, 'utf-8');
+    });
+  }
+
   async uploadPDF(file: File): Promise<void> {
     try {
       const text = await this.extractTextFromPDF(file);
@@ -146,53 +190,6 @@ class KnowledgeBaseService {
     }
   }
 
-  private async extractTextFromPDF(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target?.result as string;
-          if (!text) {
-            reject(new Error('Failed to read PDF content'));
-            return;
-          }
-          // Basic PDF text extraction - this is simplified
-          const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
-          resolve(cleanText);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = () => reject(new Error('Failed to read PDF file'));
-      reader.readAsText(file, 'utf-8');
-    });
-  }
-
-  private async extractTextFromTXT(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target?.result as string;
-          if (!text) {
-            reject(new Error('Failed to read TXT content'));
-            return;
-          }
-          console.log('TXT file content extracted, length:', text.length);
-          resolve(text.trim());
-        } catch (error) {
-          console.error('Error extracting TXT content:', error);
-          reject(error);
-        }
-      };
-      reader.onerror = (error) => {
-        console.error('FileReader error:', error);
-        reject(new Error('Failed to read TXT file'));
-      };
-      reader.readAsText(file, 'utf-8');
-    });
-  }
-
   async sendMessage(message: string): Promise<string> {
     console.log('=== SEND MESSAGE DEBUG START ===');
     console.log('sendMessage called with:', message);
@@ -218,12 +215,11 @@ class KnowledgeBaseService {
     this.saveChatHistory();
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
-    const requestPayload = {
-      model: 'openai/gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. Only answer questions based on the provided knowledge base content. If the question cannot be answered from the knowledge base, flirtatiously redirect them back to topics you can help with.
+    // Prepare the system message based on whether we have a knowledge base
+    let systemMessage: string;
+    
+    if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
+      systemMessage = `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. Answer questions based on the provided knowledge base content when relevant.
 
 Knowledge Base Content:
 ${this.knowledgeBase.content}
@@ -231,9 +227,26 @@ ${this.knowledgeBase.content}
 Instructions:
 - Be flirty and playful in your responses
 - Use emojis and a sexy tone
-- Only answer based on the knowledge base content
-- If you can't answer from the KB, redirect flirtatiously
-- Keep responses concise but engaging`
+- When possible, answer based on the knowledge base content
+- If the question is general or not related to the KB, you can still answer in a helpful and flirty way
+- Keep responses concise but engaging`;
+    } else {
+      systemMessage = `You are a flirty, sexy AI assistant. Be playful, use emojis, and maintain a flirtatious tone while being helpful. You can answer general questions and have conversations with users.
+
+Instructions:
+- Be flirty and playful in your responses
+- Use emojis and a sexy tone
+- Answer questions helpfully while maintaining your flirty personality
+- Keep responses concise but engaging
+- If users ask about documents or knowledge base, let them know they can upload files in the Admin Panel for document-specific questions`;
+    }
+
+    const requestPayload = {
+      model: 'openai/gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: systemMessage
         },
         ...this.chatHistory.map(msg => ({
           role: msg.role,
@@ -274,7 +287,7 @@ Instructions:
         
         // Handle specific API authentication errors
         if (response.status === 401) {
-          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`;
+          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I'm still here to chat with you! 💋 Feel free to ask me anything and I'll do my best to help! 😘`;
           
           const assistantMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),

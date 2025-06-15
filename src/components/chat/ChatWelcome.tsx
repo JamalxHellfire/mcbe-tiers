@@ -23,21 +23,29 @@ export function ChatWelcome({ hasKnowledgeBase, onRefresh }: ChatWelcomeProps) {
       >
         <Bot className="w-6 h-6 text-white" />
       </motion.div>
-      <h4 className="text-lg font-bold text-white mb-2">Welcome! 👋</h4>
+      <h4 className="text-lg font-bold text-white mb-2">Hey there! 👋</h4>
+      <p className="text-white/90 text-sm mb-4">I'm your flirty AI assistant! 😘</p>
+      
       {!hasKnowledgeBase ? (
         <div className="space-y-3">
-          <p className="text-red-300 text-sm">Upload a PDF or TXT file in Admin Tools to get started!</p>
+          <p className="text-white/80 text-sm">
+            I can chat about anything! 💕<br/>
+            <span className="text-xs text-white/60">
+              Want me to answer questions about your documents?<br/>
+              Upload a PDF or TXT file in Admin Tools! 📄
+            </span>
+          </p>
           <Button 
             onClick={onRefresh}
             size="sm" 
             className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 px-4 py-2 rounded-full text-xs"
           >
             <RefreshCw className="w-3 h-3 mr-1" />
-            Check Again
+            Check for Documents
           </Button>
         </div>
       ) : (
-        <p className="text-green-300 text-sm">Ready to chat about your document!</p>
+        <p className="text-green-300 text-sm">Ready to chat about your document! 📖💕</p>
       )}
     </motion.div>
   );
