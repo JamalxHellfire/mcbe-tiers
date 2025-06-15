@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useAdminPanel } from '@/hooks/useAdminPanel';
+import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
 import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
@@ -11,6 +11,7 @@ import DailyAnalytics from '@/components/admin/DailyAnalytics';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
+import ApplicationsManager from '@/components/admin/ApplicationsManager';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
@@ -26,16 +27,43 @@ import {
   Calendar,
   Database,
   UserCheck,
-  Terminal
+  Terminal,
+  UserCog,
+  Trash2
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox';
+type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications';
+
+// Role-based tab visibility
+const getVisibleTabs = (role: string): AdminTab[] => {
+  switch (role) {
+    case 'owner':
+      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications'];
+    case 'admin':
+      return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox'];
+    case 'moderator':
+      return ['submit', 'manage', 'analytics', 'daily', 'blackbox'];
+    case 'tester':
+      return ['submit', 'manage'];
+    default:
+      return [];
+  }
+};
 
 const AdminPanel = () => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('submit');
+  return (
+    <AdminProtectedRoute>
+      {(userRole: string) => <AdminPanelContent userRole={userRole} />}
+    </AdminProtectedRoute>
+  );
+};
+
+const AdminPanelContent = ({ userRole }: { userRole: string }) => {
+  const visibleTabs = getVisibleTabs(userRole);
+  const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0] || 'submit');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast } = useToast();
@@ -47,8 +75,9 @@ const AdminPanel = () => {
       const sessionToken = localStorage.getItem('admin_session_token');
       if (sessionToken) {
         await adminService.adminLogout(sessionToken);
-        localStorage.removeItem('admin_session_token');
       }
+      
+      adminService.clearAllAuthState();
       
       toast({
         title: "Logged out successfully",
@@ -63,7 +92,7 @@ const AdminPanel = () => {
         description: "Failed to logout properly, but session has been cleared.",
         variant: "destructive"
       });
-      localStorage.removeItem('admin_session_token');
+      adminService.clearAllAuthState();
       window.location.href = '/';
     } finally {
       setIsLoggingOut(false);
@@ -77,7 +106,7 @@ const AdminPanel = () => {
       case 'manage':
         return <ManagePlayersTab />;
       case 'tools':
-        return (
+        return userRole === 'owner' || userRole === 'admin' ? (
           <div className="space-y-4 md:space-y-6">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
               <div className="space-y-3 md:space-y-4">
@@ -89,22 +118,29 @@ const AdminPanel = () => {
                 <SystemLogsViewer />
               </div>
             </div>
-            <div className="space-y-3 md:space-y-4">
-              <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Knowledge Base Management</h3>
-              <KnowledgeBaseUpload />
-            </div>
+            {userRole === 'owner' && (
+              <div className="space-y-3 md:space-y-4">
+                <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Knowledge Base Management</h3>
+                <KnowledgeBaseUpload />
+              </div>
+            )}
           </div>
-        );
+        ) : <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'analytics':
         return <AnalyticsDashboard />;
       case 'daily':
         return <DailyAnalytics />;
       case 'database':
-        return <DatabaseTools />;
+        return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
+          <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'users':
-        return <UserManagement />;
+        return userRole === 'owner' || userRole === 'admin' ? <UserManagement /> : 
+          <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'blackbox':
         return <BlackBoxLogger />;
+      case 'applications':
+        return userRole === 'owner' ? <ApplicationsManager userRole={userRole} /> : 
+          <div className="text-center py-8 text-gray-400">Access denied. Only owners can manage applications.</div>;
       default:
         return null;
     }
@@ -115,43 +151,47 @@ const AdminPanel = () => {
     label: string; 
     icon: React.ElementType;
     description: string;
-  }) => (
-    <button
-      onClick={() => {
-        setActiveTab(tabName);
-        if (isMobile) setMobileMenuOpen(false);
-      }}
-      className={cn(
-        "group relative p-2 md:p-3 lg:p-4 rounded-lg md:rounded-xl transition-all duration-200",
-        "border backdrop-blur-sm text-left w-full",
-        activeTab === tabName
-          ? "bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/50 shadow-lg shadow-purple-500/25"
-          : "bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-gray-600/50"
-      )}
-    >
-      <div className="flex items-start space-x-2 md:space-x-3">
-        <div className={cn(
-          "p-1.5 md:p-2 rounded-md md:rounded-lg transition-colors",
+  }) => {
+    if (!visibleTabs.includes(tabName)) return null;
+    
+    return (
+      <button
+        onClick={() => {
+          setActiveTab(tabName);
+          if (isMobile) setMobileMenuOpen(false);
+        }}
+        className={cn(
+          "group relative p-2 md:p-3 lg:p-4 rounded-lg md:rounded-xl transition-all duration-200",
+          "border backdrop-blur-sm text-left w-full",
           activeTab === tabName
-            ? "bg-purple-500/20 text-purple-400"
-            : "bg-gray-700/50 text-gray-400 group-hover:bg-gray-600/50 group-hover:text-gray-300"
-        )}>
-          <Icon className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className={cn(
-            "font-semibold mb-0.5 transition-colors text-xs md:text-sm lg:text-base",
-            activeTab === tabName ? "text-white" : "text-gray-300 group-hover:text-white"
+            ? "bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/50 shadow-lg shadow-purple-500/25"
+            : "bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-gray-600/50"
+        )}
+      >
+        <div className="flex items-start space-x-2 md:space-x-3">
+          <div className={cn(
+            "p-1.5 md:p-2 rounded-md md:rounded-lg transition-colors",
+            activeTab === tabName
+              ? "bg-purple-500/20 text-purple-400"
+              : "bg-gray-700/50 text-gray-400 group-hover:bg-gray-600/50 group-hover:text-gray-300"
           )}>
-            {label}
-          </h3>
-          <p className="text-xs text-gray-400 group-hover:text-gray-300 leading-tight hidden md:block">
-            {description}
-          </p>
+            <Icon className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className={cn(
+              "font-semibold mb-0.5 transition-colors text-xs md:text-sm lg:text-base",
+              activeTab === tabName ? "text-white" : "text-gray-300 group-hover:text-white"
+            )}>
+              {label}
+            </h3>
+            <p className="text-xs text-gray-400 group-hover:text-gray-300 leading-tight hidden md:block">
+              {description}
+            </p>
+          </div>
         </div>
-      </div>
-    </button>
-  );
+      </button>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] text-white">
@@ -174,7 +214,9 @@ const AdminPanel = () => {
                   <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
                     Admin Dashboard
                   </h1>
-                  <p className="text-gray-400 text-xs md:text-sm hidden md:block">Manage your platform with precision</p>
+                  <p className="text-gray-400 text-xs md:text-sm hidden md:block">
+                    Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                  </p>
                 </div>
               </div>
               
@@ -227,6 +269,7 @@ const AdminPanel = () => {
                     <TabButton tabName="analytics" label="System Analytics" icon={BarChart3} description="Platform insights and statistics" />
                     <TabButton tabName="database" label="Database Tools" icon={Database} description="Database management and maintenance" />
                     <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Real-time system activity monitor" />
+                    <TabButton tabName="applications" label="Applications" icon={UserCog} description="Review admin applications" />
                     <TabButton tabName="tools" label="Admin Tools" icon={Wrench} description="Mass submission and system tools" />
                     
                     <Button 
@@ -245,7 +288,7 @@ const AdminPanel = () => {
               
               {/* Desktop Navigation Grid */}
               {!isMobile && (
-                <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3">
+                <div className="grid grid-cols-4 lg:grid-cols-9 gap-2 md:gap-3">
                   <TabButton tabName="submit" label="Submit" icon={UploadCloud} description="Add or update player rankings" />
                   <TabButton tabName="manage" label="Players" icon={Users} description="View and edit accounts" />
                   <TabButton tabName="users" label="Moderation" icon={UserCheck} description="Ban/unban players" />
@@ -253,6 +296,7 @@ const AdminPanel = () => {
                   <TabButton tabName="analytics" label="Analytics" icon={BarChart3} description="System insights" />
                   <TabButton tabName="database" label="Database" icon={Database} description="DB management" />
                   <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Live system monitor" />
+                  <TabButton tabName="applications" label="Applications" icon={UserCog} description="Review applications" />
                   <TabButton tabName="tools" label="Tools" icon={Wrench} description="Admin utilities" />
                 </div>
               )}

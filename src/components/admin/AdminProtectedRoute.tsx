@@ -4,40 +4,43 @@ import { AdminAuth } from './AdminAuth';
 import { adminService } from '@/services/adminService';
 
 interface AdminProtectedRouteProps {
-  children: React.ReactNode;
+  children: (userRole: string) => React.ReactNode;
 }
 
 export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const sessionToken = localStorage.getItem('admin_session_token');
-      
-      if (!sessionToken) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
-
+    const checkAccess = async () => {
       try {
-        const isValid = await adminService.verifyAdminSession(sessionToken);
-        setIsAuthenticated(isValid);
+        const result = await adminService.checkAdminAccess();
+        if (result.hasAccess && result.role) {
+          setUserRole(result.role);
+          // Set session token for compatibility
+          localStorage.setItem('admin_session_token', `admin_${Date.now()}`);
+          localStorage.setItem('admin_role', result.role);
+        } else {
+          setUserRole(null);
+        }
       } catch (error) {
-        console.error('Session verification error:', error);
-        setIsAuthenticated(false);
-        localStorage.removeItem('admin_session_token');
+        console.error('Access check error:', error);
+        setUserRole(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkAuthStatus();
+    checkAccess();
   }, []);
 
   const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
+    // Re-check access after successful auth
+    adminService.checkAdminAccess().then((result) => {
+      if (result.hasAccess && result.role) {
+        setUserRole(result.role);
+      }
+    });
   };
 
   if (isLoading) {
@@ -48,9 +51,9 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
     );
   }
 
-  if (!isAuthenticated) {
+  if (!userRole) {
     return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
   }
 
-  return <>{children}</>;
+  return <>{children(userRole)}</>;
 };
