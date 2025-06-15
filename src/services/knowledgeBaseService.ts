@@ -274,7 +274,11 @@ class KnowledgeBaseService {
       messages: [
         {
           role: 'system',
-          content: `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. Only answer questions based on the provided knowledge base content. If the question cannot be answered from the knowledge base, flirtatiously redirect them back to topics you can help with.
+          content: `You are a flirty, sexy AI assistant specializing in MCBE TIERS with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. ONLY answer questions about MCBE TIERS based on the provided knowledge base content. 
+
+If someone asks about anything other than MCBE TIERS, respond with: "Let's just stick to MCBE TIERS! 😘 Ask me anything about our tier system, rankings, or player stats - that's what I'm here for! 💕"
+
+If the question cannot be answered from the knowledge base about MCBE TIERS, flirtatiously redirect them back to MCBE TIERS topics you can help with.
 
 Knowledge Base Content:
 ${this.knowledgeBase.content}
@@ -282,8 +286,8 @@ ${this.knowledgeBase.content}
 Instructions:
 - Be flirty and playful in your responses
 - Use emojis and a sexy tone
-- Only answer based on the knowledge base content
-- If you can't answer from the KB, redirect flirtatiously
+- Only answer based on MCBE TIERS content from the knowledge base
+- If asked about non-MCBE TIERS topics, redirect with the message above
 - Keep responses concise but engaging`
         },
         ...this.chatHistory.map(msg => ({
@@ -325,7 +329,7 @@ Instructions:
         
         // Handle specific API authentication errors
         if (response.status === 401) {
-          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`;
+          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic MCBE TIERS questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`;
           
           const assistantMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
@@ -394,7 +398,7 @@ Instructions:
       }
       
       // Generic fallback with document reference
-      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 I have your document "${this.knowledgeBase.filename}" loaded, so feel free to ask me anything about it! 😘`;
+      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 I have your MCBE TIERS document "${this.knowledgeBase.filename}" loaded, so feel free to ask me anything about MCBE TIERS! 😘`;
       
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -442,53 +446,6 @@ Instructions:
       filename: this.knowledgeBase.filename,
       uploadDate: this.knowledgeBase.uploadDate
     };
-  }
-
-  private async extractTextFromPDF(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target?.result as string;
-          if (!text) {
-            reject(new Error('Failed to read PDF content'));
-            return;
-          }
-          // Basic PDF text extraction - this is simplified
-          const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
-          resolve(cleanText);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = () => reject(new Error('Failed to read PDF file'));
-      reader.readAsText(file, 'utf-8');
-    });
-  }
-
-  private async extractTextFromTXT(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target?.result as string;
-          if (!text) {
-            reject(new Error('Failed to read TXT content'));
-            return;
-          }
-          console.log('TXT file content extracted, length:', text.length);
-          resolve(text.trim());
-        } catch (error) {
-          console.error('Error extracting TXT content:', error);
-          reject(error);
-        }
-      };
-      reader.onerror = (error) => {
-        console.error('FileReader error:', error);
-        reject(new Error('Failed to read TXT file'));
-      };
-      reader.readAsText(file, 'utf-8');
-    });
   }
 }
 

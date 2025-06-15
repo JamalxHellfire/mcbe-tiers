@@ -1,45 +1,56 @@
-
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import SubcategoryPage from "./pages/SubcategoryPage";
-import AdminPanel from "./pages/AdminPanel";
-import NotFound from "./pages/NotFound";
-import { PopupProvider } from "./contexts/PopupContext";
-import { ModernResultPopup } from "./components/ModernResultPopup";
-import { useErrorHandler } from "./hooks/useErrorHandler";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from '@/components/theme-provider';
+import { PopupProvider } from '@/contexts/PopupContext';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useVisitorTracking } from '@/hooks/useVisitorTracking';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Submit from './pages/Submit';
+import Players from './pages/Players';
+import AdminPanel from './pages/AdminPanel';
+import Footer from './components/Footer';
+import { FloatingChatButton } from './components/FloatingChatButton';
+import NotFound from './pages/NotFound';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  useErrorHandler(); // Move the hook call inside a proper React component
+  useErrorHandler();
+  useVisitorTracking();
 
   return (
-    <>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/:category" element={<SubcategoryPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-      <ModernResultPopup />
-    </>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/submit" element={<Submit />} />
+        <Route path="/players" element={<Players />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Footer />
+      <FloatingChatButton />
+    </div>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <PopupProvider>
-          <AppContent />
+          <Router>
+            <AppContent />
+            <Toaster />
+          </Router>
         </PopupProvider>
-      </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

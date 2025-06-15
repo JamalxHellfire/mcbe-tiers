@@ -2,17 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
-import { TrendingUp, Users, Database, Activity, Globe, Smartphone } from 'lucide-react';
+import { TrendingUp, Users, Database, Activity, Globe, Smartphone, Eye, Clock } from 'lucide-react';
 
 interface AnalyticsData {
   totalPlayers: number;
   totalGlobalPoints: number;
+  totalVisitors: number;
+  dailyVisitors: number;
   playersByRegion: { region: string; count: number }[];
   playersByDevice: { device: string; count: number }[];
-  recentActivity: { date: string; registrations: number; updates: number }[];
+  recentActivity: { date: string; registrations: number; updates: number; visitors: number }[];
   topGamemodes: { gamemode: string; players: number }[];
+  visitorTrends: { date: string; visits: number }[];
 }
 
 export const AnalyticsDashboard: React.FC = () => {
@@ -37,6 +40,21 @@ export const AnalyticsDashboard: React.FC = () => {
 
       const totalPlayers = playersData.length;
       const totalGlobalPoints = playersData.reduce((sum, p) => sum + (p.global_points || 0), 0);
+
+      // Fetch visitor data from logs
+      const { data: visitorLogs } = await supabase
+        .from('system_logs')
+        .select('timestamp, context')
+        .eq('operation', 'page_visit')
+        .order('timestamp', { ascending: false });
+
+      const totalVisitors = visitorLogs?.length || 0;
+      
+      // Calculate daily visitors (last 24 hours)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const dailyVisitors = visitorLogs?.filter(log => 
+        new Date(log.timestamp) > oneDayAgo
+      ).length || 0;
 
       // Calculate regional distribution
       const regionCounts = playersData.reduce((acc, player) => {
@@ -64,9 +82,9 @@ export const AnalyticsDashboard: React.FC = () => {
 
       // Calculate recent activity (last 7 days)
       const now = new Date();
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
       const recentActivity = [];
+      const visitorTrends = [];
+      
       for (let i = 6; i >= 0; i--) {
         const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
         const dateStr = date.toISOString().split('T')[0];
@@ -75,10 +93,20 @@ export const AnalyticsDashboard: React.FC = () => {
           p.created_at && p.created_at.startsWith(dateStr)
         ).length;
 
+        const dayVisitors = visitorLogs?.filter(log => 
+          log.timestamp.startsWith(dateStr)
+        ).length || 0;
+
         recentActivity.push({
           date: dateStr,
           registrations,
-          updates: Math.floor(Math.random() * 10) // Placeholder for updates
+          updates: Math.floor(Math.random() * 10), // Placeholder for updates
+          visitors: dayVisitors
+        });
+
+        visitorTrends.push({
+          date: dateStr,
+          visits: dayVisitors
         });
       }
 
@@ -101,10 +129,13 @@ export const AnalyticsDashboard: React.FC = () => {
       setAnalytics({
         totalPlayers,
         totalGlobalPoints,
+        totalVisitors,
+        dailyVisitors,
         playersByRegion,
         playersByDevice,
         recentActivity,
-        topGamemodes
+        topGamemodes,
+        visitorTrends
       });
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -142,7 +173,7 @@ export const AnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card className="bg-gray-900/50 border-gray-700/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -159,10 +190,34 @@ export const AnalyticsDashboard: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm text-gray-400">Total Visitors</p>
+                <p className="text-2xl font-bold text-white">{analytics.totalVisitors.toLocaleString()}</p>
+              </div>
+              <Eye className="h-8 w-8 text-green-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Daily Visitors</p>
+                <p className="text-2xl font-bold text-white">{analytics.dailyVisitors.toLocaleString()}</p>
+              </div>
+              <Clock className="h-8 w-8 text-orange-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/50 border-gray-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm text-gray-400">Global Points</p>
                 <p className="text-2xl font-bold text-white">{analytics.totalGlobalPoints.toLocaleString()}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-400" />
+              <TrendingUp className="h-8 w-8 text-purple-400" />
             </div>
           </CardContent>
         </Card>
@@ -174,7 +229,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 <p className="text-sm text-gray-400">Active Gamemodes</p>
                 <p className="text-2xl font-bold text-white">{analytics.topGamemodes.length}</p>
               </div>
-              <Database className="h-8 w-8 text-purple-400" />
+              <Database className="h-8 w-8 text-cyan-400" />
             </div>
           </CardContent>
         </Card>
@@ -191,11 +246,44 @@ export const AnalyticsDashboard: React.FC = () => {
                   }
                 </p>
               </div>
-              <Activity className="h-8 w-8 text-orange-400" />
+              <Activity className="h-8 w-8 text-pink-400" />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Visitor Trends */}
+      <Card className="bg-gray-900/50 border-gray-700/50">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Visitor Trends (Last 7 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={analytics.visitorTrends}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="date" stroke="#9CA3AF" />
+              <YAxis stroke="#9CA3AF" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1F2937', 
+                  border: '1px solid #374151',
+                  borderRadius: '8px'
+                }} 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="visits" 
+                stroke="#10B981" 
+                strokeWidth={2}
+                dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -300,6 +388,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 }} 
               />
               <Bar dataKey="registrations" fill="#10B981" name="New Registrations" />
+              <Bar dataKey="visitors" fill="#06B6D4" name="Visitors" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
