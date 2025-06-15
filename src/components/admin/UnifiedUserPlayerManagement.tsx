@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -249,7 +248,7 @@ const UnifiedUserPlayerManagement = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-lg border border-green-500/30">
             <Users className="h-6 w-6 text-green-400" />
@@ -262,54 +261,63 @@ const UnifiedUserPlayerManagement = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30">
+            <Button className="bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30 w-full sm:w-auto">
               <UserPlus className="h-4 w-4 mr-2" />
               Add Player
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50">
+          <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 w-[95vw] max-w-lg mx-auto p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle className="text-white flex items-center space-x-2">
+              <DialogTitle className="text-white flex items-center space-x-2 text-lg">
                 <UserPlus className="h-5 w-5 text-green-400" />
                 <span>Add New Player</span>
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="ign" className="text-gray-300 font-medium">IGN (Required)</Label>
+                <Label htmlFor="ign" className="text-gray-300 font-medium text-sm">IGN (Required)</Label>
                 <Input
                   id="ign"
                   value={newPlayer.ign}
                   onChange={(e) => setNewPlayer({ ...newPlayer, ign: e.target.value })}
                   placeholder="Enter player IGN"
-                  className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400"
+                  className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-gray-300 font-medium">Java Username</Label>
+                  <Label className="text-gray-300 font-medium text-sm">Java Username</Label>
                   <Input
                     value={newPlayer.java_username}
                     onChange={(e) => setNewPlayer({ ...newPlayer, java_username: e.target.value })}
                     placeholder="Java username"
-                    className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400"
+                    className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-300 font-medium">Region</Label>
+                  <Label className="text-gray-300 font-medium text-sm">Region</Label>
                   <Input
                     value={newPlayer.region}
                     onChange={(e) => setNewPlayer({ ...newPlayer, region: e.target.value })}
                     placeholder="Region"
-                    className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400"
+                    className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
                   />
                 </div>
               </div>
-              <div className="flex space-x-3">
+              <div className="space-y-2">
+                <Label className="text-gray-300 font-medium text-sm">Device</Label>
+                <Input
+                  value={newPlayer.device}
+                  onChange={(e) => setNewPlayer({ ...newPlayer, device: e.target.value })}
+                  placeholder="Device"
+                  className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-2">
                 <Button
                   onClick={handleAddPlayer}
                   disabled={isLoading}
-                  className="flex-1 bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
+                  className="flex-1 bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30 h-10"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Player
@@ -317,7 +325,7 @@ const UnifiedUserPlayerManagement = () => {
                 <Button
                   onClick={() => setIsAddDialogOpen(false)}
                   variant="outline"
-                  className="flex-1 border-gray-600/50 text-gray-300 hover:bg-gray-800/60"
+                  className="flex-1 border-gray-600/50 text-gray-300 hover:bg-gray-800/60 h-10"
                 >
                   Cancel
                 </Button>
