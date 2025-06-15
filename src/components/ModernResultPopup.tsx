@@ -35,7 +35,9 @@ export function ModernResultPopup() {
       assignment.gamemode === mode
     );
     
-    if (playerTier) {
+    console.log(`Getting tier data for ${mode}:`, playerTier);
+    
+    if (playerTier && playerTier.tier && playerTier.tier !== 'Not Ranked') {
       const tierMap: Record<string, { code: string, color: string, gradient: string }> = {
         'HT1': { code: 'HT1', color: '#fde047', gradient: 'linear-gradient(135deg, #fef9c3 0%, #fde047 90%)' },
         'LT1': { code: 'LT1', color: '#7cffad', gradient: 'linear-gradient(135deg, #e6fff6 0%, #7cffad 90%)' },
@@ -43,10 +45,21 @@ export function ModernResultPopup() {
         'LT2': { code: 'LT2', color: '#fda4af', gradient: 'linear-gradient(135deg, #fff1fc 0%, #fda4af 100%)' },
         'HT3': { code: 'HT3', color: '#f472b6', gradient: 'linear-gradient(135deg, #fff1fa 0%, #f472b6 90%)' },
         'LT3': { code: 'LT3', color: '#38bdf8', gradient: 'linear-gradient(135deg, #f0faff 0%, #38bdf8 90%)' },
+        'HT4': { code: 'HT4', color: '#fb7185', gradient: 'linear-gradient(135deg, #fef2f2 0%, #fb7185 90%)' },
+        'LT4': { code: 'LT4', color: '#60a5fa', gradient: 'linear-gradient(135deg, #eff6ff 0%, #60a5fa 90%)' },
+        'HT5': { code: 'HT5', color: '#34d399', gradient: 'linear-gradient(135deg, #ecfdf5 0%, #34d399 90%)' },
+        'LT5': { code: 'LT5', color: '#fbbf24', gradient: 'linear-gradient(135deg, #fffbeb 0%, #fbbf24 90%)' },
+        'Retired': { code: 'RT', color: '#6b7280', gradient: 'linear-gradient(135deg, #f9fafb 0%, #6b7280 90%)' }
       };
-      return tierMap[playerTier.tier] || { code: 'NR', color: '#e5e7eb', gradient: 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)' };
+      
+      const tierInfo = tierMap[playerTier.tier];
+      if (tierInfo) {
+        console.log(`Found tier info for ${mode}:`, tierInfo);
+        return tierInfo;
+      }
     }
     
+    console.log(`No tier found for ${mode}, returning NR`);
     return { code: 'NR', color: '#e5e7eb', gradient: 'linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%)' };
   };
 
