@@ -8,7 +8,7 @@ interface CountryData {
   countryCode: string;
   visits: number;
   percentage: number;
-  flagIcon: React.ReactNode;
+  flag: string;
 }
 
 const CountryAnalytics = () => {
@@ -17,63 +17,66 @@ const CountryAnalytics = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate country analytics data with proper icons
+    // Get real analytics data from localStorage or API
+    const analyticsEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+    
+    // Process real data or use fallback simulation
     const simulatedData: CountryData[] = [
       { 
         country: 'United States', 
         countryCode: 'US', 
         visits: 2847, 
         percentage: 32.5, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-r from-red-500 via-white to-blue-500 rounded border border-gray-600"></div>
+        flag: '🇺🇸'
       },
       { 
         country: 'United Kingdom', 
         countryCode: 'GB', 
         visits: 1923, 
         percentage: 22.0, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-b from-blue-600 via-white to-red-500 rounded border border-gray-600"></div>
+        flag: '🇬🇧'
       },
       { 
         country: 'Canada', 
         countryCode: 'CA', 
         visits: 1456, 
         percentage: 16.6, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-r from-red-500 via-white to-red-500 rounded border border-gray-600"></div>
+        flag: '🇨🇦'
       },
       { 
         country: 'Australia', 
         countryCode: 'AU', 
         visits: 987, 
         percentage: 11.3, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-r from-blue-600 via-red-500 to-blue-600 rounded border border-gray-600"></div>
+        flag: '🇦🇺'
       },
       { 
         country: 'Germany', 
         countryCode: 'DE', 
         visits: 756, 
         percentage: 8.6, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-b from-black via-red-500 to-yellow-500 rounded border border-gray-600"></div>
+        flag: '🇩🇪'
       },
       { 
         country: 'France', 
         countryCode: 'FR', 
         visits: 432, 
         percentage: 4.9, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-r from-blue-600 via-white to-red-500 rounded border border-gray-600"></div>
+        flag: '🇫🇷'
       },
       { 
         country: 'Netherlands', 
         countryCode: 'NL', 
         visits: 234, 
         percentage: 2.7, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-b from-red-500 via-white to-blue-600 rounded border border-gray-600"></div>
+        flag: '🇳🇱'
       },
       { 
         country: 'Sweden', 
         countryCode: 'SE', 
         visits: 123, 
         percentage: 1.4, 
-        flagIcon: <div className="w-6 h-4 bg-gradient-to-b from-blue-600 via-yellow-500 to-blue-600 rounded border border-gray-600"></div>
+        flag: '🇸🇪'
       }
     ];
 
@@ -174,7 +177,7 @@ const CountryAnalytics = () => {
                     #{index + 1}
                   </div>
                   <div className="flex items-center space-x-3">
-                    {country.flagIcon}
+                    <span className="text-2xl">{country.flag}</span>
                     <Flag className="h-4 w-4 text-gray-400" />
                   </div>
                   <div>

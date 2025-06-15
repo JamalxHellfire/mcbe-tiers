@@ -27,19 +27,24 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
 
-  // Mock active staff data (in real app, this would come from your backend)
-  const mockActiveStaff: StaffMember[] = [
-    { id: '1', discord: 'admin#1234', role: 'admin', status: 'online', lastSeen: '2 minutes ago', ip_address: '192.168.1.100' },
-    { id: '2', discord: 'mod#5678', role: 'moderator', status: 'offline', lastSeen: '1 hour ago', ip_address: '192.168.1.101' },
-    { id: '3', discord: 'tester#9012', role: 'tester', status: 'online', lastSeen: 'Just now', ip_address: '192.168.1.102' }
-  ];
+  // Mock active staff data - in real implementation, this would come from your backend
+  const initializeStaffData = () => {
+    const mockActiveStaff: StaffMember[] = [
+      { id: '1', discord: 'admin#1234', role: 'admin', status: 'online', lastSeen: '2 minutes ago', ip_address: '192.168.1.100' },
+      { id: '2', discord: 'mod#5678', role: 'moderator', status: 'offline', lastSeen: '1 hour ago', ip_address: '192.168.1.101' },
+      { id: '3', discord: 'tester#9012', role: 'tester', status: 'online', lastSeen: 'Just now', ip_address: '192.168.1.102' }
+    ];
+    
+    // Get existing staff from localStorage or use mock data
+    const existingStaff = JSON.parse(localStorage.getItem('active_staff') || JSON.stringify(mockActiveStaff));
+    setActiveStaff(existingStaff);
+  };
 
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
       const data = await newAdminService.getPendingApplications();
       setApplications(data);
-      setActiveStaff(mockActiveStaff);
       
       const roles = data.reduce((acc, app) => {
         acc[app.id] = app.requested_role;
@@ -56,6 +61,7 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
   useEffect(() => {
     if (userRole === 'owner') {
       fetchApplications();
+      initializeStaffData();
     }
   }, [userRole]);
 
@@ -66,6 +72,25 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
       const result = await newAdminService.reviewApplicationWithRole(applicationId, action, userRole, roleToAssign);
       
       if (result.success) {
+        // If approved, add to active staff
+        if (action === 'approve' && roleToAssign) {
+          const application = applications.find(app => app.id === applicationId);
+          if (application) {
+            const newStaffMember: StaffMember = {
+              id: Date.now().toString(),
+              discord: application.discord,
+              role: roleToAssign,
+              status: 'offline',
+              lastSeen: 'Never',
+              ip_address: application.ip_address
+            };
+            
+            const updatedStaff = [...activeStaff, newStaffMember];
+            setActiveStaff(updatedStaff);
+            localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
+          }
+        }
+        
         toast({
           title: `Application ${action === 'approve' ? 'Approved' : 'Denied'}`,
           description: action === 'approve' 
@@ -92,19 +117,57 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
   };
 
   const handleRemoveStaff = async (staffId: string) => {
-    toast({
-      title: "Staff Removed",
-      description: "Staff member has been removed from the team.",
-    });
-    // In real app, implement actual removal logic
+    try {
+      const staffMember = activeStaff.find(staff => staff.id === staffId);
+      if (!staffMember) return;
+
+      // Remove from active staff
+      const updatedStaff = activeStaff.filter(staff => staff.id !== staffId);
+      setActiveStaff(updatedStaff);
+      localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
+
+      // In a real implementation, you would also remove from the database
+      // await staffService.removeStaff(staffId);
+
+      toast({
+        title: "Staff Removed",
+        description: `${staffMember.discord} has been removed from the team.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Remove Failed",
+        description: "Failed to remove staff member",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePromoteStaff = async (staffId: string, newRole: string) => {
-    toast({
-      title: "Staff Promoted",
-      description: `Staff member has been promoted to ${newRole}.`,
-    });
-    // In real app, implement actual promotion logic
+    try {
+      const staffMember = activeStaff.find(staff => staff.id === staffId);
+      if (!staffMember) return;
+
+      // Update staff role
+      const updatedStaff = activeStaff.map(staff => 
+        staff.id === staffId ? { ...staff, role: newRole } : staff
+      );
+      setActiveStaff(updatedStaff);
+      localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
+
+      // In a real implementation, you would also update the database
+      // await staffService.updateStaffRole(staffId, newRole);
+
+      toast({
+        title: "Staff Promoted",
+        description: `${staffMember.discord} has been promoted to ${newRole}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Promotion Failed",
+        description: "Failed to promote staff member",
+        variant: "destructive"
+      });
+    }
   };
 
   const getRoleIcon = (role: string) => {
