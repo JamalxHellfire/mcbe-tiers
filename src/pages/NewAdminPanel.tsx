@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { NewAdminProtectedRoute } from '@/components/admin/NewAdminProtectedRoute';
 import { CombinedSubmitPlayersTab } from '@/components/admin/CombinedSubmitPlayersTab';
-import { CompactSystemTools } from '@/components/admin/CompactSystemTools';
-import { CompactUserManagement } from '@/components/admin/CompactUserManagement';
+import UnifiedSystemConsole from '@/components/admin/UnifiedSystemConsole';
+import UnifiedUserPlayerManagement from '@/components/admin/UnifiedUserPlayerManagement';
 import { CombinedAnalyticsDashboard } from '@/components/admin/CombinedAnalyticsDashboard';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import StaffManagement from '@/components/admin/StaffManagement';
@@ -103,7 +103,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
         return <CombinedSubmitPlayersTab />;
       case 'system':
         return userRole === 'owner' || userRole === 'admin' || userRole === 'moderator' ? (
-          <CompactSystemTools />
+          <UnifiedSystemConsole />
         ) : <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'analytics':
         return <CombinedAnalyticsDashboard />;
@@ -111,7 +111,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
         return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
           <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'users':
-        return userRole === 'owner' || userRole === 'admin' ? <CompactUserManagement /> : 
+        return userRole === 'owner' || userRole === 'admin' ? <UnifiedUserPlayerManagement /> : 
           <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'applications':
         return userRole === 'owner' ? <StaffManagement userRole={userRole} /> : 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { ManagePlayersTab } from './ManagePlayersTab';
+import UserManagement from './UserManagement';
 import { 
   Users, 
   Search, 
@@ -248,195 +251,39 @@ const UnifiedUserPlayerManagement = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-lg border border-green-500/30">
-            <Users className="h-6 w-6 text-green-400" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-white">User & Player Management</h3>
-            <p className="text-gray-400 text-sm">Unified player accounts and user moderation</p>
-          </div>
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-lg border border-green-500/30">
+          <Users className="h-6 w-6 text-green-400" />
         </div>
-        
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30 w-full sm:w-auto">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Player
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 w-[95vw] max-w-lg mx-auto p-4 sm:p-6">
-            <DialogHeader>
-              <DialogTitle className="text-white flex items-center space-x-2 text-lg">
-                <UserPlus className="h-5 w-5 text-green-400" />
-                <span>Add New Player</span>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="ign" className="text-gray-300 font-medium text-sm">IGN (Required)</Label>
-                <Input
-                  id="ign"
-                  value={newPlayer.ign}
-                  onChange={(e) => setNewPlayer({ ...newPlayer, ign: e.target.value })}
-                  placeholder="Enter player IGN"
-                  className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-gray-300 font-medium text-sm">Java Username</Label>
-                  <Input
-                    value={newPlayer.java_username}
-                    onChange={(e) => setNewPlayer({ ...newPlayer, java_username: e.target.value })}
-                    placeholder="Java username"
-                    className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-gray-300 font-medium text-sm">Region</Label>
-                  <Input
-                    value={newPlayer.region}
-                    onChange={(e) => setNewPlayer({ ...newPlayer, region: e.target.value })}
-                    placeholder="Region"
-                    className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-gray-300 font-medium text-sm">Device</Label>
-                <Input
-                  value={newPlayer.device}
-                  onChange={(e) => setNewPlayer({ ...newPlayer, device: e.target.value })}
-                  placeholder="Device"
-                  className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 h-10 text-sm"
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-2">
-                <Button
-                  onClick={handleAddPlayer}
-                  disabled={isLoading}
-                  className="flex-1 bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30 h-10"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add Player
-                </Button>
-                <Button
-                  onClick={() => setIsAddDialogOpen(false)}
-                  variant="outline"
-                  className="flex-1 border-gray-600/50 text-gray-300 hover:bg-gray-800/60 h-10"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="Search players by IGN..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-gray-800/60 border-gray-600/50 text-white placeholder-gray-400 pl-10"
-        />
+        <div>
+          <h3 className="text-xl font-bold text-white">User & Player Management</h3>
+          <p className="text-gray-400 text-sm">Unified player accounts and user moderation</p>
+        </div>
       </div>
 
       <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-white text-lg">Player Management Console</CardTitle>
+          <CardTitle className="text-white text-lg">Management Console</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800/50">
-              <TabsTrigger value="overview" className="text-xs">
-                <Users className="h-4 w-4 mr-1" />
-                Overview
+          <Tabs defaultValue="players" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800/50">
+              <TabsTrigger value="players" className="text-xs md:text-sm">
+                <Users className="h-4 w-4 mr-1 md:mr-2" />
+                <span>Players</span>
               </TabsTrigger>
-              <TabsTrigger value="top" className="text-xs">
-                <Award className="h-4 w-4 mr-1" />
-                Top Players
-              </TabsTrigger>
-              <TabsTrigger value="banned" className="text-xs">
-                <ShieldOff className="h-4 w-4 mr-1" />
-                Banned
-              </TabsTrigger>
-              <TabsTrigger value="recent" className="text-xs">
-                <UserCheck className="h-4 w-4 mr-1" />
-                Recent
+              <TabsTrigger value="users" className="text-xs md:text-sm">
+                <Shield className="h-4 w-4 mr-1 md:mr-2" />
+                <span>Users</span>
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="overview" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/30">
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-blue-400" />
-                    <div>
-                      <p className="text-sm text-gray-400">Total Players</p>
-                      <p className="text-xl font-bold text-white">{players.length}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/30">
-                  <div className="flex items-center space-x-2">
-                    <ShieldOff className="h-5 w-5 text-red-400" />
-                    <div>
-                      <p className="text-sm text-gray-400">Banned Players</p>
-                      <p className="text-xl font-bold text-white">{bannedPlayers.length}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/30">
-                  <div className="flex items-center space-x-2">
-                    <Award className="h-5 w-5 text-yellow-400" />
-                    <div>
-                      <p className="text-sm text-gray-400">Active Players</p>
-                      <p className="text-xl font-bold text-white">{players.length - bannedPlayers.length}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {filteredPlayers.slice(0, 20).map((player) => (
-                  <PlayerCard key={player.id} player={player} />
-                ))}
-              </div>
+            <TabsContent value="players" className="mt-4">
+              <ManagePlayersTab />
             </TabsContent>
             
-            <TabsContent value="top" className="mt-4">
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {topPlayers.map((player) => (
-                  <PlayerCard key={player.id} player={player} />
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="banned" className="mt-4">
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {bannedPlayers.length > 0 ? (
-                  bannedPlayers.map((player) => (
-                    <PlayerCard key={player.id} player={player} />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-400">
-                    No banned players found
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="recent" className="mt-4">
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {recentPlayers.map((player) => (
-                  <PlayerCard key={player.id} player={player} showRank={false} />
-                ))}
-              </div>
+            <TabsContent value="users" className="mt-4">
+              <UserManagement />
             </TabsContent>
           </Tabs>
         </CardContent>

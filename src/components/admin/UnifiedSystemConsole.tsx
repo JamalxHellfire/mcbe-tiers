@@ -20,7 +20,8 @@ import {
   Database,
   Upload,
   FileText,
-  Activity
+  Activity,
+  Wrench
 } from 'lucide-react';
 
 interface LogEntry {
@@ -291,160 +292,177 @@ const UnifiedSystemConsole = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Terminal className="h-5 w-5 text-purple-400" />
-          <h3 className="text-lg md:text-xl font-bold text-white">Unified System Console</h3>
-          <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-            {logs.length} entries
-          </Badge>
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-gradient-to-br from-orange-600/20 to-red-600/20 rounded-lg border border-orange-500/30">
+          <Wrench className="h-6 w-6 text-orange-400" />
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                <Upload className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Mass Submit</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-white flex items-center space-x-2">
-                  <Database className="h-5 w-5 text-blue-400" />
-                  <span>Mass Submission</span>
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">Gamemode</label>
-                  <Select value={selectedGamemode} onValueChange={setSelectedGamemode}>
-                    <SelectTrigger className="bg-gray-800/60 border-gray-600/50 text-white">
-                      <SelectValue placeholder="Select gamemode" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-600">
-                      <SelectItem value="bedwars">Bedwars</SelectItem>
-                      <SelectItem value="skywars">Skywars</SelectItem>
-                      <SelectItem value="duels">Duels</SelectItem>
-                      <SelectItem value="bridge">Bridge</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">Submission Data</label>
-                  <Textarea
-                    value={massSubmissionData}
-                    onChange={(e) => setMassSubmissionData(e.target.value)}
-                    placeholder="Enter submission data (one entry per line)..."
-                    className="bg-gray-800/60 border-gray-600/50 text-white min-h-32"
-                  />
-                </div>
-                <Button
-                  onClick={handleMassSubmission}
-                  disabled={isSubmitting}
-                  className="w-full bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/30"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isSubmitting ? 'Processing...' : 'Submit Data'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          
-          <Button
-            onClick={() => setIsPaused(!isPaused)}
-            variant="outline"
-            size="sm"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-          >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-          </Button>
-          <Button
-            onClick={exportLogs}
-            variant="outline"
-            size="sm"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={clearLogs}
-            variant="destructive"
-            size="sm"
-            className="bg-red-600/20 border-red-500/50 text-red-400 hover:bg-red-600/30"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+        <div>
+          <h3 className="text-xl font-bold text-white">System Management & Monitoring</h3>
+          <p className="text-gray-400 text-sm">Mass tools, logs, and live system monitoring</p>
         </div>
       </div>
 
       <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm md:text-base text-white flex items-center">
-              <Activity className="h-4 w-4 mr-2" />
-              Live System Activity & Operations Console
-            </CardTitle>
-            <div className="flex items-center space-x-2">
-              {isPaused ? (
-                <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-400 border-yellow-500/50">
-                  PAUSED
-                </Badge>
-              ) : (
-                <Badge variant="default" className="bg-green-600/20 text-green-400 border-green-500/50 animate-pulse">
-                  LIVE
-                </Badge>
-              )}
-            </div>
-          </div>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white text-lg">System Console</CardTitle>
         </CardHeader>
-        
         <CardContent>
-          <ScrollArea className="h-96 w-full" ref={scrollAreaRef}>
-            <div className="space-y-1 font-mono text-xs">
-              {logs.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  Waiting for system activity...
-                </div>
-              ) : (
-                logs.map((log) => (
-                  <div 
-                    key={log.id} 
-                    className="flex items-start space-x-2 p-2 rounded bg-gray-900/30 border border-gray-700/30 animate-in fade-in duration-300"
-                  >
-                    <span className="text-xs">{getTypeIcon(log.type)}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1 flex-wrap">
-                        <span className="text-gray-500 text-xs">
-                          {new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs border-gray-600 ${getLogColor(log.level, log.latency)}`}
-                        >
-                          {log.type.toUpperCase().replace('_', ' ')}
-                        </Badge>
-                        {getLatencyBadge(log.latency)}
-                      </div>
-                      <div className={`text-xs ${getLogColor(log.level, log.latency)}`}>
-                        {log.message}
-                      </div>
-                      {log.details && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {log.details}
-                        </div>
-                      )}
-                    </div>
+          <Tabs defaultValue="logs" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800/50">
+              <TabsTrigger value="logs" className="text-xs md:text-sm">
+                <Terminal className="h-4 w-4 mr-1 md:mr-2" />
+                <span>Live Logs</span>
+              </TabsTrigger>
+              <TabsTrigger value="mass" className="text-xs md:text-sm">
+                <Database className="h-4 w-4 mr-1 md:mr-2" />
+                <span>Mass Tools</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="logs" className="mt-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Terminal className="h-5 w-5 text-purple-400" />
+                    <h4 className="text-lg font-bold text-white">Live System Activity</h4>
+                    <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+                      {logs.length} entries
+                    </Badge>
                   </div>
-                ))
-              )}
-              <div ref={logsEndRef} />
-            </div>
-          </ScrollArea>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => setIsPaused(!isPaused)}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      onClick={exportLogs}
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={clearLogs}
+                      variant="destructive"
+                      size="sm"
+                      className="bg-red-600/20 border-red-500/50 text-red-400 hover:bg-red-600/30"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="h-4 w-4 mr-2" />
+                    <span className="text-sm text-white">System Activity Feed</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {isPaused ? (
+                      <Badge variant="secondary" className="bg-yellow-600/20 text-yellow-400 border-yellow-500/50">
+                        PAUSED
+                      </Badge>
+                    ) : (
+                      <Badge variant="default" className="bg-green-600/20 text-green-400 border-green-500/50 animate-pulse">
+                        LIVE
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <ScrollArea className="h-96 w-full" ref={scrollAreaRef}>
+                  <div className="space-y-1 font-mono text-xs">
+                    {logs.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8">
+                        Waiting for system activity...
+                      </div>
+                    ) : (
+                      logs.map((log) => (
+                        <div 
+                          key={log.id} 
+                          className="flex items-start space-x-2 p-2 rounded bg-gray-900/30 border border-gray-700/30 animate-in fade-in duration-300"
+                        >
+                          <span className="text-xs">{getTypeIcon(log.type)}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1 flex-wrap">
+                              <span className="text-gray-500 text-xs">
+                                {new Date(log.timestamp).toLocaleTimeString()}
+                              </span>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs border-gray-600 ${getLogColor(log.level, log.latency)}`}
+                              >
+                                {log.type.toUpperCase().replace('_', ' ')}
+                              </Badge>
+                              {getLatencyBadge(log.latency)}
+                            </div>
+                            <div className={`text-xs ${getLogColor(log.level, log.latency)}`}>
+                              {log.message}
+                            </div>
+                            {log.details && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {log.details}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <div ref={logsEndRef} />
+                  </div>
+                </ScrollArea>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="mass" className="mt-4">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Database className="h-5 w-5 text-blue-400" />
+                  <h4 className="text-lg font-bold text-white">Mass Submission Tools</h4>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Gamemode</label>
+                    <Select value={selectedGamemode} onValueChange={setSelectedGamemode}>
+                      <SelectTrigger className="bg-gray-800/60 border-gray-600/50 text-white">
+                        <SelectValue placeholder="Select gamemode" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-600">
+                        <SelectItem value="bedwars">Bedwars</SelectItem>
+                        <SelectItem value="skywars">Skywars</SelectItem>
+                        <SelectItem value="duels">Duels</SelectItem>
+                        <SelectItem value="bridge">Bridge</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Submission Data</label>
+                    <Textarea
+                      value={massSubmissionData}
+                      onChange={(e) => setMassSubmissionData(e.target.value)}
+                      placeholder="Enter submission data (one entry per line)..."
+                      className="bg-gray-800/60 border-gray-600/50 text-white min-h-32"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleMassSubmission}
+                    disabled={isSubmitting}
+                    className="w-full bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/30"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {isSubmitting ? 'Processing...' : 'Submit Data'}
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
