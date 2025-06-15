@@ -37,7 +37,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
     setIsLoading(true);
     try {
       const result = await newAdminService.authenticateAdmin(password);
-      
+
       if (result.success) {
         if (result.needsOnboarding) {
           setStep('onboarding');
@@ -51,9 +51,13 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
       } else {
         toast({
           title: "Login Failed",
-          description: result.error || "Invalid password",
+          description: (result.error ?? "Invalid password") + (typeof result.error === "string" && result.error.includes("Debug info") ? " (Debug info in console)" : ""),
           variant: "destructive"
         });
+        if (result.error && result.error.includes("Debug info")) {
+          // Show debug in dev console
+          console.error("[ADMIN LOGIN DEBUG] " + result.error);
+        }
       }
     } catch (error) {
       console.error('Login error:', error);

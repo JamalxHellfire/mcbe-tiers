@@ -80,8 +80,7 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
 // Authenticate with password
 export const authenticateAdmin = async (password: string): Promise<AdminAuthResult> => {
   try {
-    // Fast path for owner -- use edge function for IP-accurate authentication
-    // Only runs for owner attempt (for other logic, fallback to below, or skip)
+    // Edge function for owner -- real IP logic now
     const response = await fetch(
       "https://gpofewohvpggmmhgaqxj.functions.supabase.co/admin_owner_login",
       {
@@ -95,12 +94,27 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
 
     const ownerResult = await response.json();
 
+    // Always clear and refetch access status for owner
+    clearAllAuthState();
     if (ownerResult?.success && ownerResult?.role === "owner") {
-      return { success: true, role: "owner" };
+      // Immediately recheck db access via checkAdminAccess
+      await new Promise((r) => setTimeout(r, 400));
+      const check = await checkAdminAccess();
+      if (check.hasAccess && check.role === "owner") {
+        return { success: true, role: "owner" };
+      } else {
+        return {
+          success: false,
+          error:
+            "Owner login succeeded, but admin access was still denied. Debug info: " +
+            JSON.stringify(ownerResult) +
+            " Access check: " +
+            JSON.stringify(check),
+        };
+      }
     }
-    // For general password and onboarding logic, do it as before (not owner)
-    // Continue with old logic if not owner
 
+    // General admin as before
     const { data: configs, error } = await supabase
       .from('auth_config')
       .select('config_key, config_value');
