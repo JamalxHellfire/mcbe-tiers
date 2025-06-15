@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { AdminProtectedRoute } from '@/components/admin/AdminProtectedRoute';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
 import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
@@ -53,15 +52,11 @@ const getVisibleTabs = (role: string): AdminTab[] => {
   }
 };
 
-const AdminPanel = () => {
-  return (
-    <AdminProtectedRoute>
-      {(userRole: string) => <AdminPanelContent userRole={userRole} />}
-    </AdminProtectedRoute>
-  );
-};
+interface AdminPanelProps {
+  userRole: string;
+}
 
-const AdminPanelContent = ({ userRole }: { userRole: string }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
   const visibleTabs = getVisibleTabs(userRole);
   const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0] || 'submit');
   const [isLoggingOut, setIsLoggingOut] = useState(false);

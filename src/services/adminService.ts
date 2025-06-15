@@ -61,9 +61,51 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
   }
 };
 
-// Fixed admin login with new password system
+// Initialize auth config if it doesn't exist
+const initializeAuthConfig = async () => {
+  try {
+    // Check if owner password exists
+    const { data: existing } = await supabase
+      .from('auth_config')
+      .select('config_key')
+      .eq('config_key', 'owner_password')
+      .single();
+
+    if (!existing) {
+      // Insert owner password
+      await supabase
+        .from('auth_config')
+        .insert({ config_key: 'owner_password', config_value: '$$nullnox911$$' });
+      
+      console.log('Owner password initialized');
+    }
+
+    // Check if general password exists
+    const { data: generalExists } = await supabase
+      .from('auth_config')
+      .select('config_key')
+      .eq('config_key', 'general_password')
+      .single();
+
+    if (!generalExists) {
+      // Insert general password
+      await supabase
+        .from('auth_config')
+        .insert({ config_key: 'general_password', config_value: 'admin123' });
+      
+      console.log('General password initialized');
+    }
+  } catch (error) {
+    console.error('Failed to initialize auth config:', error);
+  }
+};
+
+// Admin login with improved error handling
 export const adminLogin = async (password: string): Promise<AdminLoginResult> => {
   try {
+    // Initialize auth config first
+    await initializeAuthConfig();
+
     const { data: configs, error } = await supabase
       .from('auth_config')
       .select('config_key, config_value');
@@ -72,6 +114,8 @@ export const adminLogin = async (password: string): Promise<AdminLoginResult> =>
 
     const ownerPassword = configs?.find(c => c.config_key === 'owner_password')?.config_value;
     const generalPassword = configs?.find(c => c.config_key === 'general_password')?.config_value;
+
+    console.log('Checking password against owner password:', password === ownerPassword);
 
     if (password === ownerPassword) {
       // Owner access - auto-approve IP

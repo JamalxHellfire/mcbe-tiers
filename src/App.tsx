@@ -41,7 +41,7 @@ function RouterContent() {
         path="/admin" 
         element={
           <AdminProtectedRoute>
-            <AdminPanel />
+            {(userRole: string) => <AdminPanel userRole={userRole} />}
           </AdminProtectedRoute>
         } 
       />
