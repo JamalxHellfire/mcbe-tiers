@@ -19,13 +19,11 @@ class KnowledgeBaseService {
   private chatHistory: ChatMessage[] = [];
 
   constructor() {
-    // Try to restore knowledge base from localStorage on initialization
     this.restoreKnowledgeBase();
   }
 
   private restoreKnowledgeBase() {
     try {
-      // First try localStorage for backward compatibility
       const stored = localStorage.getItem('knowledgeBase');
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -37,7 +35,6 @@ class KnowledgeBaseService {
         return;
       }
 
-      // Then try sessionStorage as a fallback
       const sessionStored = sessionStorage.getItem('globalKnowledgeBase');
       if (sessionStored) {
         const parsed = JSON.parse(sessionStored);
@@ -49,10 +46,8 @@ class KnowledgeBaseService {
         return;
       }
 
-      // Check if there's a global knowledge base indicator
       const globalIndicator = localStorage.getItem('hasGlobalKnowledgeBase');
       if (globalIndicator === 'true') {
-        // Try to fetch from a more persistent source or set a default
         console.log('Global knowledge base indicator found, but no actual KB data');
       }
     } catch (error) {
@@ -65,19 +60,14 @@ class KnowledgeBaseService {
   private saveKnowledgeBase() {
     try {
       if (this.knowledgeBase) {
-        // Save to both localStorage and sessionStorage for broader access
         const kbData = JSON.stringify(this.knowledgeBase);
         localStorage.setItem('knowledgeBase', kbData);
         sessionStorage.setItem('globalKnowledgeBase', kbData);
-        
-        // Set a global indicator that knowledge base exists
         localStorage.setItem('hasGlobalKnowledgeBase', 'true');
         sessionStorage.setItem('hasGlobalKnowledgeBase', 'true');
         
-        // Also try to save to a more persistent location if possible
         try {
           if (typeof(Storage) !== "undefined") {
-            // Use a global key that all users can access
             const globalKey = 'mcbe_global_knowledge_base';
             localStorage.setItem(globalKey, kbData);
             sessionStorage.setItem(globalKey, kbData);
@@ -101,12 +91,10 @@ class KnowledgeBaseService {
     }
   }
 
-  // Add method to check for global knowledge base
   private checkGlobalKnowledgeBase() {
     try {
       if (this.knowledgeBase) return true;
 
-      // Check multiple possible storage locations
       const locations = [
         'knowledgeBase',
         'globalKnowledgeBase', 
@@ -114,7 +102,6 @@ class KnowledgeBaseService {
       ];
 
       for (const location of locations) {
-        // Check localStorage
         const localStored = localStorage.getItem(location);
         if (localStored) {
           try {
@@ -130,7 +117,6 @@ class KnowledgeBaseService {
           }
         }
 
-        // Check sessionStorage
         const sessionStored = sessionStorage.getItem(location);
         if (sessionStored) {
           try {
@@ -152,6 +138,22 @@ class KnowledgeBaseService {
       console.error('Error checking global knowledge base:', error);
       return false;
     }
+  }
+
+  // Helper function to truncate knowledge base content to fit token limits
+  private truncateKnowledgeBase(content: string, maxTokens: number = 8000): string {
+    // Rough estimation: 1 token ≈ 4 characters
+    const maxChars = maxTokens * 4;
+    if (content.length <= maxChars) return content;
+    
+    // Try to truncate at sentence boundaries
+    const truncated = content.substring(0, maxChars);
+    const lastSentence = truncated.lastIndexOf('.');
+    if (lastSentence > maxChars * 0.8) {
+      return truncated.substring(0, lastSentence + 1) + '\n\n[Content truncated to fit token limits]';
+    }
+    
+    return truncated + '\n\n[Content truncated to fit token limits]';
   }
 
   async uploadPDF(file: File): Promise<void> {
@@ -205,7 +207,6 @@ class KnowledgeBaseService {
             reject(new Error('Failed to read PDF content'));
             return;
           }
-          // Basic PDF text extraction - this is simplified
           const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
           resolve(cleanText);
         } catch (error) {
@@ -246,11 +247,8 @@ class KnowledgeBaseService {
     console.log('=== SEND MESSAGE DEBUG START ===');
     console.log('sendMessage called with:', message);
     
-    // Check for global knowledge base before proceeding
     const hasGlobalKB = this.checkGlobalKnowledgeBase();
     console.log('Knowledge base exists:', !!this.knowledgeBase, 'Global KB check:', hasGlobalKB);
-    console.log('API Key (first 20 chars):', this.apiKey.substring(0, 20) + '...');
-    console.log('Base URL:', this.baseUrl);
     
     if (!this.knowledgeBase) {
       console.log('No knowledge base found - returning early');
@@ -269,8 +267,12 @@ class KnowledgeBaseService {
     this.chatHistory.push(userMessage);
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
+    // Truncate knowledge base content to prevent token limit issues
+    const truncatedKnowledgeBase = this.truncateKnowledgeBase(this.knowledgeBase.content);
+    console.log('Truncated KB content length:', truncatedKnowledgeBase.length);
+
     const requestPayload = {
-      model: 'openai/gpt-4o',
+      model: 'openai/gpt-4o-mini', // Using mini model for better token limits
       messages: [
         {
           role: 'system',
@@ -281,7 +283,7 @@ If someone asks about anything other than MCBE TIERS, respond with: "Let's just 
 If the question cannot be answered from the knowledge base about MCBE TIERS, flirtatiously redirect them back to MCBE TIERS topics you can help with.
 
 Knowledge Base Content:
-${this.knowledgeBase.content}
+${truncatedKnowledgeBase}
 
 Instructions:
 - Be flirty and playful in your responses
@@ -290,12 +292,12 @@ Instructions:
 - If asked about non-MCBE TIERS topics, redirect with the message above
 - Keep responses concise but engaging`
         },
-        ...this.chatHistory.map(msg => ({
+        ...this.chatHistory.slice(-3).map(msg => ({ // Only keep last 3 messages for context
           role: msg.role,
           content: msg.content
         }))
       ],
-      max_tokens: 300,
+      max_tokens: 200,
       temperature: 0.8
     };
 
@@ -303,7 +305,6 @@ Instructions:
 
     try {
       console.log('Making API request to OpenRouter...');
-      console.log('Full URL:', `${this.baseUrl}/chat/completions`);
       
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -317,7 +318,6 @@ Instructions:
       });
 
       console.log('API response status:', response.status);
-      console.log('API response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -327,7 +327,7 @@ Instructions:
           errorText: errorText
         });
         
-        // Handle specific API authentication errors
+        // Handle specific API errors
         if (response.status === 401) {
           const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic MCBE TIERS questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`;
           
@@ -343,16 +343,26 @@ Instructions:
           return fallbackResponse;
         }
         
+        if (response.status === 402) {
+          const fallbackResponse = `Hey gorgeous! 😘 My AI brain is working overtime and needs a quick break. The document is quite large, but I'm still here to help with MCBE TIERS questions! Try asking something specific about tiers, rankings, or players - I'll give you my best answer! 💕`;
+          
+          const assistantMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: fallbackResponse,
+            timestamp: new Date()
+          };
+          
+          this.chatHistory.push(assistantMessage);
+          console.log('=== SEND MESSAGE DEBUG END (402 error) ===');
+          return fallbackResponse;
+        }
+        
         throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('API response received successfully:', {
-        hasChoices: !!data.choices,
-        choicesLength: data.choices?.length,
-        hasMessage: !!data.choices?.[0]?.message,
-        messageContent: data.choices?.[0]?.message?.content?.substring(0, 100) + '...'
-      });
+      console.log('API response received successfully');
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid API response structure:', data);
@@ -379,9 +389,7 @@ Instructions:
       console.error('=== ERROR IN SEND MESSAGE ===');
       console.error('Error type:', error.constructor.name);
       console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
       
-      // Provide more specific error messages based on error type
       if (error instanceof TypeError && error.message.includes('fetch')) {
         const fallbackResponse = "Oops! 😅 I'm having trouble connecting to my brain right now. Check your internet connection and try again, sweetie! 💋";
         
@@ -397,8 +405,7 @@ Instructions:
         return fallbackResponse;
       }
       
-      // Generic fallback with document reference
-      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 I have your MCBE TIERS document "${this.knowledgeBase.filename}" loaded, so feel free to ask me anything about MCBE TIERS! 😘`;
+      const fallbackResponse = `Hey sweetie! 😘 I'm having a tiny hiccup, but I'm still here for you! Ask me anything specific about MCBE TIERS from your document "${this.knowledgeBase.filename}" and I'll help you out! 💕`;
       
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -423,20 +430,17 @@ Instructions:
   }
 
   hasKnowledgeBase(): boolean {
-    // First check current instance
     if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
       console.log('hasKnowledgeBase check: true (current instance)');
       return true;
     }
 
-    // Then check for global knowledge base
     const hasGlobalKB = this.checkGlobalKnowledgeBase();
     console.log('hasKnowledgeBase check:', hasGlobalKB, 'KB exists:', !!this.knowledgeBase);
     return hasGlobalKB;
   }
 
   getKnowledgeBaseInfo(): { filename: string; uploadDate: Date } | null {
-    // Try to find knowledge base if not already loaded
     if (!this.knowledgeBase) {
       this.checkGlobalKnowledgeBase();
     }
