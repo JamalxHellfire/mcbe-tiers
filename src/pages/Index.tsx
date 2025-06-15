@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
@@ -63,8 +64,8 @@ const Index = () => {
         navigate={navigate} 
       />
       
-      <main className="flex-grow">
-        <div className="content-container py-6">
+      <main className="flex-grow w-full">
+        <div className="w-full px-4 py-6">
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="text-white">Loading...</div>
@@ -78,6 +79,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
+              className="w-full"
             >
               <MinecraftLeaderboardTable 
                 players={players}
@@ -89,6 +91,7 @@ const Index = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
+              className="w-full"
             >
               <TierGrid 
                 selectedMode={toDatabaseGameMode(selectedMode)}
