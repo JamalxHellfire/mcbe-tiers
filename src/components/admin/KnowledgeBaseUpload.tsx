@@ -12,6 +12,7 @@ export function KnowledgeBaseUpload() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [password, setPassword] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [passwordError, setPasswordError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -44,30 +45,40 @@ export function KnowledgeBaseUpload() {
 
     console.log('Valid file detected, showing password modal');
     setPendingFile(file);
+    setPassword('');
+    setPasswordError('');
     setShowPasswordModal(true);
   };
 
-  const handlePasswordSubmit = async () => {
+  const handlePasswordSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
     if (!pendingFile) {
       console.log('No pending file');
+      setPasswordError('No file selected');
       return;
     }
 
-    console.log('Password submitted:', password);
-    
-    if (password !== '$$nullknox911$$') {
-      toast({
-        title: "Access Denied",
-        description: "Invalid password. Please try again.",
-        variant: "destructive"
-      });
-      setPassword('');
+    if (!password.trim()) {
+      setPasswordError('Please enter the access code');
       return;
     }
+
+    console.log('Validating password...');
+    
+    // Check password
+    if (password.trim() !== '$$nullknox911$$') {
+      console.log('Invalid password provided');
+      setPasswordError('Invalid access code. Please try again.');
+      return;
+    }
+
+    console.log('Password validated successfully');
 
     try {
       setIsUploading(true);
       setShowPasswordModal(false);
+      setPasswordError('');
       console.log('Uploading file:', pendingFile.name);
       
       // Handle both PDF and TXT files
@@ -79,7 +90,7 @@ export function KnowledgeBaseUpload() {
       
       toast({
         title: "Success",
-        description: "File uploaded successfully. The AI assistant is ready to answer questions about it.",
+        description: `${pendingFile.name} uploaded successfully. The AI assistant is ready to answer questions about it.`,
       });
       
     } catch (error) {
@@ -103,9 +114,17 @@ export function KnowledgeBaseUpload() {
     console.log('Password modal cancelled');
     setShowPasswordModal(false);
     setPassword('');
+    setPasswordError('');
     setPendingFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handlePasswordSubmit();
     }
   };
 
@@ -166,7 +185,7 @@ export function KnowledgeBaseUpload() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 flex items-center justify-center"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 handleCancelPassword();
@@ -177,41 +196,59 @@ export function KnowledgeBaseUpload() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white dark:bg-gray-900 rounded-lg p-6 w-80 border border-gray-200 dark:border-gray-700 shadow-xl"
+              className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-200 dark:border-gray-700 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-center mb-4">
-                <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Secure Upload</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Authentication required to upload {pendingFile?.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'TXT'}</p>
-              </div>
-              
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter access code..."
-                className="mb-4"
-                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                autoFocus
-              />
-              
-              <div className="flex space-x-2">
-                <Button
-                  onClick={handleCancelPassword}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handlePasswordSubmit}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={!password.trim()}
-                >
-                  Authenticate
-                </Button>
-              </div>
+              <form onSubmit={handlePasswordSubmit}>
+                <div className="text-center mb-6">
+                  <Shield className="w-8 h-8 text-blue-500 mx-auto mb-3" />
+                  <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Secure Upload</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    Authentication required to upload {pendingFile?.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'TXT'} file
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    File: {pendingFile?.name}
+                  </p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError('');
+                      }}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Enter access code..."
+                      className={`w-full ${passwordError ? 'border-red-500' : ''}`}
+                      autoFocus
+                    />
+                    {passwordError && (
+                      <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                    )}
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <Button
+                      type="button"
+                      onClick={handleCancelPassword}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={!password.trim()}
+                    >
+                      Authenticate
+                    </Button>
+                  </div>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
