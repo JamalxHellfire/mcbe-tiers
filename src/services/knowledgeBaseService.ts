@@ -194,16 +194,7 @@ class KnowledgeBaseService {
     console.log('=== SEND MESSAGE DEBUG START ===');
     console.log('sendMessage called with:', message);
     console.log('Knowledge base exists:', !!this.knowledgeBase);
-    console.log('API Key (first 20 chars):', this.apiKey.substring(0, 20) + '...');
-    console.log('Base URL:', this.baseUrl);
     
-    if (!this.knowledgeBase) {
-      console.log('No knowledge base found - returning early');
-      return "Hey there! 😘 You need to upload a PDF or TXT file first using the KB upload feature in the Admin Panel. I'm dying to learn from your documents! 💕";
-    }
-
-    console.log('Knowledge base content length:', this.knowledgeBase.content.length);
-
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -215,11 +206,11 @@ class KnowledgeBaseService {
     this.saveChatHistory();
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
-    // Prepare the system message based on whether we have a knowledge base
+    // Prepare the system message - can answer general questions even without KB
     let systemMessage: string;
     
     if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
-      systemMessage = `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. Answer questions based on the provided knowledge base content when relevant.
+      systemMessage = `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. You can answer both general questions and document-specific questions.
 
 Knowledge Base Content:
 ${this.knowledgeBase.content}
@@ -227,9 +218,10 @@ ${this.knowledgeBase.content}
 Instructions:
 - Be flirty and playful in your responses
 - Use emojis and a sexy tone
-- When possible, answer based on the knowledge base content
-- If the question is general or not related to the KB, you can still answer in a helpful and flirty way
-- Keep responses concise but engaging`;
+- For document-related questions, use the knowledge base content
+- For general questions (greetings, casual chat, non-document topics), answer normally without referencing the document
+- Keep responses concise but engaging
+- Don't mention document issues for simple general questions`;
     } else {
       systemMessage = `You are a flirty, sexy AI assistant. Be playful, use emojis, and maintain a flirtatious tone while being helpful. You can answer general questions and have conversations with users.
 
@@ -238,7 +230,7 @@ Instructions:
 - Use emojis and a sexy tone
 - Answer questions helpfully while maintaining your flirty personality
 - Keep responses concise but engaging
-- If users ask about documents or knowledge base, let them know they can upload files in the Admin Panel for document-specific questions`;
+- For document-specific questions, let users know they can upload files in the Admin Panel`;
     }
 
     const requestPayload = {
@@ -261,7 +253,6 @@ Instructions:
 
     try {
       console.log('Making API request to OpenRouter...');
-      console.log('Full URL:', `${this.baseUrl}/chat/completions`);
       
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -275,7 +266,6 @@ Instructions:
       });
 
       console.log('API response status:', response.status);
-      console.log('API response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -285,9 +275,9 @@ Instructions:
           errorText: errorText
         });
         
-        // Handle specific API authentication errors
+        // Handle specific API authentication errors with appropriate fallback
         if (response.status === 401) {
-          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I'm still here to chat with you! 💋 Feel free to ask me anything and I'll do my best to help! 😘`;
+          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API seems to be having issues! 💔 But I'm still here to chat with you sweetie! 💋 What's on your mind? 😘`;
           
           const assistantMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
@@ -306,12 +296,7 @@ Instructions:
       }
 
       const data = await response.json();
-      console.log('API response received successfully:', {
-        hasChoices: !!data.choices,
-        choicesLength: data.choices?.length,
-        hasMessage: !!data.choices?.[0]?.message,
-        messageContent: data.choices?.[0]?.message?.content?.substring(0, 100) + '...'
-      });
+      console.log('API response received successfully');
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid API response structure:', data);
@@ -337,13 +322,11 @@ Instructions:
 
     } catch (error) {
       console.error('=== ERROR IN SEND MESSAGE ===');
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+      console.error('Error details:', error);
       
-      // Provide more specific error messages based on error type
+      // Provide more helpful fallback responses
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        const fallbackResponse = "Oops! 😅 I'm having trouble connecting to my brain right now. Check your internet connection and try again, sweetie! 💋";
+        const fallbackResponse = "Oops! 😅 I'm having trouble connecting right now. Check your internet connection and try again, sweetie! 💋";
         
         const assistantMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -358,8 +341,8 @@ Instructions:
         return fallbackResponse;
       }
       
-      // Generic fallback with document reference
-      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 I have your document "${this.knowledgeBase.filename}" loaded, so feel free to ask me anything about it! 😘`;
+      // Generic fallback - don't always mention documents
+      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but I'm still here for you! 💋 What would you like to chat about? 😘`;
       
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),

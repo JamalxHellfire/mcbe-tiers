@@ -266,17 +266,6 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
                                   <User size={isTablet ? 18 : 16} className="text-white/60" />
                                   <div className="flex-1">
                                     <div className="text-white font-medium">{player.ign}</div>
-                                    {player.java_username && player.java_username !== player.ign && (
-                                      <div className="text-white/60 text-xs">Java: {player.java_username}</div>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    {player.overall_rank && player.overall_rank > 0 ? (
-                                      <div className="text-white/80 text-sm">#{player.overall_rank}</div>
-                                    ) : (
-                                      <div className="text-white/60 text-sm">Unranked</div>
-                                    )}
-                                    <div className="text-white/60 text-xs">{player.global_points || 0} pts</div>
                                   </div>
                                 </button>
                               ))}
@@ -368,17 +357,6 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
                               <User size={16} className="text-white/60" />
                               <div className="flex-1">
                                 <div className="text-white font-medium">{player.ign}</div>
-                                {player.java_username && player.java_username !== player.ign && (
-                                  <div className="text-white/60 text-xs">Java: {player.java_username}</div>
-                                )}
-                              </div>
-                              <div className="text-right">
-                                {player.overall_rank && player.overall_rank > 0 ? (
-                                  <div className="text-white/80 text-sm">#{player.overall_rank}</div>
-                                ) : (
-                                  <div className="text-white/60 text-sm">Unranked</div>
-                                )}
-                                <div className="text-white/60 text-xs">{player.global_points || 0} pts</div>
                               </div>
                             </button>
                           ))}
