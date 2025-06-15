@@ -1,4 +1,3 @@
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -46,6 +45,22 @@ class KnowledgeBaseService {
     }
   }
 
+  async uploadTXT(file: File): Promise<void> {
+    try {
+      const text = await this.extractTextFromTXT(file);
+      this.knowledgeBase = {
+        content: text,
+        filename: file.name,
+        uploadDate: new Date()
+      };
+      this.clearConversation();
+      console.log('TXT uploaded and processed successfully');
+    } catch (error) {
+      console.error('Error uploading TXT:', error);
+      throw new Error('Failed to process TXT file');
+    }
+  }
+
   private async extractTextFromPDF(file: File): Promise<string> {
     // Simple text extraction - in a real app, you'd use a proper PDF parser
     return new Promise((resolve, reject) => {
@@ -64,9 +79,25 @@ class KnowledgeBaseService {
     });
   }
 
+  private async extractTextFromTXT(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          resolve(text);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read TXT file'));
+      reader.readAsText(file);
+    });
+  }
+
   async sendMessage(message: string): Promise<string> {
     if (!this.knowledgeBase) {
-      return "Hey there! 😘 You need to upload a PDF first using the KB PDF button. I'm dying to learn from your documents! 💕";
+      return "Hey there! 😘 You need to upload a PDF or TXT file first using the KB upload feature in the Admin Panel. I'm dying to learn from your documents! 💕";
     }
 
     const userMessage: ChatMessage = {

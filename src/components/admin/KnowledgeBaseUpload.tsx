@@ -24,11 +24,16 @@ export function KnowledgeBaseUpload() {
       return;
     }
 
-    // Check if it's a PDF file
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    // Check if it's a PDF or TXT file
+    const isValidFile = file.type === 'application/pdf' || 
+                       file.type === 'text/plain' ||
+                       file.name.toLowerCase().endsWith('.pdf') ||
+                       file.name.toLowerCase().endsWith('.txt');
+
+    if (!isValidFile) {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF file only.",
+        description: "Please upload a PDF or TXT file only.",
         variant: "destructive"
       });
       if (fileInputRef.current) {
@@ -37,7 +42,7 @@ export function KnowledgeBaseUpload() {
       return;
     }
 
-    console.log('PDF file detected, showing password modal');
+    console.log('Valid file detected, showing password modal');
     setPendingFile(file);
     setShowPasswordModal(true);
   };
@@ -63,20 +68,25 @@ export function KnowledgeBaseUpload() {
     try {
       setIsUploading(true);
       setShowPasswordModal(false);
-      console.log('Uploading PDF:', pendingFile.name);
+      console.log('Uploading file:', pendingFile.name);
       
-      await knowledgeBaseService.uploadPDF(pendingFile);
+      // Handle both PDF and TXT files
+      if (pendingFile.type === 'application/pdf' || pendingFile.name.toLowerCase().endsWith('.pdf')) {
+        await knowledgeBaseService.uploadPDF(pendingFile);
+      } else {
+        await knowledgeBaseService.uploadTXT(pendingFile);
+      }
       
       toast({
         title: "Success",
-        description: "PDF uploaded successfully. The AI assistant is ready to answer questions about it.",
+        description: "File uploaded successfully. The AI assistant is ready to answer questions about it.",
       });
       
     } catch (error) {
-      console.error('Error uploading PDF:', error);
+      console.error('Error uploading file:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload PDF. Please try again.",
+        description: "Failed to upload file. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -113,7 +123,7 @@ export function KnowledgeBaseUpload() {
           </div>
           
           <p className="text-gray-400 mb-6">
-            Upload PDF documents to enhance the AI assistant's knowledge base. Only authorized personnel can upload files.
+            Upload PDF or TXT documents to enhance the AI assistant's knowledge base. Only authorized personnel can upload files.
           </p>
 
           {kbInfo && (
@@ -135,13 +145,13 @@ export function KnowledgeBaseUpload() {
               className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 w-full"
             >
               <Shield className="w-4 h-4" />
-              {isUploading ? 'Uploading...' : 'Upload PDF Knowledge Base'}
+              {isUploading ? 'Uploading...' : 'Upload Knowledge Base (PDF/TXT)'}
             </Button>
             
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,application/pdf"
+              accept=".pdf,.txt,application/pdf,text/plain"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -173,7 +183,7 @@ export function KnowledgeBaseUpload() {
               <div className="text-center mb-4">
                 <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                 <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Secure Upload</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Authentication required to upload PDF</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Authentication required to upload {pendingFile?.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'TXT'}</p>
               </div>
               
               <Input
