@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
@@ -5,6 +6,7 @@ import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
 import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { UploadCloud, Users, Wrench, Settings, Shield, LogOut, BarChart3 } from 'lucide-react';
@@ -67,6 +69,10 @@ const AdminPanel = () => {
                 <h3 className="text-2xl font-bold text-white mb-4">System Monitoring</h3>
                 <SystemLogsViewer />
               </div>
+            </div>
+            <div className="space-y-6">
+              <h3 className="text-2xl font-bold text-white mb-4">Knowledge Base Management</h3>
+              <KnowledgeBaseUpload />
             </div>
           </div>
         );

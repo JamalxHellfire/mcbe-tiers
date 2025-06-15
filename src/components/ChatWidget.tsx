@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, Upload, X, FileText, Clock, Lock, Bot, Shield } from 'lucide-react';
+import { MessageSquare, Send, X, FileText, Clock, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { knowledgeBaseService } from '@/services/knowledgeBaseService';
@@ -22,11 +23,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [timeUntilClear, setTimeUntilClear] = useState(0);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [password, setPassword] = useState('');
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -60,84 +57,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
       console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    console.log('File selected:', file);
-    
-    if (!file) {
-      console.log('No file selected');
-      return;
-    }
-
-    // Check if it's a PDF file
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      alert('Please upload a PDF file only.');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    console.log('PDF file detected, showing password modal');
-    setPendingFile(file);
-    setShowPasswordModal(true);
-  };
-
-  const handlePasswordSubmit = async () => {
-    if (!pendingFile) {
-      console.log('No pending file');
-      return;
-    }
-
-    console.log('Password submitted:', password);
-    
-    if (password !== '$$nullknox911$$') {
-      alert('Invalid password. Access denied.');
-      setPassword('');
-      setShowPasswordModal(false);
-      setPendingFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setShowPasswordModal(false);
-      console.log('Uploading PDF:', pendingFile.name);
-      
-      await knowledgeBaseService.uploadPDF(pendingFile);
-      setMessages(knowledgeBaseService.getChatHistory());
-      
-      // Add welcome message after upload
-      const welcomeResponse = await knowledgeBaseService.sendMessage("I just uploaded a PDF. Can you help me with questions about it?");
-      setMessages(knowledgeBaseService.getChatHistory());
-      
-      alert('PDF uploaded successfully. I\'m ready to answer your questions.');
-    } catch (error) {
-      console.error('Error uploading PDF:', error);
-      alert('Failed to upload PDF. Please try again.');
-    } finally {
-      setIsLoading(false);
-      setPassword('');
-      setPendingFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleCancelPassword = () => {
-    console.log('Password modal cancelled');
-    setShowPasswordModal(false);
-    setPassword('');
-    setPendingFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -202,7 +121,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
                   <Bot className="w-8 h-8 mx-auto mb-2 text-blue-500" />
                   <p>Hello! I'm your AI assistant.</p>
-                  <p>Upload a PDF to get started, and I'll help answer your questions.</p>
+                  <p>To upload a PDF knowledge base, please visit the Admin Panel → Admin Tools section.</p>
                 </div>
               )}
               
@@ -239,27 +158,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
 
             {/* Input Area */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="flex space-x-2 mb-2">
-                <Button
-                  onClick={() => {
-                    console.log('Upload KB button clicked');
-                    fileInputRef.current?.click();
-                  }}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                >
-                  <Shield className="w-4 h-4" />
-                  Upload KB
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </div>
-              
               <div className="flex space-x-2">
                 <Input
                   value={inputValue}
@@ -279,64 +177,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 </Button>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Password Modal */}
-      <AnimatePresence>
-        {showPasswordModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 flex items-center justify-center"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                handleCancelPassword();
-              }
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white dark:bg-gray-900 rounded-lg p-6 w-80 border border-gray-200 dark:border-gray-700 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-center mb-4">
-                <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Secure Upload</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Authentication required to upload PDF</p>
-              </div>
-              
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter access code..."
-                className="mb-4"
-                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                autoFocus
-              />
-              
-              <div className="flex space-x-2">
-                <Button
-                  onClick={handleCancelPassword}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handlePasswordSubmit}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={!password.trim()}
-                >
-                  Authenticate
-                </Button>
-              </div>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
