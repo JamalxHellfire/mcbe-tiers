@@ -1,4 +1,3 @@
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -10,6 +9,7 @@ interface KnowledgeBase {
   content: string;
   filename: string;
   uploadDate: Date;
+  summary?: string;
 }
 
 class KnowledgeBaseService {
@@ -18,7 +18,8 @@ class KnowledgeBaseService {
   private knowledgeBase: KnowledgeBase | null = null;
   private chatHistory: ChatMessage[] = [];
   private isInitialized = false;
-  private conversationContext: string = '';
+  private maxTokens = 8000; // Safe limit below API maximum
+  private maxHistoryMessages = 6; // Keep recent conversation context
 
   constructor() {
     this.initializeService();
@@ -29,24 +30,11 @@ class KnowledgeBaseService {
       console.log('Initializing knowledge base service...');
       this.restoreKnowledgeBase();
       this.restoreChatHistory();
-      this.buildConversationContext();
       this.isInitialized = true;
       console.log('Knowledge base service initialized successfully');
     } catch (error) {
       console.error('Error initializing knowledge base service:', error);
       this.isInitialized = true;
-    }
-  }
-
-  private buildConversationContext() {
-    if (this.knowledgeBase) {
-      this.conversationContext = `Knowledge Base Document: ${this.knowledgeBase.filename}
-      
-Document Content Summary:
-${this.knowledgeBase.content.substring(0, 1000)}...
-
-Full Document Content:
-${this.knowledgeBase.content}`;
     }
   }
 
@@ -62,7 +50,6 @@ ${this.knowledgeBase.content}`;
           };
           console.log('Successfully restored knowledge base from localStorage:', this.knowledgeBase.filename);
           console.log('Knowledge base content length:', this.knowledgeBase.content.length);
-          this.buildConversationContext();
           return;
         }
       }
@@ -79,10 +66,9 @@ ${this.knowledgeBase.content}`;
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          this.chatHistory = parsed.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          }));
+          this.chatHistory = parsed
+            .map(msg => ({ ...msg, timestamp: new Date(msg.timestamp) }))
+            .slice(-this.maxHistoryMessages); // Keep only recent messages
           console.log('Restored chat history:', this.chatHistory.length, 'messages');
         }
       }
@@ -108,15 +94,28 @@ ${this.knowledgeBase.content}`;
 
   private saveChatHistory() {
     try {
-      if (this.chatHistory.length > 0) {
-        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
-        console.log('Saved chat history to localStorage:', this.chatHistory.length, 'messages');
+      // Only save recent messages to avoid storage bloat
+      const recentHistory = this.chatHistory.slice(-this.maxHistoryMessages);
+      if (recentHistory.length > 0) {
+        localStorage.setItem('chatHistory', JSON.stringify(recentHistory));
+        console.log('Saved chat history to localStorage:', recentHistory.length, 'messages');
       } else {
         localStorage.removeItem('chatHistory');
       }
     } catch (error) {
       console.error('Error saving chat history:', error);
     }
+  }
+
+  private createKnowledgeBaseSummary(content: string): string {
+    // Create a concise summary for context
+    const lines = content.split('\n').filter(line => line.trim().length > 0);
+    const firstLines = lines.slice(0, 10).join('\n');
+    const totalLines = lines.length;
+    
+    return `Document: ${this.knowledgeBase?.filename}
+Lines: ${totalLines}
+Preview: ${firstLines}${totalLines > 10 ? '\n...(content continues)' : ''}`;
   }
 
   private async extractTextFromPDF(file: File): Promise<string> {
@@ -174,10 +173,10 @@ ${this.knowledgeBase.content}`;
       this.knowledgeBase = {
         content: text,
         filename: file.name,
-        uploadDate: new Date()
+        uploadDate: new Date(),
+        summary: this.createKnowledgeBaseSummary(text)
       };
       this.saveKnowledgeBase();
-      this.buildConversationContext();
       this.clearConversation();
       console.log('PDF uploaded and processed successfully, content length:', text.length);
     } catch (error) {
@@ -195,10 +194,10 @@ ${this.knowledgeBase.content}`;
       this.knowledgeBase = {
         content: text,
         filename: file.name,
-        uploadDate: new Date()
+        uploadDate: new Date(),
+        summary: this.createKnowledgeBaseSummary(text)
       };
       this.saveKnowledgeBase();
-      this.buildConversationContext();
       this.clearConversation();
       console.log('TXT uploaded and processed successfully, content length:', text.length);
       console.log('Knowledge base set, hasKnowledgeBase should now return true');
@@ -226,12 +225,13 @@ MCBE Tiers is a competitive ranking platform for Minecraft Bedrock Edition playe
 - Professional tournament and competitive scene coverage`;
 
     if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
+      const summary = this.knowledgeBase.summary || this.createKnowledgeBaseSummary(this.knowledgeBase.content);
       return `${baseSystemMessage}
 
 Document-Specific Knowledge:
 You have access to the uploaded document "${this.knowledgeBase.filename}" which contains detailed information. Use this document to answer specific questions about its content while maintaining your professional demeanor.
 
-${this.conversationContext}
+${summary}
 
 Instructions for Document-Based Responses:
 - Reference the document content when directly asked about it
@@ -259,16 +259,22 @@ No specific document is currently loaded. You can answer general questions about
     };
 
     this.chatHistory.push(userMessage);
+    
+    // Keep only recent messages to manage memory
+    if (this.chatHistory.length > this.maxHistoryMessages) {
+      this.chatHistory = this.chatHistory.slice(-this.maxHistoryMessages);
+    }
+    
     this.saveChatHistory();
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
     const systemMessage = this.createSystemMessage();
 
     // Prepare conversation history for context
-    const recentHistory = this.chatHistory.slice(-10); // Keep last 10 messages for context
+    const recentHistory = this.chatHistory.slice(-4); // Only recent context
 
     const requestPayload = {
-      model: 'openai/gpt-4o',
+      model: 'openai/gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -279,7 +285,7 @@ No specific document is currently loaded. You can answer general questions about
           content: msg.content
         }))
       ],
-      max_tokens: 500,
+      max_tokens: 300,
       temperature: 0.7,
       top_p: 0.9,
       frequency_penalty: 0.3,
@@ -334,6 +340,12 @@ No specific document is currently loaded. You can answer general questions about
       };
 
       this.chatHistory.push(assistantMessage);
+      
+      // Maintain history limit
+      if (this.chatHistory.length > this.maxHistoryMessages) {
+        this.chatHistory = this.chatHistory.slice(-this.maxHistoryMessages);
+      }
+      
       this.saveChatHistory();
       console.log('Added assistant message to history, total messages:', this.chatHistory.length);
       console.log('=== SEND MESSAGE DEBUG END (success) ===');
@@ -391,7 +403,6 @@ No specific document is currently loaded. You can answer general questions about
 
   refreshKnowledgeBaseStatus(): boolean {
     this.restoreKnowledgeBase();
-    this.buildConversationContext();
     return this.hasKnowledgeBase();
   }
 
