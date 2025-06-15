@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
@@ -312,12 +311,12 @@ export function ManagePlayersTab() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-700/50 hover:bg-gray-800/50">
+                    <TableHead className="text-gray-300">Global Rank</TableHead>
                     <TableHead className="text-gray-300">IGN</TableHead>
                     <TableHead className="text-gray-300">Java Username</TableHead>
                     <TableHead className="text-gray-300">Region</TableHead>
                     <TableHead className="text-gray-300">Device</TableHead>
                     <TableHead className="text-gray-300">Global Points</TableHead>
-                    <TableHead className="text-gray-300">Rank</TableHead>
                     <TableHead className="text-gray-300">Gamemode Tiers</TableHead>
                     <TableHead className="text-gray-300">Actions</TableHead>
                   </TableRow>
@@ -325,6 +324,9 @@ export function ManagePlayersTab() {
                 <TableBody>
                   {filteredPlayers.map((player) => (
                     <TableRow key={player.id} className="border-gray-700/50 hover:bg-gray-800/30">
+                      <TableCell className="font-medium">
+                        <span className="text-white">#{player.overall_rank || 'N/A'}</span>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {renderEditableCell(player.ign, player.id, 'ign')}
                       </TableCell>
@@ -338,7 +340,6 @@ export function ManagePlayersTab() {
                         <Badge variant="secondary" className="bg-gray-700 text-gray-300">{player.device}</Badge>
                       </TableCell>
                       <TableCell className="text-white">{player.global_points || 0}</TableCell>
-                      <TableCell className="text-white">#{player.overall_rank || 'N/A'}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {GAME_MODES.map((gamemode) => {
