@@ -31,27 +31,34 @@ const queryClient = new QueryClient({
   },
 });
 
+function RouterContent() {
+  useAnalytics(); // Now inside BrowserRouter context
+
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route 
+        path="/admin" 
+        element={
+          <AdminProtectedRoute>
+            <AdminPanel />
+          </AdminProtectedRoute>
+        } 
+      />
+      <Route path="/:category" element={<SubcategoryPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 function AppContent() {
   useErrorHandler();
-  useAnalytics(); // Track page visits
 
   return (
     <>
       <Toaster />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route 
-            path="/admin" 
-            element={
-              <AdminProtectedRoute>
-                <AdminPanel />
-              </AdminProtectedRoute>
-            } 
-          />
-          <Route path="/:category" element={<SubcategoryPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <RouterContent />
       </BrowserRouter>
       <ModernResultPopup />
     </>
