@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Heart } from 'lucide-react';
+import { MessageSquare, HelpCircle } from 'lucide-react';
 import { ChatWidget } from './ChatWidget';
 
 export function FloatingChatButton() {
@@ -11,51 +11,38 @@ export function FloatingChatButton() {
     <>
       <motion.div
         className="fixed bottom-6 right-6 z-40"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-2xl border-2 border-white/20 flex items-center justify-center overflow-hidden group"
-          animate={{
-            boxShadow: [
-              "0 0 20px rgba(147, 51, 234, 0.5)",
-              "0 0 30px rgba(236, 72, 153, 0.7)",
-              "0 0 20px rgba(147, 51, 234, 0.5)"
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
+          className="relative w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full shadow-xl border border-blue-500/20 flex items-center justify-center group hover:shadow-2xl transition-all duration-300"
         >
-          {/* Background gradient animation */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 animate-pulse opacity-50" />
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full opacity-90 group-hover:opacity-100 transition-opacity" />
           
-          {/* Bot icon */}
+          {/* Chat icon */}
           <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="relative z-10"
-          >
-            <Bot className="w-6 h-6 text-white" />
-          </motion.div>
-
-          {/* Floating hearts */}
-          <motion.div
-            className="absolute top-1 right-1"
             animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.7, 1, 0.7]
+              rotate: isOpen ? 180 : 0,
+              scale: isOpen ? 0.9 : 1
             }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            transition={{ duration: 0.3 }}
           >
-            <Heart className="w-3 h-3 text-pink-300 fill-current" />
+            {isOpen ? (
+              <HelpCircle className="w-6 h-6 text-white" />
+            ) : (
+              <MessageSquare className="w-6 h-6 text-white" />
+            )}
           </motion.div>
 
-          {/* Ripple effect */}
-          <div className="absolute inset-0 rounded-full border-2 border-pink-400/30 animate-ping" />
+          {/* Pulse ring */}
+          <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-ping opacity-75" />
           
-          {/* Notification dot */}
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">💋</span>
+          {/* Status indicator */}
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
           </div>
         </motion.button>
       </motion.div>

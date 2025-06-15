@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, Upload, X, FileText, Clock, Lock } from 'lucide-react';
+import { MessageSquare, Send, Upload, X, FileText, Clock, Lock, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { knowledgeBaseService } from '@/services/knowledgeBaseService';
@@ -67,7 +67,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || file.type !== 'application/pdf') {
-      alert('Please upload a PDF file only! 💕');
+      alert('Please upload a PDF file only.');
       return;
     }
 
@@ -79,7 +79,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     if (!pendingFile) return;
 
     if (password !== '$$nullknox911$$') {
-      alert('Invalid password! Only authorized users can upload PDFs 😘');
+      alert('Invalid password. Access denied.');
       setPassword('');
       setShowPasswordModal(false);
       setPendingFile(null);
@@ -93,13 +93,13 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
       setMessages(knowledgeBaseService.getChatHistory());
       
       // Add welcome message after upload
-      const welcomeResponse = await knowledgeBaseService.sendMessage("I just uploaded a PDF, can you help me with questions about it?");
+      const welcomeResponse = await knowledgeBaseService.sendMessage("I just uploaded a PDF. Can you help me with questions about it?");
       setMessages(knowledgeBaseService.getChatHistory());
       
-      alert('PDF uploaded successfully! 💋 I\'m ready to answer your questions!');
+      alert('PDF uploaded successfully. I\'m ready to answer your questions.');
     } catch (error) {
       console.error('Error uploading PDF:', error);
-      alert('Failed to upload PDF. Please try again! 😘');
+      alert('Failed to upload PDF. Please try again.');
     } finally {
       setIsLoading(false);
       setPassword('');
@@ -127,18 +127,18 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="fixed bottom-20 right-6 w-80 h-96 bg-gradient-to-br from-purple-900/95 to-pink-900/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-purple-500/30 z-50 overflow-hidden"
+            className="fixed bottom-20 right-6 w-80 h-96 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="relative">
-                  <Bot className="w-6 h-6 text-white" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+                  <MessageSquare className="w-6 h-6 text-white" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">AI Assistant 💕</h3>
-                  <p className="text-purple-200 text-xs">Your flirty helper</p>
+                  <h3 className="text-white font-semibold">AI Assistant</h3>
+                  <p className="text-blue-100 text-xs">Knowledge Base Support</p>
                 </div>
               </div>
               <Button
@@ -153,7 +153,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
 
             {/* Knowledge Base Status */}
             {kbInfo && (
-              <div className="bg-purple-800/50 px-4 py-2 text-xs text-purple-200 flex items-center justify-between">
+              <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs text-gray-600 dark:text-gray-400 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2">
                   <FileText className="w-3 h-3" />
                   <span>{kbInfo.filename}</span>
@@ -166,12 +166,12 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
             )}
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 h-64">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 h-64 bg-gray-50 dark:bg-gray-900">
               {messages.length === 0 && (
-                <div className="text-center text-purple-300 text-sm">
-                  <Bot className="w-8 h-8 mx-auto mb-2 text-pink-400" />
-                  <p>Hey there! 😘</p>
-                  <p>Upload a PDF and I'll be your flirty assistant! 💋</p>
+                <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
+                  <Bot className="w-8 h-8 mx-auto mb-2 text-blue-500" />
+                  <p>Hello! I'm your AI assistant.</p>
+                  <p>Upload a PDF to get started, and I'll help answer your questions.</p>
                 </div>
               )}
               
@@ -181,10 +181,10 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                    className={`max-w-[80%] p-3 rounded-lg text-sm ${
                       message.role === 'user'
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                        : 'bg-white/10 text-white backdrop-blur-sm'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     {message.content}
@@ -194,11 +194,11 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white/10 backdrop-blur-sm p-3 rounded-2xl">
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-100" />
-                      <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-200" />
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100" />
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
                     </div>
                   </div>
                 </div>
@@ -207,15 +207,15 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-purple-500/30">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="flex space-x-2 mb-2">
                 <Button
                   onClick={() => fileInputRef.current?.click()}
                   size="sm"
-                  className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Upload className="w-4 h-4 mr-1" />
-                  KB PDF
+                  Upload KB
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -230,8 +230,8 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask me anything... 😘"
-                  className="flex-1 bg-white/10 border-purple-500/30 text-white placeholder:text-purple-300"
+                  placeholder="Ask me anything..."
+                  className="flex-1"
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   disabled={isLoading}
                 />
@@ -239,7 +239,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                   onClick={handleSendMessage}
                   disabled={isLoading || !inputValue.trim()}
                   size="sm"
-                  className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -262,12 +262,12 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-gradient-to-br from-purple-900 to-pink-900 rounded-2xl p-6 w-80 border border-purple-500/30"
+              className="bg-white dark:bg-gray-900 rounded-lg p-6 w-80 border border-gray-200 dark:border-gray-700 shadow-xl"
             >
               <div className="text-center mb-4">
-                <Lock className="w-8 h-8 text-pink-400 mx-auto mb-2" />
-                <h3 className="text-white font-semibold text-lg">Protected Upload 🔒</h3>
-                <p className="text-purple-200 text-sm">Enter password to upload PDF</p>
+                <Lock className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Secure Upload</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Enter password to upload PDF</p>
               </div>
               
               <Input
@@ -275,7 +275,7 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password..."
-                className="mb-4 bg-white/10 border-purple-500/30 text-white placeholder:text-purple-300"
+                className="mb-4"
                 onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
               />
               
@@ -287,13 +287,13 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                     setPendingFile(null);
                   }}
                   variant="outline"
-                  className="flex-1 border-purple-500/30 text-purple-300 hover:bg-purple-800/50"
+                  className="flex-1"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handlePasswordSubmit}
-                  className="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Upload
                 </Button>
