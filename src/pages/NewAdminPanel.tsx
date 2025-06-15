@@ -2,13 +2,11 @@
 import React, { useState } from 'react';
 import { NewAdminProtectedRoute } from '@/components/admin/NewAdminProtectedRoute';
 import { CombinedSubmitPlayersTab } from '@/components/admin/CombinedSubmitPlayersTab';
-import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
-import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
+import { CompactSystemTools } from '@/components/admin/CompactSystemTools';
+import { CompactUserManagement } from '@/components/admin/CompactUserManagement';
 import { CombinedAnalyticsDashboard } from '@/components/admin/CombinedAnalyticsDashboard';
 import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
 import DatabaseTools from '@/components/admin/DatabaseTools';
-import UserManagement from '@/components/admin/UserManagement';
-import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
 import StaffManagement from '@/components/admin/StaffManagement';
 import AdminNavigation, { AdminTab } from '@/components/admin/AdminNavigation';
 import { Button } from '@/components/ui/button';
@@ -107,19 +105,10 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
         return <CombinedSubmitPlayersTab />;
       case 'tools':
         return userRole === 'owner' || userRole === 'admin' ? (
-          <div className="space-y-4 md:space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-              <div className="space-y-3 md:space-y-4">
-                <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Mass Submission</h3>
-                <MassSubmissionForm />
-              </div>
-              <div className="space-y-3 md:space-y-4">
-                <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">System Monitoring</h3>
-                <SystemLogsViewer />
-              </div>
-            </div>
-            <div className="space-y-3 md:space-y-4">
-              <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Knowledge Base Management</h3>
+          <div className="space-y-4">
+            <CompactSystemTools />
+            <div className="space-y-3">
+              <h3 className="text-lg font-bold text-white">Knowledge Base Management</h3>
               <KnowledgeBaseUpload />
             </div>
           </div>
@@ -130,10 +119,10 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
         return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
           <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'users':
-        return userRole === 'owner' || userRole === 'admin' ? <UserManagement /> : 
+        return userRole === 'owner' || userRole === 'admin' ? <CompactUserManagement /> : 
           <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
       case 'blackbox':
-        return <BlackBoxLogger />;
+        return <CompactSystemTools />;
       case 'applications':
         return userRole === 'owner' ? <StaffManagement userRole={userRole} /> : 
           <div className="text-center py-8 text-gray-400">Access denied. Only owners can manage applications.</div>;
@@ -153,14 +142,14 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
       <div className="relative z-10 p-2 md:p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <header className="mb-4 md:mb-6 lg:mb-8">
+          <header className="mb-4 md:mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 md:space-x-3">
                 <div className="p-1.5 md:p-2 bg-gradient-to-br from-purple-600 to-blue-600 rounded-md md:rounded-lg">
                   <Shield className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+                  <h1 className="text-lg md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
                     Admin Dashboard
                   </h1>
                   <p className="text-gray-400 text-xs md:text-sm hidden md:block">
@@ -169,14 +158,14 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 md:space-x-2">
                 {/* Mobile Menu Toggle */}
                 {isMobile && (
                   <Button 
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     variant="ghost" 
                     size="sm"
-                    className="text-white/70 hover:text-white p-2"
+                    className="text-white/70 hover:text-white p-1.5 md:p-2"
                   >
                     {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                   </Button>
@@ -189,10 +178,10 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
                     disabled={isLoading}
                     variant="destructive" 
                     size="sm"
-                    className="bg-orange-600/20 border border-orange-500/50 text-orange-400 hover:bg-orange-600/30"
+                    className="bg-orange-600/20 border border-orange-500/50 text-orange-400 hover:bg-orange-600/30 text-xs px-2 py-1"
                   >
-                    <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                    Clear Sessions
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    <span className="hidden lg:inline">Clear Sessions</span>
                   </Button>
                 )}
                 
@@ -202,20 +191,20 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
                     onClick={handleLogout}
                     variant="destructive" 
                     size="sm"
-                    className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+                    className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 text-xs px-2 py-1"
                   >
-                    <LogOut className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                    Logout
+                    <LogOut className="h-3 w-3 mr-1" />
+                    <span className="hidden lg:inline">Logout</span>
                   </Button>
                 )}
               </div>
             </div>
           </header>
 
-          <main className="space-y-3 md:space-y-4 lg:space-y-6">
+          <main className="space-y-3 md:space-y-4">
             {/* Navigation */}
-            <div className="space-y-2 md:space-y-3">
-              <h2 className="text-base md:text-lg font-bold text-white text-center">Administrative Controls</h2>
+            <div className="space-y-2">
+              <h2 className="text-sm md:text-lg font-bold text-white text-center">Administrative Controls</h2>
               
               <AdminNavigation
                 activeTab={activeTab}
@@ -257,7 +246,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
             
             {/* Content Area */}
             <div className="relative">
-              <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-6 shadow-2xl">
+              <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl p-2 md:p-4 lg:p-6 shadow-2xl overflow-x-auto">
                 {renderContent()}
               </div>
             </div>
