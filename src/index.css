@@ -130,14 +130,6 @@
     @apply absolute -bottom-1 -right-1 bg-yellow-500 text-dark-background
            rounded-full w-3 h-3 flex items-center justify-center text-xs font-bold;
   }
-  
-  .tier-tab {
-    @apply;
-  }
-  
-  .tier-column {
-    @apply;
-  }
 
   /* Mobile-first optimizations */
   @media (max-width: 640px) {
