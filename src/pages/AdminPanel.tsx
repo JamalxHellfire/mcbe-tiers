@@ -12,24 +12,29 @@ import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
 import ApplicationsManager from '@/components/admin/ApplicationsManager';
 import CountryAnalytics from '@/components/admin/CountryAnalytics';
-import AdminNavigation, { AdminTab } from '@/components/admin/AdminNavigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
   Shield, 
   LogOut, 
-  Menu, 
-  X,
-  Trash2
+  UploadCloud, 
+  Users, 
+  Wrench, 
+  BarChart3, 
+  Calendar,
+  Database,
+  UserCheck,
+  Terminal,
+  UserCog,
+  Globe
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
 
-type AdminTabType = AdminTab;
+type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox' | 'applications' | 'country-analytics';
 
 // Role-based tab visibility
-const getVisibleTabs = (role: string): AdminTabType[] => {
+const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
       return ['submit', 'manage', 'tools', 'analytics', 'daily', 'database', 'users', 'blackbox', 'applications', 'country-analytics'];
@@ -50,11 +55,9 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
   const visibleTabs = getVisibleTabs(userRole);
-  const [activeTab, setActiveTab] = useState<AdminTabType>(visibleTabs[0] || 'submit');
+  const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0] || 'submit');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -85,6 +88,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
       setIsLoggingOut(false);
     }
   };
+
+  const tabs = [
+    { id: 'submit' as AdminTab, label: 'Submit', icon: UploadCloud },
+    { id: 'manage' as AdminTab, label: 'Players', icon: Users },
+    { id: 'tools' as AdminTab, label: 'Tools', icon: Wrench },
+    { id: 'analytics' as AdminTab, label: 'Analytics', icon: BarChart3 },
+    { id: 'daily' as AdminTab, label: 'Daily', icon: Calendar },
+    { id: 'database' as AdminTab, label: 'Database', icon: Database },
+    { id: 'users' as AdminTab, label: 'Users', icon: UserCheck },
+    { id: 'blackbox' as AdminTab, label: 'Logs', icon: Terminal },
+    { id: 'applications' as AdminTab, label: 'Apps', icon: UserCog },
+    { id: 'country-analytics' as AdminTab, label: 'Countries', icon: Globe }
+  ].filter(tab => visibleTabs.includes(tab.id));
 
   const renderContent = () => {
     switch (activeTab) {
@@ -162,114 +178,59 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] text-white">
-      {/* Background effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-600/8 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-cyan-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+      {/* Small Top Navigation Bar */}
+      <nav className="bg-gray-900/60 backdrop-blur-xl border-b border-gray-700/50 px-4 py-2">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg">
+              <Shield className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-sm font-semibold text-white">Admin</span>
+            <span className="text-xs text-gray-400">({userRole})</span>
+          </div>
 
-      <div className="relative z-10 p-3 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <header className="mb-6 lg:mb-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg">
-                  <Shield className="h-6 w-6 lg:h-7 lg:w-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
-                    Admin Dashboard
-                  </h1>
-                  <div className="flex items-center space-x-3 mt-1">
-                    <p className="text-gray-400 text-sm md:text-base">
-                      Role: <span className="text-purple-400 font-semibold">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
-                    </p>
-                    <div className="h-1 w-1 bg-gray-500 rounded-full"></div>
-                    <p className="text-gray-500 text-xs md:text-sm">
-                      {new Date().toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                {/* Mobile Menu Toggle */}
-                {isMobile && (
-                  <Button 
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    variant="ghost" 
-                    size="sm"
-                    className="text-white/70 hover:text-white p-2 hover:bg-gray-800/50 rounded-lg transition-all duration-200"
-                  >
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                  </Button>
+          {/* Navigation Tabs */}
+          <div className="flex items-center space-x-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium transition-colors",
+                  activeTab === tab.id
+                    ? "bg-purple-600/20 text-purple-400 border border-purple-500/30"
+                    : "text-gray-400 hover:text-white hover:bg-gray-800/50"
                 )}
-                
-                {/* Logout Button */}
-                {!isMobile && (
-                  <Button 
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    variant="destructive" 
-                    size="sm"
-                    className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 hover:border-red-400/60 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {isLoggingOut ? 'Logging out...' : 'Logout'}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </header>
+              >
+                <tab.icon className="h-3 w-3" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-          <main className="space-y-6 lg:space-y-8">
-            {/* Navigation */}
-            <div className="space-y-4">
-              <div className="text-center">
-                <h2 className="text-lg md:text-xl font-bold text-white mb-2">Administrative Controls</h2>
-                <div className="h-1 w-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mx-auto"></div>
-              </div>
-              
-              <AdminNavigation
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                userRole={userRole}
-                visibleTabs={visibleTabs}
-                isMobile={isMobile}
-                mobileMenuOpen={mobileMenuOpen}
-                setMobileMenuOpen={setMobileMenuOpen}
-              />
-
-              {/* Mobile Logout Button */}
-              {isMobile && mobileMenuOpen && (
-                <div className="p-4 bg-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl">
-                  <Button 
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    variant="destructive" 
-                    className="w-full bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
-                    size="sm"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {isLoggingOut ? 'Logging out...' : 'Logout'}
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            {/* Content Area */}
-            <div className="relative">
-              <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl lg:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl">
-                <div className="relative">
-                  {renderContent()}
-                </div>
-              </div>
-            </div>
-          </main>
+          {/* Logout Button */}
+          <Button 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            variant="ghost" 
+            size="sm"
+            className="text-red-400 hover:text-red-300 hover:bg-red-600/10 px-2 py-1 h-auto text-xs"
+          >
+            <LogOut className="h-3 w-3 mr-1" />
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
+          </Button>
         </div>
-      </div>
+      </nav>
+
+      {/* Content Area */}
+      <main className="p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-6 shadow-2xl">
+            {renderContent()}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
