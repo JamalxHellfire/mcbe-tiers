@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, FileText, Clock, Bot } from 'lucide-react';
+import { MessageSquare, Send, X, FileText, Clock, Bot, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { knowledgeBaseService } from '@/services/knowledgeBaseService';
@@ -23,11 +23,16 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [timeUntilClear, setTimeUntilClear] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setMessages(knowledgeBaseService.getChatHistory());
+      console.log('Chat widget opened, loading history...');
+      const history = knowledgeBaseService.getChatHistory();
+      console.log('Loaded chat history:', history.length, 'messages');
+      setMessages(history);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -44,17 +49,28 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading) {
+      console.log('Cannot send message: empty input or loading');
+      return;
+    }
 
     const userMessage = inputValue;
     setInputValue('');
     setIsLoading(true);
+    setError(null);
+
+    console.log('Sending message:', userMessage);
 
     try {
       const response = await knowledgeBaseService.sendMessage(userMessage);
-      setMessages(knowledgeBaseService.getChatHistory());
+      console.log('Received response:', response);
+      
+      const updatedHistory = knowledgeBaseService.getChatHistory();
+      console.log('Updated chat history:', updatedHistory.length, 'messages');
+      setMessages(updatedHistory);
     } catch (error) {
       console.error('Error sending message:', error);
+      setError('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +83,9 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   };
 
   const kbInfo = knowledgeBaseService.getKnowledgeBaseInfo();
+  const hasKnowledgeBase = knowledgeBaseService.hasKnowledgeBase();
+
+  console.log('Chat widget render - KB info:', kbInfo, 'Has KB:', hasKnowledgeBase);
 
   return (
     <>
@@ -84,11 +103,13 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <MessageSquare className="w-6 h-6 text-white" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full" />
+                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${hasKnowledgeBase ? 'bg-green-400' : 'bg-red-400'}`} />
                 </div>
                 <div>
                   <h3 className="text-white font-semibold">AI Assistant</h3>
-                  <p className="text-blue-100 text-xs">Knowledge Base Support</p>
+                  <p className="text-blue-100 text-xs">
+                    {hasKnowledgeBase ? 'Knowledge Base Ready' : 'No Knowledge Base'}
+                  </p>
                 </div>
               </div>
               <Button
@@ -115,13 +136,25 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               </div>
             )}
 
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 px-4 py-2 text-xs text-red-600 dark:text-red-400 flex items-center space-x-2 border-b border-red-200 dark:border-red-800">
+                <AlertCircle className="w-3 h-3" />
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 h-64 bg-gray-50 dark:bg-gray-900">
               {messages.length === 0 && (
                 <div className="text-center text-gray-500 dark:text-gray-400 text-sm">
                   <Bot className="w-8 h-8 mx-auto mb-2 text-blue-500" />
                   <p>Hello! I'm your AI assistant.</p>
-                  <p>To upload a PDF knowledge base, please visit the Admin Panel → Admin Tools section.</p>
+                  {!hasKnowledgeBase ? (
+                    <p className="mt-2 text-red-500">Please upload a PDF or TXT file in the Admin Panel → Admin Tools to start chatting!</p>
+                  ) : (
+                    <p className="mt-2 text-green-600">Knowledge base loaded! Ask me anything about your document.</p>
+                  )}
                 </div>
               )}
               
@@ -162,20 +195,23 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask me anything..."
+                  placeholder={hasKnowledgeBase ? "Ask me anything..." : "Upload a document first..."}
                   className="flex-1"
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  disabled={isLoading}
+                  disabled={isLoading || !hasKnowledgeBase}
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={isLoading || !inputValue.trim()}
+                  disabled={isLoading || !inputValue.trim() || !hasKnowledgeBase}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
+              {!hasKnowledgeBase && (
+                <p className="text-xs text-gray-500 mt-1">Upload a document in Admin Tools first</p>
+              )}
             </div>
           </motion.div>
         )}

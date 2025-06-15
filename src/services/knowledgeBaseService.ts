@@ -1,3 +1,4 @@
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -32,13 +33,16 @@ class KnowledgeBaseService {
   async uploadPDF(file: File): Promise<void> {
     try {
       const text = await this.extractTextFromPDF(file);
+      if (!text || text.trim().length === 0) {
+        throw new Error('No text could be extracted from the PDF file');
+      }
       this.knowledgeBase = {
         content: text,
         filename: file.name,
         uploadDate: new Date()
       };
       this.clearConversation();
-      console.log('PDF uploaded and processed successfully');
+      console.log('PDF uploaded and processed successfully, content length:', text.length);
     } catch (error) {
       console.error('Error uploading PDF:', error);
       throw new Error('Failed to process PDF file');
@@ -48,13 +52,16 @@ class KnowledgeBaseService {
   async uploadTXT(file: File): Promise<void> {
     try {
       const text = await this.extractTextFromTXT(file);
+      if (!text || text.trim().length === 0) {
+        throw new Error('The TXT file appears to be empty or unreadable');
+      }
       this.knowledgeBase = {
         content: text,
         filename: file.name,
         uploadDate: new Date()
       };
       this.clearConversation();
-      console.log('TXT uploaded and processed successfully');
+      console.log('TXT uploaded and processed successfully, content length:', text.length);
     } catch (error) {
       console.error('Error uploading TXT:', error);
       throw new Error('Failed to process TXT file');
@@ -62,20 +69,24 @@ class KnowledgeBaseService {
   }
 
   private async extractTextFromPDF(file: File): Promise<string> {
-    // Simple text extraction - in a real app, you'd use a proper PDF parser
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          // This is a simplified approach - you might want to use pdf-parse or similar
           const text = e.target?.result as string;
-          resolve(text);
+          if (!text) {
+            reject(new Error('Failed to read PDF content'));
+            return;
+          }
+          // Basic PDF text extraction - this is simplified
+          const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
+          resolve(cleanText);
         } catch (error) {
           reject(error);
         }
       };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsText(file);
+      reader.onerror = () => reject(new Error('Failed to read PDF file'));
+      reader.readAsText(file, 'utf-8');
     });
   }
 
@@ -85,20 +96,35 @@ class KnowledgeBaseService {
       reader.onload = (e) => {
         try {
           const text = e.target?.result as string;
-          resolve(text);
+          if (!text) {
+            reject(new Error('Failed to read TXT content'));
+            return;
+          }
+          console.log('TXT file content extracted, length:', text.length);
+          resolve(text.trim());
         } catch (error) {
+          console.error('Error extracting TXT content:', error);
           reject(error);
         }
       };
-      reader.onerror = () => reject(new Error('Failed to read TXT file'));
-      reader.readAsText(file);
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        reject(new Error('Failed to read TXT file'));
+      };
+      reader.readAsText(file, 'utf-8');
     });
   }
 
   async sendMessage(message: string): Promise<string> {
+    console.log('sendMessage called with:', message);
+    console.log('Knowledge base exists:', !!this.knowledgeBase);
+    
     if (!this.knowledgeBase) {
+      console.log('No knowledge base found');
       return "Hey there! 😘 You need to upload a PDF or TXT file first using the KB upload feature in the Admin Panel. I'm dying to learn from your documents! 💕";
     }
+
+    console.log('Knowledge base content length:', this.knowledgeBase.content.length);
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -108,8 +134,10 @@ class KnowledgeBaseService {
     };
 
     this.chatHistory.push(userMessage);
+    console.log('Added user message to history, total messages:', this.chatHistory.length);
 
     try {
+      console.log('Making API request to DeepSeek...');
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -143,12 +171,24 @@ Instructions:
         })
       });
 
+      console.log('API response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`DeepSeek API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('DeepSeek API error:', response.status, errorText);
+        throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('API response received:', data);
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid API response structure:', data);
+        throw new Error('Invalid response from AI service');
+      }
+
       const aiResponse = data.choices[0].message.content;
+      console.log('AI response:', aiResponse);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -158,10 +198,18 @@ Instructions:
       };
 
       this.chatHistory.push(assistantMessage);
+      console.log('Added assistant message to history, total messages:', this.chatHistory.length);
+      
       return aiResponse;
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error in sendMessage:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return "Oops! 😅 I'm having trouble connecting to my brain right now. Check your internet connection and try again, sweetie! 💋";
+      }
+      
       return "Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 Try asking me something else about the document you uploaded! 😘";
     }
   }
@@ -177,7 +225,9 @@ Instructions:
   }
 
   hasKnowledgeBase(): boolean {
-    return this.knowledgeBase !== null;
+    const hasKb = this.knowledgeBase !== null;
+    console.log('hasKnowledgeBase:', hasKb);
+    return hasKb;
   }
 
   getKnowledgeBaseInfo(): { filename: string; uploadDate: Date } | null {
