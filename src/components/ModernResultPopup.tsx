@@ -199,14 +199,14 @@ export function ModernResultPopup() {
                       className="object-cover object-center scale-110"
                       onError={(e) => handleAvatarError(e, popupData.player.ign, popupData.player.java_username)}
                     />
-                    <AvatarFallback className="bg-yellow-200 text-yellow-800 font-bold text-lg">
+                    <AvatarFallback className="bg-gray-200 text-gray-800 font-bold text-lg">
                       {popupData.player.ign.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                 </div>
               </div>
               
-              {/* Username with device icon and badge */}
+              {/* username section, divider, and tiers section */}
               <div className="flex flex-col items-center gap-1 mb-4 w-full">
                 <div className={`flex items-center gap-2 font-bold text-white drop-shadow-lg text-center ${
                   isMobile ? 'text-lg' : 'text-xl'
