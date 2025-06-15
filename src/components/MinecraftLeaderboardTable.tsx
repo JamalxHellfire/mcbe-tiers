@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { GameModeIcon } from './GameModeIcon';
+import { Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getPlayerRank } from '@/utils/rankUtils';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
@@ -11,6 +13,21 @@ interface MinecraftLeaderboardTableProps {
   players: Player[];
   onPlayerClick: (player: Player) => void;
 }
+
+// Helper to get device icon
+const getDeviceIcon = (device: string = 'PC') => {
+  switch(device?.toLowerCase()) {
+    case 'mobile':
+    case 'bedrock':
+      return <Smartphone className="w-4 h-4 text-blue-400" />;
+    case 'console':
+      return <Gamepad className="w-4 h-4 text-green-400" />;
+    case 'pc':
+    case 'java':
+    default:
+      return <Monitor className="w-4 h-4 text-white/80" />;
+  }
+};
 
 export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps> = ({
   players,
@@ -86,8 +103,11 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
 
                 {/* Name and info */}
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white text-base truncate">
-                    {player.ign}
+                  <div className="flex items-center gap-2 mb-1">
+                    {getDeviceIcon(player.device)}
+                    <span className="font-semibold text-white text-base truncate">
+                      {player.ign}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <span className={`font-medium ${rankInfo.color}`}>
@@ -142,7 +162,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
     );
   }
 
-  // Desktop table layout (existing code)
+  // Desktop table layout
   return (
     <div className="w-full bg-dark-surface/40 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
       {/* Header */}
@@ -197,9 +217,12 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </div>
                 
                 <div className="flex flex-col">
-                  <span className="text-white font-semibold text-lg group-hover:text-blue-200 transition-colors">
-                    {player.ign}
-                  </span>
+                  <div className="flex items-center gap-2 mb-1">
+                    {getDeviceIcon(player.device)}
+                    <span className="text-white font-semibold text-lg group-hover:text-blue-200 transition-colors">
+                      {player.ign}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-medium ${rankInfo.color} group-hover:brightness-110 transition-all`}>
                       ◆ {rankInfo.title}
