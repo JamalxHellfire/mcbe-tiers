@@ -172,6 +172,7 @@ export const useAdminPanel = () => {
     const startTime = Date.now();
     
     let playerId: string;
+    let playerIGN: string = '';
     
     if (typeof playerIdOrIGN === 'string' && isNaN(Number(playerIdOrIGN))) {
       const player = await findPlayerByIGN(playerIdOrIGN);
@@ -184,6 +185,7 @@ export const useAdminPanel = () => {
         return { success: false, error: "Player not found" };
       }
       playerId = player.id;
+      playerIGN = player.ign;
     } else {
       const numericId = typeof playerIdOrIGN === 'string' ? parseInt(playerIdOrIGN) : playerIdOrIGN;
       if (!numericId || isNaN(numericId)) {
@@ -195,15 +197,21 @@ export const useAdminPanel = () => {
         return { success: false, error: "Invalid player ID" };
       }
       playerId = numericId.toString();
+      
+      // Find player IGN for logging
+      const playerData = players.find(p => p.id === playerId);
+      playerIGN = playerData?.ign || 'Unknown';
     }
 
     setLoading(true);
     setError(null);
     
     try {
-      console.log(`Deleting player with ID: ${playerId}`);
-      deepSeekService.logUserAction('delete_player', 'player', { playerId });
+      console.log(`Deleting player with ID: ${playerId} (IGN: ${playerIGN})`);
+      deepSeekService.logUserAction('delete_player', 'player', { playerId, playerIGN });
       
+      // First delete gamemode scores
+      console.log('Deleting gamemode scores...');
       deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId });
       const { error: scoresError } = await supabase
         .from('gamemode_scores')
@@ -216,6 +224,10 @@ export const useAdminPanel = () => {
         throw new Error(`Failed to delete gamemode scores: ${scoresError.message}`);
       }
 
+      console.log('Gamemode scores deleted successfully');
+
+      // Then delete player
+      console.log('Deleting player...');
       deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId });
       const { error: playerError } = await supabase
         .from('players')
@@ -230,18 +242,24 @@ export const useAdminPanel = () => {
         throw new Error(`Failed to delete player: ${playerError.message}`);
       }
 
-      setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId));
-      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId }, { success: true }, null, duration);
-      toast({
-        title: "Success",
-        description: `Player ${playerId} deleted successfully.`,
+      console.log('Player deleted successfully');
+
+      // Update local state immediately
+      setPlayers(prevPlayers => {
+        const newPlayers = prevPlayers.filter(player => player.id !== playerId);
+        console.log(`Updated local state: removed player ${playerId}, ${newPlayers.length} players remaining`);
+        return newPlayers;
       });
+
+      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId }, { success: true }, null, duration);
+      
+      console.log(`Player ${playerIGN} (${playerId}) deleted successfully`);
       return { success: true };
     } catch (err: any) {
       const duration = Date.now() - startTime;
       console.error('Exception in deletePlayer:', err);
       setError(err.message);
-      deepSeekService.logError(err, { operation: 'deletePlayer', playerId });
+      deepSeekService.logError(err, { operation: 'deletePlayer', playerId, playerIGN });
       toast({
         title: "Error",
         description: `Failed to delete player: ${err.message}`,

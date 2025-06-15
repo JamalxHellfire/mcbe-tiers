@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Player, GameMode, TierLevel } from '@/services/playerService';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Search, Edit, Save, X } from 'lucide-react';
+import { Trash2, Search, Edit, Save, X, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GAME_MODES, TIER_LEVELS } from '@/lib/constants';
 
@@ -28,6 +29,8 @@ export function ManagePlayersTab() {
     gamemode: GameMode;
     currentTier: TierLevel;
   } | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     refreshPlayers();
@@ -38,12 +41,57 @@ export function ManagePlayersTab() {
     (player.java_username && player.java_username.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleDeletePlayer = async (playerId: string) => {
-    if (window.confirm('Are you sure you want to delete this player? This action cannot be undone.')) {
-      const result = await deletePlayer(playerId);
-      if (result?.success) {
-        await refreshPlayers();
+  const handleDeletePlayer = async (playerId: string, playerIGN: string) => {
+    if (window.confirm(`Are you sure you want to delete player "${playerIGN}"? This action cannot be undone.`)) {
+      setIsDeleting(playerId);
+      try {
+        console.log(`Attempting to delete player: ${playerId} (${playerIGN})`);
+        const result = await deletePlayer(playerId);
+        
+        if (result?.success) {
+          toast({
+            title: "Player Deleted",
+            description: `Player "${playerIGN}" has been successfully deleted.`,
+          });
+          // Force refresh the players list
+          await handleRefresh();
+        } else {
+          toast({
+            title: "Delete Failed",
+            description: result?.error || "Failed to delete player",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        toast({
+          title: "Delete Error",
+          description: "An unexpected error occurred while deleting the player",
+          variant: "destructive"
+        });
+      } finally {
+        setIsDeleting(null);
       }
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshPlayers();
+      toast({
+        title: "Data Refreshed",
+        description: "Player data has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh Error",
+        description: "Failed to refresh player data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -51,7 +99,7 @@ export function ManagePlayersTab() {
     const result = await updatePlayerTier(playerId, gamemode, newTier);
     if (result?.success) {
       setEditingGamemode(null);
-      await refreshPlayers();
+      await handleRefresh();
     }
   };
 
@@ -61,7 +109,7 @@ export function ManagePlayersTab() {
     return tierAssignment?.tier || 'Not Ranked';
   };
 
-  if (loading) {
+  if (loading && !isRefreshing) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
@@ -76,7 +124,7 @@ export function ManagePlayersTab() {
     return (
       <div className="p-4 text-red-500 text-center">
         <p>Error: {error}</p>
-        <Button onClick={refreshPlayers} className="mt-2">
+        <Button onClick={handleRefresh} className="mt-2">
           Retry
         </Button>
       </div>
@@ -104,15 +152,20 @@ export function ManagePlayersTab() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      // Trigger search on Enter - this is already happening with onChange
                       console.log('Search triggered for:', searchTerm);
                     }
                   }}
                   className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
                 />
               </div>
-              <Button onClick={refreshPlayers} variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
-                Refresh
+              <Button 
+                onClick={handleRefresh} 
+                disabled={isRefreshing}
+                variant="outline" 
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
             </div>
 
@@ -219,10 +272,15 @@ export function ManagePlayersTab() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
-                          onClick={() => handleDeletePlayer(player.id)}
+                          disabled={isDeleting === player.id}
+                          className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 disabled:opacity-50"
+                          onClick={() => handleDeletePlayer(player.id, player.ign)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {isDeleting === player.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -236,6 +294,11 @@ export function ManagePlayersTab() {
                 {searchTerm ? 'No players found matching your search' : 'No players found'}
               </div>
             )}
+
+            {/* Debug Info */}
+            <div className="text-xs text-gray-500 mt-4">
+              Total players: {players.length} | Filtered: {filteredPlayers.length}
+            </div>
           </div>
         </CardContent>
       </Card>
