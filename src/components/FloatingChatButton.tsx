@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, HelpCircle } from 'lucide-react';
+import { MessageSquare, Sparkles } from 'lucide-react';
 import { ChatWidget } from './ChatWidget';
 
 export function FloatingChatButton() {
@@ -16,10 +16,17 @@ export function FloatingChatButton() {
       >
         <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full shadow-xl border border-blue-500/20 flex items-center justify-center group hover:shadow-2xl transition-all duration-300"
+          className="relative w-16 h-16 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-full shadow-2xl border border-white/20 flex items-center justify-center group hover:shadow-blue-500/25 transition-all duration-300 overflow-hidden"
         >
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full opacity-90 group-hover:opacity-100 transition-opacity" />
+          {/* Animated background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full opacity-90 group-hover:opacity-100 transition-opacity animate-pulse" />
+          
+          {/* Sparkle effect */}
+          <div className="absolute inset-0 rounded-full">
+            <div className="absolute top-2 left-3 w-1 h-1 bg-white rounded-full animate-ping" />
+            <div className="absolute bottom-3 right-2 w-1 h-1 bg-white rounded-full animate-ping delay-300" />
+            <div className="absolute top-1/2 right-1 w-0.5 h-0.5 bg-white rounded-full animate-ping delay-700" />
+          </div>
           
           {/* Chat icon */}
           <motion.div
@@ -28,22 +35,27 @@ export function FloatingChatButton() {
               rotate: isOpen ? 180 : 0,
               scale: isOpen ? 0.9 : 1
             }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, type: "spring" }}
           >
             {isOpen ? (
-              <HelpCircle className="w-6 h-6 text-white" />
+              <Sparkles className="w-7 h-7 text-white" />
             ) : (
-              <MessageSquare className="w-6 h-6 text-white" />
+              <MessageSquare className="w-7 h-7 text-white" />
             )}
           </motion.div>
 
-          {/* Pulse ring */}
+          {/* Outer pulse ring */}
           <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-ping opacity-75" />
+          <div className="absolute inset-0 rounded-full border border-purple-400/20 animate-pulse" />
           
           {/* Status indicator */}
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+          <motion.div 
+            className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-          </div>
+          </motion.div>
         </motion.button>
       </motion.div>
 
