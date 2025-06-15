@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel, updatePlayerGlobalPoints } from '@/services/playerService';
@@ -169,39 +168,20 @@ export const useAdminPanel = () => {
     }
   };
 
-  const deletePlayer = async (playerIdOrIGN: number | string) => {
+  const deletePlayer = async (playerId: string) => {
     const startTime = Date.now();
     
-    let playerId: string;
-    let playerIGN: string = '';
+    // Get player info for logging before deletion
+    const playerData = players.find(p => p.id === playerId);
+    const playerIGN = playerData?.ign || 'Unknown';
     
-    if (typeof playerIdOrIGN === 'string' && isNaN(Number(playerIdOrIGN))) {
-      const player = await findPlayerByIGN(playerIdOrIGN);
-      if (!player) {
-        toast({
-          title: "Player Not Found",
-          description: `Could not find player with IGN: ${playerIdOrIGN}`,
-          variant: "destructive"
-        });
-        return { success: false, error: "Player not found" };
-      }
-      playerId = player.id;
-      playerIGN = player.ign;
-    } else {
-      const numericId = typeof playerIdOrIGN === 'string' ? parseInt(playerIdOrIGN) : playerIdOrIGN;
-      if (!numericId || isNaN(numericId)) {
-        toast({
-          title: "Invalid Player ID",
-          description: "Cannot delete player with invalid ID",
-          variant: "destructive"
-        });
-        return { success: false, error: "Invalid player ID" };
-      }
-      playerId = numericId.toString();
-      
-      // Find player IGN for logging
-      const playerData = players.find(p => p.id === playerId);
-      playerIGN = playerData?.ign || 'Unknown';
+    if (!playerData) {
+      toast({
+        title: "Player Not Found",
+        description: `Could not find player in current list`,
+        variant: "destructive"
+      });
+      return { success: false, error: "Player not found in current list" };
     }
 
     setLoading(true);
