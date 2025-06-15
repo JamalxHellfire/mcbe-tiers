@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Users, TrendingUp, MapPin } from 'lucide-react';
+import { Globe, Users, TrendingUp, MapPin, Flag } from 'lucide-react';
 import { getCountryAnalytics, CountryStats } from '@/services/analyticsService';
 
 const CountryAnalytics = () => {
@@ -19,7 +19,7 @@ const CountryAnalytics = () => {
           setCountryData(realData);
           setTotalVisits(realData.reduce((sum, country) => sum + country.visits, 0));
         } else {
-          // Fallback data if no real data exists with proper flag emojis
+          // Fallback data if no real data exists
           const fallbackData: CountryStats[] = [
             { 
               country: 'United States', 
@@ -162,9 +162,7 @@ const CountryAnalytics = () => {
                 <div className="text-xl font-bold text-white flex items-center space-x-2">
                   {countryData[0] && (
                     <>
-                      <span className="text-2xl" role="img" aria-label={`${countryData[0].country} flag`}>
-                        {countryData[0].flag}
-                      </span>
+                      <Flag className="h-5 w-5 text-blue-400" />
                       <span>{countryData[0].country}</span>
                     </>
                   )}
@@ -201,18 +199,7 @@ const CountryAnalytics = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-10 flex items-center justify-center bg-gray-700/30 rounded-lg border border-gray-600/40">
-                        <span 
-                          className="text-2xl" 
-                          role="img" 
-                          aria-label={`${country.country} flag`}
-                          style={{ 
-                            fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
-                            fontSize: '24px',
-                            lineHeight: '1'
-                          }}
-                        >
-                          {country.flag || '🌍'}
-                        </span>
+                        <Flag className="h-6 w-6 text-blue-400" />
                       </div>
                       <div>
                         <h4 className="text-white font-semibold">{country.country}</h4>
