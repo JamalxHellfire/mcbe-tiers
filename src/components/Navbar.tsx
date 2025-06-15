@@ -2,12 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { GameModeSelector } from './GameModeSelector';
 import { MobileNavMenu } from './MobileNavMenu';
-import { Trophy, Home, Youtube, MessageCircle, Search, Menu, X } from 'lucide-react';
+import { Trophy, Home, Youtube, MessageCircle, Search, Menu, X, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { usePlayerSearch } from '@/hooks/usePlayerSearch';
+import { usePopup } from '@/contexts/PopupContext';
+import { Player } from '@/services/playerService';
+import { getPlayerRank } from '@/utils/rankUtils';
 
 interface NavbarProps {
   selectedMode: string;
@@ -17,10 +21,12 @@ interface NavbarProps {
 }
 
 export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const isMobile = useIsMobile();
+  const { query, setQuery, results, isLoading, error } = usePlayerSearch();
+  const { openPopup } = usePopup();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -31,11 +37,59 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    // Show results when we have a query and results
+    if (query && query.length >= 2) {
+      setShowSearchResults(true);
+    } else {
+      setShowSearchResults(false);
+    }
+  }, [query, results]);
+
+  useEffect(() => {
+    // Hide results when clicking outside
+    const handleClickOutside = () => {
+      setShowSearchResults(false);
+    };
+    
+    if (showSearchResults) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showSearchResults]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
-    // Future implementation will search for players
+    // Search is handled by usePlayerSearch hook automatically
+  };
+
+  const handlePlayerClick = (player: Player) => {
+    const rankInfo = getPlayerRank(player.global_points || 0);
+    
+    const tierAssignments = (player.tierAssignments || []).map(assignment => ({
+      gamemode: assignment.gamemode,
+      tier: assignment.tier,
+      score: assignment.score
+    }));
+    
+    openPopup({
+      player,
+      tierAssignments,
+      combatRank: {
+        title: rankInfo.title,
+        points: player.global_points || 0,
+        color: rankInfo.color,
+        effectType: 'general',
+        rankNumber: player.overall_rank || 1,
+        borderColor: rankInfo.borderColor
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear search and hide results
+    setQuery('');
+    setShowSearchResults(false);
   };
   
   const toggleMobileMenu = () => {
@@ -103,22 +157,78 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
               </div>
             ) : (
               <div className="hidden md:flex items-center space-x-6">
-                <motion.form 
-                  onSubmit={handleSearch} 
+                <motion.div 
                   className="relative"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <Input
-                    type="text"
-                    placeholder="Search player..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-10"
-                  />
-                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
-                </motion.form>
+                  <form onSubmit={handleSearch} className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search player..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-48 lg:w-56 h-10"
+                    />
+                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+                    
+                    {/* Search Results Dropdown */}
+                    <AnimatePresence>
+                      {showSearchResults && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-dark-surface/95 backdrop-blur-xl border border-white/20 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto"
+                        >
+                          {isLoading && (
+                            <div className="p-3 text-center text-white/60">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/40 mx-auto"></div>
+                            </div>
+                          )}
+                          
+                          {error && (
+                            <div className="p-3 text-center text-red-400 text-sm">
+                              Error: {error}
+                            </div>
+                          )}
+                          
+                          {!isLoading && !error && results.length === 0 && query && (
+                            <div className="p-3 text-center text-white/60 text-sm">
+                              No players found for "{query}"
+                            </div>
+                          )}
+                          
+                          {!isLoading && !error && results.length > 0 && (
+                            <div className="py-1">
+                              {results.slice(0, 5).map((player) => (
+                                <button
+                                  key={player.id}
+                                  onClick={() => handlePlayerClick(player)}
+                                  className="w-full p-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3"
+                                >
+                                  <User size={16} className="text-white/60" />
+                                  <div className="flex-1">
+                                    <div className="text-white font-medium">{player.ign}</div>
+                                    {player.java_username && (
+                                      <div className="text-white/60 text-xs">Java: {player.java_username}</div>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-white/80 text-sm">#{player.overall_rank || 'N/A'}</div>
+                                    <div className="text-white/60 text-xs">{player.global_points || 0} pts</div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </form>
+                </motion.div>
                 
                 <motion.a 
                   href="https://youtube.com" 
@@ -147,17 +257,73 @@ export function Navbar({ selectedMode, onSelectMode, navigate }: NavbarProps) {
 
           {/* Search bar for mobile */}
           {isMobile && (
-            <div className="py-2 border-t border-white/10">
-              <form onSubmit={handleSearch} className="relative">
-                <Input
-                  type="text"
-                  placeholder="Search player..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-full h-10"
-                />
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
-              </form>
+            <div className="py-2 border-t border-white/10" onClick={(e) => e.stopPropagation()}>
+              <div className="relative">
+                <form onSubmit={handleSearch} className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search player..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="pl-9 pr-3 py-2 bg-dark-surface/60 border-white/10 focus:border-white/30 rounded-lg text-white/80 placeholder:text-white/40 w-full h-10"
+                  />
+                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+                </form>
+                
+                {/* Mobile Search Results */}
+                <AnimatePresence>
+                  {showSearchResults && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-dark-surface/95 backdrop-blur-xl border border-white/20 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto"
+                    >
+                      {isLoading && (
+                        <div className="p-3 text-center text-white/60">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/40 mx-auto"></div>
+                        </div>
+                      )}
+                      
+                      {error && (
+                        <div className="p-3 text-center text-red-400 text-sm">
+                          Error: {error}
+                        </div>
+                      )}
+                      
+                      {!isLoading && !error && results.length === 0 && query && (
+                        <div className="p-3 text-center text-white/60 text-sm">
+                          No players found for "{query}"
+                        </div>
+                      )}
+                      
+                      {!isLoading && !error && results.length > 0 && (
+                        <div className="py-1">
+                          {results.slice(0, 5).map((player) => (
+                            <button
+                              key={player.id}
+                              onClick={() => handlePlayerClick(player)}
+                              className="w-full p-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3"
+                            >
+                              <User size={16} className="text-white/60" />
+                              <div className="flex-1">
+                                <div className="text-white font-medium">{player.ign}</div>
+                                {player.java_username && (
+                                  <div className="text-white/60 text-xs">Java: {player.java_username}</div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-white/80 text-sm">#{player.overall_rank || 'N/A'}</div>
+                                <div className="text-white/60 text-xs">{player.global_points || 0} pts</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           )}
 
