@@ -1,8 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, FileText, Clock, Bot, AlertCircle, RefreshCw, Sparkles, User } from 'lucide-react';
+import { MessageSquare, Send, X, FileText, Bot, AlertCircle, RefreshCw, Sparkles, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { knowledgeBaseService } from '@/services/knowledgeBaseService';
 
 interface ChatWidgetProps {
@@ -21,7 +23,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [timeUntilClear, setTimeUntilClear] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [hasKnowledgeBase, setHasKnowledgeBase] = useState(false);
   const [kbInfo, setKbInfo] = useState<{ filename: string; uploadDate: Date } | null>(null);
@@ -55,16 +56,18 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   }, [isOpen]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeUntilClear(knowledgeBaseService.getTimeUntilClear());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Clear conversation when user leaves the site
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      knowledgeBaseService.clearConversation();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) {
@@ -97,12 +100,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -189,10 +186,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                     <p className="text-xs text-white/70">Document loaded</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 bg-black/30 px-3 py-2 rounded-full">
-                  <Clock className="w-4 h-4 text-orange-300" />
-                  <span className="text-sm font-mono text-orange-200">{formatTime(timeUntilClear)}</span>
-                </div>
               </motion.div>
             )}
 
@@ -208,97 +201,101 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
               </motion.div>
             )}
 
-            {/* Chat Messages */}
-            <div className="relative flex-1 overflow-y-auto px-6 py-6 space-y-6">
-              {messages.length === 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center py-12"
-                >
-                  <motion.div 
-                    className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    <Bot className="w-10 h-10 text-white" />
-                  </motion.div>
-                  <h4 className="text-xl font-bold text-white mb-3">Welcome! 👋</h4>
-                  {!hasKnowledgeBase ? (
-                    <div className="space-y-4">
-                      <p className="text-red-300 text-sm">📄 Upload a PDF or TXT file in Admin Tools to get started!</p>
-                      <Button 
-                        onClick={refreshKnowledgeBaseStatus}
-                        size="sm" 
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 px-6 py-2 rounded-full font-semibold"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Check Again
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="text-green-300 text-sm">✨ Ready to chat about your document!</p>
-                  )}
-                </motion.div>
-              )}
-              
-              {messages.map((message, index) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`flex items-start space-x-3 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === 'user' 
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
-                        : 'bg-gradient-to-r from-gray-600 to-gray-700'
-                    }`}>
-                      {message.role === 'user' ? (
-                        <User className="w-4 h-4 text-white" />
-                      ) : (
-                        <Bot className="w-4 h-4 text-white" />
-                      )}
-                    </div>
-                    <div
-                      className={`p-4 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                          : 'bg-white/10 text-white border border-white/20'
-                      }`}
+            {/* Chat Messages with Scrolling */}
+            <div className="relative flex-1 overflow-hidden">
+              <ScrollArea className="h-full px-6 py-6">
+                <div className="space-y-6">
+                  {messages.length === 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-center py-12"
                     >
-                      <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
-                      <div className="text-xs opacity-70 mt-3 text-right">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <motion.div 
+                        className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      >
+                        <Bot className="w-10 h-10 text-white" />
+                      </motion.div>
+                      <h4 className="text-xl font-bold text-white mb-3">Welcome! 👋</h4>
+                      {!hasKnowledgeBase ? (
+                        <div className="space-y-4">
+                          <p className="text-red-300 text-sm">📄 Upload a PDF or TXT file in Admin Tools to get started!</p>
+                          <Button 
+                            onClick={refreshKnowledgeBaseStatus}
+                            size="sm" 
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 px-6 py-2 rounded-full font-semibold"
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Check Again
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-green-300 text-sm">✨ Ready to chat about your document!</p>
+                      )}
+                    </motion.div>
+                  )}
+                  
+                  {messages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`flex items-start space-x-3 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          message.role === 'user' 
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
+                            : 'bg-gradient-to-r from-gray-600 to-gray-700'
+                        }`}>
+                          {message.role === 'user' ? (
+                            <User className="w-4 h-4 text-white" />
+                          ) : (
+                            <Bot className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                        <div
+                          className={`p-4 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${
+                            message.role === 'user'
+                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                              : 'bg-white/10 text-white border border-white/20'
+                          }`}
+                        >
+                          <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                          <div className="text-xs opacity-70 mt-3 text-right">
+                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-              
-              {isLoading && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex justify-start"
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-gray-600 to-gray-700 flex items-center justify-center">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="bg-white/10 border border-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-100" />
-                        <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-200" />
+                    </motion.div>
+                  ))}
+                  
+                  {isLoading && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex justify-start"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-gray-600 to-gray-700 flex items-center justify-center">
+                          <Bot className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="bg-white/10 border border-white/20 p-4 rounded-2xl backdrop-blur-sm">
+                          <div className="flex space-x-2">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-100" />
+                            <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-200" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-              <div ref={messagesEndRef} />
+                    </motion.div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
             </div>
 
             {/* Input Area */}

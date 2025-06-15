@@ -16,10 +16,8 @@ class KnowledgeBaseService {
   private baseUrl = 'https://openrouter.ai/api/v1';
   private knowledgeBase: KnowledgeBase | null = null;
   private chatHistory: ChatMessage[] = [];
-  private sessionStartTime: Date = new Date();
 
   constructor() {
-    this.startSessionTimer();
     // Try to restore knowledge base from localStorage on initialization
     this.restoreKnowledgeBase();
   }
@@ -53,13 +51,6 @@ class KnowledgeBaseService {
     } catch (error) {
       console.error('Error saving knowledge base:', error);
     }
-  }
-
-  private startSessionTimer() {
-    // Clear conversation every 10 minutes
-    setInterval(() => {
-      this.clearConversation();
-    }, 10 * 60 * 1000);
   }
 
   async uploadPDF(file: File): Promise<void> {
@@ -316,7 +307,6 @@ Instructions:
 
   clearConversation(): void {
     this.chatHistory = [];
-    this.sessionStartTime = new Date();
     console.log('Conversation cleared - starting fresh! 💕');
   }
 
@@ -336,12 +326,6 @@ Instructions:
       filename: this.knowledgeBase.filename,
       uploadDate: this.knowledgeBase.uploadDate
     };
-  }
-
-  getTimeUntilClear(): number {
-    const elapsed = Date.now() - this.sessionStartTime.getTime();
-    const remaining = (10 * 60 * 1000) - elapsed;
-    return Math.max(0, remaining);
   }
 }
 
