@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, Users } from 'lucide-react';
@@ -12,6 +12,8 @@ interface WelcomePopupProps {
 }
 
 const WelcomePopup: React.FC<WelcomePopupProps> = ({ isOpen, onClose, visitorNumber }) => {
+  console.log('WelcomePopup rendering with visitor number:', visitorNumber);
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md w-[95vw] mx-auto bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 border border-purple-500/30 backdrop-blur-lg">
@@ -41,7 +43,7 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({ isOpen, onClose, visitorNum
           {/* Welcome message */}
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-white mb-2">
-              👋 Welcome to <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">MCBE Tiers</span>, dear.
+              👋 Welcome to <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">MCBE Tiers</span>!
             </h2>
             
             <p className="text-gray-300 text-sm leading-relaxed">
@@ -50,12 +52,17 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({ isOpen, onClose, visitorNum
               <span className="text-blue-400 font-semibold">Swaify</span>.
             </p>
 
-            {/* Visitor counter */}
-            <div className="flex items-center justify-center space-x-2 bg-white/5 rounded-lg p-3 border border-white/10">
-              <Users className="h-5 w-5 text-green-400" />
-              <span className="text-white font-medium">
-                🎉 You are visitor <span className="text-green-400 font-bold">#{visitorNumber.toLocaleString()}</span> to our site.
-              </span>
+            {/* Visitor counter - Enhanced display */}
+            <div className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-lg p-4 border border-green-400/20">
+              <Users className="h-6 w-6 text-green-400 animate-bounce" />
+              <div className="text-center">
+                <div className="text-white font-medium text-lg">
+                  🎉 You are visitor <span className="text-green-400 font-bold text-xl">#{visitorNumber?.toLocaleString() || '1'}</span>
+                </div>
+                <div className="text-gray-400 text-xs mt-1">
+                  Thank you for visiting our site!
+                </div>
+              </div>
             </div>
           </div>
 
@@ -63,15 +70,17 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({ isOpen, onClose, visitorNum
           <div className="mt-6">
             <Button
               onClick={onClose}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 rounded-lg transition-all duration-200 transform hover:scale-105"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
             >
-              Explore MCBE Tiers
+              🚀 Explore MCBE Tiers
             </Button>
           </div>
 
           {/* Decorative elements */}
           <div className="absolute top-4 left-4 w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
           <div className="absolute bottom-4 right-4 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+          <div className="absolute top-8 right-8 w-1 h-1 bg-yellow-400 rounded-full animate-ping"></div>
+          <div className="absolute bottom-8 left-8 w-1 h-1 bg-pink-400 rounded-full animate-pulse"></div>
         </div>
       </DialogContent>
     </Dialog>
