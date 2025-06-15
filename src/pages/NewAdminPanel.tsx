@@ -9,7 +9,6 @@ import DatabaseTools from '@/components/admin/DatabaseTools';
 import StaffManagement from '@/components/admin/StaffManagement';
 import AdminNavigation, { AdminTab } from '@/components/admin/AdminNavigation';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { 
   Shield, 
   LogOut, 
@@ -130,20 +129,20 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
         <div className="absolute bottom-1/4 right-1/4 w-48 h-48 md:w-64 md:h-64 bg-blue-600/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 p-2 md:p-4 lg:p-6">
+      <div className="relative z-10 p-3 md:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <header className="mb-3 md:mb-6">
+          <header className="mb-4 md:mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 md:space-x-3">
                 <div className="p-1.5 md:p-2 bg-gradient-to-br from-purple-600 to-blue-600 rounded-md md:rounded-lg">
                   <Shield className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-base md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+                  <h1 className="text-lg md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
                     Admin Dashboard
                   </h1>
-                  <p className="text-gray-400 text-xs md:text-sm hidden md:block">
+                  <p className="text-gray-400 text-xs md:text-sm">
                     Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
                   </p>
                 </div>
@@ -156,7 +155,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     variant="ghost" 
                     size="sm"
-                    className="text-white/70 hover:text-white p-1.5 md:p-2"
+                    className="text-white/70 hover:text-white p-1.5"
                   >
                     {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                   </Button>
@@ -193,9 +192,9 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
             </div>
           </header>
 
-          <main className="space-y-3 md:space-y-4">
+          <main className="space-y-4">
             {/* Navigation */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h2 className="text-sm md:text-lg font-bold text-white text-center">Administrative Controls</h2>
               
               <AdminNavigation
@@ -238,7 +237,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
             
             {/* Content Area */}
             <div className="relative">
-              <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl p-2 md:p-4 lg:p-6 shadow-2xl overflow-x-auto">
+              <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl p-3 md:p-6 shadow-2xl overflow-x-auto">
                 {renderContent()}
               </div>
             </div>

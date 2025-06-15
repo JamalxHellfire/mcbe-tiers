@@ -67,7 +67,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
       title: "Management",
       icon: Shield,
       tabs: [
-        { id: 'users' as AdminTab, label: 'Users & Players', icon: UserCheck, description: 'Unified user moderation and player management' },
+        { id: 'users' as AdminTab, label: 'Users & Players', icon: UserCheck, description: 'Unified user and player management' },
         { id: 'applications' as AdminTab, label: 'Staff Apps', icon: UserCog, description: 'Staff applications and members' }
       ]
     },
