@@ -159,15 +159,17 @@ const CountryAnalytics = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-400 font-medium">Top Country</p>
-                <p className="text-xl font-bold text-white flex items-center space-x-2">
+                <div className="text-xl font-bold text-white flex items-center space-x-2">
                   {countryData[0] && (
                     <>
-                      <span className="text-2xl">{countryData[0].flag}</span>
+                      <span className="text-2xl" role="img" aria-label={`${countryData[0].country} flag`}>
+                        {countryData[0].flag}
+                      </span>
                       <span>{countryData[0].country}</span>
                     </>
                   )}
                   {!countryData[0] && <span>N/A</span>}
-                </p>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -198,8 +200,19 @@ const CountryAnalytics = () => {
                       #{index + 1}
                     </div>
                     <div className="flex items-center space-x-3">
-                      <div className="text-3xl w-12 h-8 flex items-center justify-center bg-gray-700/30 rounded-lg border border-gray-600/40">
-                        {country.flag}
+                      <div className="w-12 h-10 flex items-center justify-center bg-gray-700/30 rounded-lg border border-gray-600/40">
+                        <span 
+                          className="text-2xl" 
+                          role="img" 
+                          aria-label={`${country.country} flag`}
+                          style={{ 
+                            fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
+                            fontSize: '24px',
+                            lineHeight: '1'
+                          }}
+                        >
+                          {country.flag || '🌍'}
+                        </span>
                       </div>
                       <div>
                         <h4 className="text-white font-semibold">{country.country}</h4>
