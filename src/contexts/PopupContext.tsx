@@ -44,8 +44,7 @@ export function PopupProvider({ children }: { children: React.ReactNode }) {
   const closePopup = () => {
     console.log('PopupContext: Closing popup');
     setShowPopup(false);
-    // Don't immediately clear popupData to allow for exit animations
-    setTimeout(() => setPopupData(null), 300);
+    setPopupData(null);
   };
 
   return (

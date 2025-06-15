@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trophy, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
@@ -118,22 +118,14 @@ export function ResultPopup() {
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [showPopup, closePopup]);
-  
-  // Click outside to close
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (e.target === e.currentTarget) {
-      closePopup();
+    if (showPopup) {
+      document.addEventListener('keydown', handleEscape);
     }
-  };
 
-  const handleCloseClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    closePopup();
-  };
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showPopup, closePopup]);
   
   if (!showPopup || !popupData) return null;
   
@@ -157,23 +149,29 @@ export function ResultPopup() {
       {showPopup && (
         <motion.div
           className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
-          style={{ zIndex: 9999 }}
+          style={{ zIndex: 50 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={handleOverlayClick}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closePopup();
+          }}
         >
           <motion.div 
             className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl w-full max-w-md border-2 ${regionStyling.borderColor} shadow-2xl overflow-hidden`}
             style={{
               boxShadow: `0 0 30px ${regionStyling.hexColor}40, 0 8px 32px rgba(0, 0, 0, 0.4)`,
-              zIndex: 10000
             }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             {/* Region-based gradient overlay */}
             <div className={`absolute inset-0 bg-gradient-to-br ${regionStyling.gradientFrom} ${regionStyling.gradientTo} opacity-50`}></div>
@@ -184,7 +182,11 @@ export function ResultPopup() {
               
               {/* Close button */}
               <button 
-                onClick={handleCloseClick}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  closePopup();
+                }}
                 className="absolute top-3 right-3 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                 aria-label="Close"
               >
