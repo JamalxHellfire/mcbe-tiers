@@ -9,6 +9,62 @@ import { GameMode } from '@/services/playerService';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Helper to get region styling with proper hex colors
+const getRegionStyling = (regionCode: string = 'NA') => {
+  const regions: Record<string, { 
+    name: string, 
+    borderColor: string, 
+    gradientFrom: string, 
+    gradientTo: string,
+    hexColor: string
+  }> = {
+    'NA': { 
+      name: 'North America', 
+      borderColor: '#10b981',
+      gradientFrom: '#10b981',
+      gradientTo: '#059669',
+      hexColor: '#10b981'
+    },
+    'EU': { 
+      name: 'Europe', 
+      borderColor: '#8b5cf6',
+      gradientFrom: '#8b5cf6',
+      gradientTo: '#7c3aed',
+      hexColor: '#8b5cf6'
+    },
+    'ASIA': { 
+      name: 'Asia', 
+      borderColor: '#ef4444',
+      gradientFrom: '#ef4444',
+      gradientTo: '#dc2626',
+      hexColor: '#ef4444'
+    },
+    'SA': { 
+      name: 'South America', 
+      borderColor: '#f97316',
+      gradientFrom: '#f97316',
+      gradientTo: '#ea580c',
+      hexColor: '#f97316'
+    },
+    'AF': { 
+      name: 'Africa', 
+      borderColor: '#ec4899',
+      gradientFrom: '#ec4899',
+      gradientTo: '#db2777',
+      hexColor: '#ec4899'
+    },
+    'OCE': { 
+      name: 'Oceania', 
+      borderColor: '#06b6d4',
+      gradientFrom: '#06b6d4',
+      gradientTo: '#0891b2',
+      hexColor: '#06b6d4'
+    }
+  };
+  
+  return regions[regionCode] || regions['NA'];
+};
+
 export function ModernResultPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
   const isMobile = useIsMobile();
@@ -17,6 +73,8 @@ export function ModernResultPopup() {
 
   const playerPoints = popupData.player.global_points || 390;
   const position = popupData.player.overall_rank || 1;
+  const region = popupData.player.region || 'NA';
+  const regionStyling = getRegionStyling(region);
 
   const orderedGamemodes: GameMode[] = [
     'Mace', 'Sword', 'Crystal', 'Axe',
@@ -84,8 +142,8 @@ export function ModernResultPopup() {
             }`}
             style={{
               background: 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%)',
-              border: '2px solid rgba(255, 224, 102, 0.6)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 224, 102, 0.3)'
+              border: `2px solid ${regionStyling.borderColor}`,
+              boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px ${regionStyling.hexColor}60`
             }}
             initial={{ scale: 0.8, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -113,8 +171,9 @@ export function ModernResultPopup() {
                     isMobile ? 'w-20 h-20' : 'w-18 h-18'
                   }`}
                   style={{
-                    background: 'linear-gradient(135deg, #ffe066 0%, #fff4a3 100%)',
-                    border: '3px solid rgba(255, 224, 102, 0.8)'
+                    background: `linear-gradient(135deg, ${regionStyling.gradientFrom} 0%, ${regionStyling.gradientTo} 100%)`,
+                    border: `3px solid ${regionStyling.borderColor}`,
+                    boxShadow: `0 0 20px ${regionStyling.hexColor}40`
                   }}
                 >
                   <Avatar className="w-full h-full">
@@ -138,38 +197,58 @@ export function ModernResultPopup() {
                 }`}>
                   {popupData.player.ign}
                 </div>
-                <div className={`inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-yellow-300 to-yellow-400 border border-yellow-200/60 shadow-lg ${
-                  isMobile ? 'px-2.5 py-1' : 'px-3 py-1.5'
-                }`}>
-                  <span className={`font-semibold text-yellow-800 tracking-wide ${
+                <div 
+                  className={`inline-flex items-center gap-2 rounded-xl border shadow-lg ${
+                    isMobile ? 'px-2.5 py-1' : 'px-3 py-1.5'
+                  }`}
+                  style={{
+                    background: `linear-gradient(135deg, ${regionStyling.gradientFrom}80 0%, ${regionStyling.gradientTo}60 100%)`,
+                    borderColor: regionStyling.borderColor,
+                    boxShadow: `0 0 15px ${regionStyling.hexColor}30`
+                  }}
+                >
+                  <span className={`font-semibold text-white tracking-wide ${
                     isMobile ? 'text-xs' : 'text-sm'
                   }`}>
                     {popupData.combatRank?.title || "Combat Master"}
                   </span>
                 </div>
-                <div className={`flex items-center gap-2 text-yellow-100/90 mt-2 ${
+                <div className={`flex items-center gap-2 text-white/90 mt-2 ${
                   isMobile ? 'text-xs flex-wrap justify-center' : 'text-sm gap-3'
                 }`}>
-                  <div className={`rounded-lg bg-black/20 border border-yellow-200/30 ${
-                    isMobile ? 'px-1.5 py-0.5' : 'px-2 py-1'
-                  }`}>
+                  <div 
+                    className={`rounded-lg bg-black/20 border ${
+                      isMobile ? 'px-1.5 py-0.5' : 'px-2 py-1'
+                    }`}
+                    style={{
+                      borderColor: `${regionStyling.borderColor}60`
+                    }}
+                  >
                     {popupData.player.region ?? 'NA'}
                   </div>
-                  <div className="text-yellow-200">#{position} overall</div>
-                  <div className="text-yellow-200">
+                  <div className="text-white/90">#{position} overall</div>
+                  <div className="text-white/90">
                     <span className="font-bold">{playerPoints}</span> pts
                   </div>
                 </div>
               </div>
               
               {/* Divider */}
-              <div className="w-full my-3 h-px bg-gradient-to-r from-transparent via-yellow-200/50 to-transparent" />
+              <div 
+                className="w-full my-3 h-px"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${regionStyling.borderColor}80, transparent)`
+                }}
+              />
               
               {/* Tiers */}
               <div className="w-full">
-                <div className={`uppercase tracking-widest font-bold text-center text-yellow-300 mb-3 ${
-                  isMobile ? 'text-xs' : 'text-xs'
-                }`}>
+                <div 
+                  className={`uppercase tracking-widest font-bold text-center mb-3 ${
+                    isMobile ? 'text-xs' : 'text-xs'
+                  }`}
+                  style={{ color: regionStyling.borderColor }}
+                >
                   Gamemode Tiers
                 </div>
                 <div className={`grid gap-2 ${
@@ -216,9 +295,13 @@ export function ModernResultPopup() {
               </div>
               
               {/* Footer */}
-              <div className={`w-full text-center text-yellow-50/70 pt-3 border-t border-yellow-100/20 mt-4 ${
+              <div className={`w-full text-center text-white/70 pt-3 border-t mt-4 ${
                 isMobile ? 'text-xs' : 'text-xs'
-              }`}>
+              }`}
+              style={{
+                borderColor: `${regionStyling.borderColor}40`
+              }}
+              >
                 <span>Tap outside to close</span>
               </div>
             </div>
