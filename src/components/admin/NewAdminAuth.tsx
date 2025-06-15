@@ -36,6 +36,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
     setIsLoading(true);
     try {
+      console.info("[ADMIN DEBUG] Submitting owner password to login...");
       const result = await newAdminService.authenticateAdmin(password);
 
       if (result.success) {
@@ -46,26 +47,29 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             title: "Login Successful",
             description: `Welcome, ${result.role}!`
           });
-          // Robust: full hard reload, then call onAuthSuccess
+          // Key: run onAuthSuccess BEFORE reload for instant state switch
+          onAuthSuccess(result.role);
           setTimeout(() => {
-            onAuthSuccess(result.role);
-            window.location.reload(); // Forces all state, including memory/session/caches, to reset
-          }, 220); // Short delay for UI feedback
+            window.location.reload();
+          }, 120); // Less delay for snappier feedback
           return;
         }
       } else {
+        // If login failed but debug info present, show trace
         toast({
           title: "Login Failed",
-          description: (result.error ?? "Invalid password") + (typeof result.error === "string" && result.error.includes("Debug info") ? " (Debug info in console)" : ""),
+          description: typeof result.error === "string" && result.error.includes("[ADMIN DEBUG]")
+            ? "Admin panel access failed after owner login.\nSee detail in browser developer console."
+            : (result.error ?? "Invalid password"),
           variant: "destructive"
         });
-        if (result.error && result.error.includes("Debug info")) {
-          // Show debug in dev console
-          console.error("[ADMIN LOGIN DEBUG] " + result.error);
+        if (result.error) {
+          // Console prints ALL debug details for full trace (ownerResult, DB access check)
+          console.error("[ADMIN DEBUG] Login error/detail:", result.error);
         }
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[ADMIN DEBUG] Login error (frontend):', error);
       toast({
         title: "Login Error",
         description: "An error occurred during login",

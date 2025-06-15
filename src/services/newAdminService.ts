@@ -72,17 +72,18 @@ export const clearAllAuthState = (): void => {
 };
 
 // Check if user has existing access based on IP
-export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string }> => {
+export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: string, ip?: string }> => {
   try {
+    // DEBUG: Announce DB access check
+    console.info("[ADMIN DEBUG] Checking admin access via database...");
     const { data, error } = await supabase.rpc('check_admin_access');
-    
     if (error) throw error;
-    
+    console.info("[ADMIN DEBUG] Database access check result:", data);
     if (data && data.length > 0) {
       const result = data[0];
-      return { hasAccess: result.has_access, role: result.user_role };
+      console.info("[ADMIN DEBUG] Admin access result:", result);
+      return { hasAccess: result.has_access, role: result.user_role, ip: undefined }; // IP not exposed directly from this function
     }
-    
     return { hasAccess: false };
   } catch (error) {
     console.error('Admin access check error:', error);
@@ -90,28 +91,28 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
   }
 };
 
-// Helper to robustly poll checkAdminAccess multiple times
-async function robustCheckAdminAccess(
-  maxRetries = 8,
-  baseDelayMs = 80
-): Promise<{ hasAccess: boolean; role?: string }> {
+// Helper: robustly poll checkAdminAccess up to 16 times (over 2.5s) for greater reliability
+async function robustCheckAdminAccess(maxRetries = 16, baseDelayMs = 80): Promise<{ hasAccess: boolean; role?: string }> {
+  let lastResult = { hasAccess: false };
   for (let i = 0; i < maxRetries; i++) {
     const res = await checkAdminAccess();
+    lastResult = res;
     if (res.hasAccess && res.role) return res;
-
-    // Exponential backoff (min 80ms, max 1500ms)
-    await new Promise((r) => setTimeout(r, Math.min(baseDelayMs * (2 ** i), 1500)));
+    // Exponential backoff (min 80ms, up to 1800ms per retry, max total delay ~2.5s)
+    await new Promise((r) => setTimeout(r, Math.min(baseDelayMs * (2 ** i), 1800)));
   }
-  return { hasAccess: false };
+  // Log failure trace
+  console.warn("[ADMIN DEBUG] Gave up on robustCheckAdminAccess after", maxRetries, "tries. Last result:", lastResult);
+  return lastResult;
 }
 
-// Authenticate with password (now with robust check)
+// Authenticate with password (now with robust check, full debug)
 export const authenticateAdmin = async (password: string): Promise<AdminAuthResult> => {
   try {
-    // Edge function for owner -- real IP logic now
-    // Always clear state before login attempt to avoid limbo
     clearAllAuthState();
 
+    // Announce login attempt
+    console.info("[ADMIN DEBUG] authenticating owner via edge...");
     const response = await fetch(
       "https://gpofewohvpggmmhgaqxj.functions.supabase.co/admin_owner_login",
       {
@@ -122,24 +123,25 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
         body: JSON.stringify({ password }),
       }
     );
-
     const ownerResult = await response.json();
+    console.info("[ADMIN DEBUG] ownerResult from edge:", ownerResult);
 
     if (ownerResult?.success && ownerResult?.role === "owner") {
-      // Poll access up to 1.5s (8 retries)
+      // Robust: wait up to 2.5s for DB upsert to complete, polling each time
       const check = await robustCheckAdminAccess();
       if (check.hasAccess && check.role === "owner") {
-        // Optionally set token for session compatibility
         localStorage.setItem('admin_role', 'owner');
+        // Optionally store the IP for further debugging
+        if (ownerResult?.ip_address) localStorage.setItem('admin_ip', ownerResult.ip_address);
         return { success: true, role: "owner" };
       } else {
+        // Return both edge and DB info for user debug
         return {
           success: false,
           error:
-            "Owner login succeeded, but admin access was still denied after retry. Debug info: " +
-            JSON.stringify(ownerResult) +
-            " Access check: " +
-            JSON.stringify(check),
+            "[ADMIN DEBUG] Owner login succeeded in edge function, but admin access was still denied after all DB checks.\n" +
+            "Edge function ownerResult: " + JSON.stringify(ownerResult, null, 2) +
+            "\nLast DB access check: " + JSON.stringify(check, null, 2),
         };
       }
     }
@@ -148,18 +150,15 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
     const { data: configs, error } = await supabase
       .from('auth_config')
       .select('config_key, config_value');
-
     if (error) throw error;
-
     const generalPassword = configs?.find(c => c.config_key === 'general_password')?.config_value;
-
     if (password === generalPassword) {
       return { success: true, needsOnboarding: true };
     } else {
       return { success: false, error: 'Invalid password' };
     }
   } catch (error: any) {
-    console.error('Admin authentication error:', error);
+    console.error('[ADMIN DEBUG] Admin authentication error:', error);
     return { success: false, error: error.message };
   }
 };
