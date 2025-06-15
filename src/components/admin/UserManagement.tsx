@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,16 +66,13 @@ const UserManagement = () => {
     }
   };
 
-  const handleToggleBan = async (playerId: string, currentStatus: boolean) => {
+  const handleToggleBan = async (playerId: string, currentBanned: boolean) => {
     setIsLoading(true);
     try {
-      // Since 'banned' doesn't exist on Player type, we'll use a custom field or handle it differently
-      // For now, we'll update a notes field or handle this as a separate action
       const { error } = await supabase
         .from('players')
         .update({ 
-          // Using notes field to track ban status since banned field doesn't exist
-          notes: currentStatus ? '' : 'BANNED'
+          banned: !currentBanned
         })
         .eq('id', playerId);
 
@@ -82,13 +80,13 @@ const UserManagement = () => {
 
       await fetchPlayers();
       toast({
-        title: currentStatus ? "Player Unbanned" : "Player Banned",
-        description: `Player has been ${currentStatus ? 'unbanned' : 'banned'} successfully.`,
+        title: currentBanned ? "Player Unbanned" : "Player Banned",
+        description: `Player has been ${currentBanned ? 'unbanned' : 'banned'} successfully.`,
       });
     } catch (error: any) {
       toast({
         title: "Ban Toggle Failed",
-        description: `Failed to ${currentStatus ? 'unban' : 'ban'} player: ${error.message}`,
+        description: `Failed to ${currentBanned ? 'unban' : 'ban'} player: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -97,7 +95,7 @@ const UserManagement = () => {
   };
 
   const filteredPlayers = players.filter(player =>
-    player.username?.toLowerCase().includes(searchTerm.toLowerCase())
+    player.ign?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -144,16 +142,16 @@ const UserManagement = () => {
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                   <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs font-bold">
-                      {player.username?.charAt(0)?.toUpperCase() || 'U'}
+                      {player.ign?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium text-sm truncate">
-                      {player.username || 'Unknown Player'}
+                      {player.ign || 'Unknown Player'}
                     </p>
                     <p className="text-gray-400 text-xs">
                       Rank: #{player.overall_rank || 'Unranked'}
-                      {player.notes === 'BANNED' && (
+                      {player.banned && (
                         <span className="ml-2 text-red-400 font-medium">BANNED</span>
                       )}
                     </p>
@@ -162,16 +160,16 @@ const UserManagement = () => {
                 
                 <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
                   <Button
-                    onClick={() => handleToggleBan(player.id, player.notes === 'BANNED')}
+                    onClick={() => handleToggleBan(player.id, player.banned)}
                     disabled={isLoading}
                     className={`admin-button ${
-                      player.notes === 'BANNED'
+                      player.banned
                         ? 'bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30'
                         : 'bg-yellow-600/20 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-600/30'
                     }`}
                     size="sm"
                   >
-                    {player.notes === 'BANNED' ? (
+                    {player.banned ? (
                       <Shield className="h-3 w-3 md:h-4 md:w-4" />
                     ) : (
                       <ShieldOff className="h-3 w-3 md:h-4 md:w-4" />

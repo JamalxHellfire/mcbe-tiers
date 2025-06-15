@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 
 const WELCOME_POPUP_KEY = 'mcbe_tiers_welcome_shown';
 const VISITOR_COUNT_KEY = 'mcbe_tiers_visitor_count';
+const GLOBAL_VISITOR_COUNT_KEY = 'mcbe_tiers_global_visitors';
 
 export const useWelcomePopup = () => {
   const [showWelcome, setShowWelcome] = useState(false);
@@ -14,16 +15,28 @@ export const useWelcomePopup = () => {
     
     if (!hasShownWelcome) {
       // Get or generate visitor number
-      let currentVisitorCount = localStorage.getItem(VISITOR_COUNT_KEY);
+      let currentVisitorNumber = localStorage.getItem(VISITOR_COUNT_KEY);
       
-      if (!currentVisitorCount) {
-        // Generate a random visitor number between 10000 and 99999 for new visitors
-        const randomVisitorNumber = Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
-        currentVisitorCount = randomVisitorNumber.toString();
-        localStorage.setItem(VISITOR_COUNT_KEY, currentVisitorCount);
+      if (!currentVisitorNumber) {
+        // Get global visitor count and increment it
+        let globalCount = parseInt(localStorage.getItem(GLOBAL_VISITOR_COUNT_KEY) || '0');
+        
+        // If this is the first visitor ever, start from a realistic number
+        if (globalCount === 0) {
+          globalCount = Math.floor(Math.random() * (15000 - 10000 + 1)) + 10000;
+        } else {
+          globalCount += 1;
+        }
+        
+        // Store the new global count
+        localStorage.setItem(GLOBAL_VISITOR_COUNT_KEY, globalCount.toString());
+        
+        // Set this user's visitor number
+        currentVisitorNumber = globalCount.toString();
+        localStorage.setItem(VISITOR_COUNT_KEY, currentVisitorNumber);
       }
       
-      setVisitorNumber(parseInt(currentVisitorCount));
+      setVisitorNumber(parseInt(currentVisitorNumber));
       
       // Show welcome popup after a brief delay for smooth loading
       const timer = setTimeout(() => {
