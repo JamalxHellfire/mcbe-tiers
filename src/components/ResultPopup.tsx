@@ -10,15 +10,57 @@ import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
 
-// Helper to get region full name and colors
-const getRegionInfo = (regionCode: string = 'NA') => {
-  const regions: Record<string, { name: string, cssClass: string }> = {
-    'NA': { name: 'North America', cssClass: 'region-na' },
-    'EU': { name: 'Europe', cssClass: 'region-eu' },
-    'ASIA': { name: 'Asia', cssClass: 'region-asia' },
-    'SA': { name: 'South America', cssClass: 'region-sa' },
-    'AF': { name: 'Africa', cssClass: 'region-af' },
-    'OCE': { name: 'Oceania', cssClass: 'region-oce' }
+// Helper to get region colors and styling
+const getRegionStyling = (regionCode: string = 'NA') => {
+  const regions: Record<string, { 
+    name: string, 
+    borderColor: string, 
+    gradientFrom: string, 
+    gradientTo: string,
+    glowColor: string 
+  }> = {
+    'NA': { 
+      name: 'North America', 
+      borderColor: 'border-green-500/80',
+      gradientFrom: 'from-green-500/20',
+      gradientTo: 'to-emerald-500/10',
+      glowColor: 'shadow-green-500/20'
+    },
+    'EU': { 
+      name: 'Europe', 
+      borderColor: 'border-purple-500/80',
+      gradientFrom: 'from-purple-500/20',
+      gradientTo: 'to-violet-500/10',
+      glowColor: 'shadow-purple-500/20'
+    },
+    'ASIA': { 
+      name: 'Asia', 
+      borderColor: 'border-red-500/80',
+      gradientFrom: 'from-red-500/20',
+      gradientTo: 'to-rose-500/10',
+      glowColor: 'shadow-red-500/20'
+    },
+    'SA': { 
+      name: 'South America', 
+      borderColor: 'border-orange-500/80',
+      gradientFrom: 'from-orange-500/20',
+      gradientTo: 'to-amber-500/10',
+      glowColor: 'shadow-orange-500/20'
+    },
+    'AF': { 
+      name: 'Africa', 
+      borderColor: 'border-fuchsia-500/80',
+      gradientFrom: 'from-fuchsia-500/20',
+      gradientTo: 'to-pink-500/10',
+      glowColor: 'shadow-fuchsia-500/20'
+    },
+    'OCE': { 
+      name: 'Oceania', 
+      borderColor: 'border-teal-500/80',
+      gradientFrom: 'from-teal-500/20',
+      gradientTo: 'to-cyan-500/10',
+      glowColor: 'shadow-teal-500/20'
+    }
   };
   
   return regions[regionCode] || regions['NA'];
@@ -67,9 +109,9 @@ export function ResultPopup() {
   
   if (!showPopup || !popupData) return null;
   
-  // Get region info for styling
+  // Get region styling
   const region = popupData.player.region || 'NA';
-  const regionInfo = getRegionInfo(region);
+  const regionStyling = getRegionStyling(region);
   const playerPoints = popupData.player.global_points || 0;
   const position = popupData.player.overall_rank || 1;
   
@@ -84,21 +126,21 @@ export function ResultPopup() {
     <AnimatePresence>
       {showPopup && (
         <motion.div
-          className="popup-overlay"
+          className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleOverlayClick}
         >
           <motion.div 
-            className="popup-container relative"
+            className={`relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl w-full max-w-md border-2 ${regionStyling.borderColor} ${regionStyling.glowColor} shadow-2xl overflow-hidden`}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             {/* Region-based gradient overlay */}
-            <div className={`region-gradient ${regionInfo.cssClass}`}></div>
+            <div className={`absolute inset-0 bg-gradient-to-br ${regionStyling.gradientFrom} ${regionStyling.gradientTo} opacity-50`}></div>
             
             {/* Header bar */}
             <div className="relative py-4 text-center border-b border-white/10 bg-black/30">
@@ -146,15 +188,12 @@ export function ResultPopup() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span 
-                            className="px-3 py-0.5 rounded-full text-xs font-medium"
-                            style={{ backgroundColor: `var(--region-color)` }}
-                          >
+                          <span className={`px-3 py-0.5 rounded-full text-xs font-medium border ${regionStyling.borderColor} bg-gradient-to-r ${regionStyling.gradientFrom} ${regionStyling.gradientTo}`}>
                             {region}
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{regionInfo.name}</p>
+                          <p>{regionStyling.name}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -190,7 +229,7 @@ export function ResultPopup() {
                 <h3 className="text-white/80 text-sm font-medium">Gamemode Rankings</h3>
               </div>
               
-              <div className="gamemode-grid">
+              <div className="grid grid-cols-3 gap-3">
                 {orderedGamemodes.map((mode, index) => {
                   const assignment = popupData.tierAssignments.find(a => a.gamemode === mode);
                   const tier = assignment?.tier || 'Not Ranked';
@@ -207,14 +246,14 @@ export function ResultPopup() {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex flex-col items-center p-3 bg-black/40 rounded-lg border border-white/10 hover:border-white/20 transition-all cursor-help">
+                            <div className={`flex flex-col items-center p-3 bg-black/40 rounded-lg border ${regionStyling.borderColor} hover:border-white/20 transition-all cursor-help`}>
                               <div className="mb-2">
-                                <GameModeIcon mode={mode.toLowerCase()} className="h-10 w-10" />
+                                <GameModeIcon mode={mode.toLowerCase()} className="h-8 w-8" />
                               </div>
                               <div className="text-center">
                                 {tier !== 'Not Ranked' ? (
                                   <div className="flex flex-col items-center">
-                                    <span className="text-white font-bold">{code}</span>
+                                    <span className="text-white font-bold text-sm">{code}</span>
                                     {label && <span className="text-xs text-white/60">{label}</span>}
                                   </div>
                                 ) : (

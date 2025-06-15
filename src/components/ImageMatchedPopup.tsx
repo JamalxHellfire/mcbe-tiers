@@ -7,6 +7,55 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 
+// Helper to get region styling
+const getRegionStyling = (regionCode: string = 'NA') => {
+  const regions: Record<string, { 
+    name: string, 
+    borderColor: string, 
+    gradientFrom: string, 
+    gradientTo: string
+  }> = {
+    'NA': { 
+      name: 'North America', 
+      borderColor: '#10b981',
+      gradientFrom: '#2a3441',
+      gradientTo: '#1e2530'
+    },
+    'EU': { 
+      name: 'Europe', 
+      borderColor: '#8b5cf6',
+      gradientFrom: '#2a3441',
+      gradientTo: '#1e2530'
+    },
+    'ASIA': { 
+      name: 'Asia', 
+      borderColor: '#ef4444',
+      gradientFrom: '#2a3441',
+      gradientTo: '#1e2530'
+    },
+    'SA': { 
+      name: 'South America', 
+      borderColor: '#f97316',
+      gradientFrom: '#2a3441',
+      gradientTo: '#1e2530'
+    },
+    'AF': { 
+      name: 'Africa', 
+      borderColor: '#ec4899',
+      gradientFrom: '#2a3441',
+      gradientTo: '#1e2530'
+    },
+    'OCE': { 
+      name: 'Oceania', 
+      borderColor: '#06b6d4',
+      gradientFrom: '#2a3441',
+      gradientTo: '#1e2530'
+    }
+  };
+  
+  return regions[regionCode] || regions['NA'];
+};
+
 export function ImageMatchedPopup() {
   const { popupData, showPopup, closePopup } = usePopup();
   
@@ -14,6 +63,8 @@ export function ImageMatchedPopup() {
 
   const playerPoints = popupData.player.global_points || 390;
   const position = popupData.player.overall_rank || 1;
+  const region = popupData.player.region || 'NA';
+  const regionStyling = getRegionStyling(region);
 
   // Exact gamemode order from image: 2 rows of 4
   const orderedGamemodes: GameMode[] = [
@@ -38,10 +89,11 @@ export function ImageMatchedPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div
-            className="relative w-full max-w-[320px] rounded-xl overflow-hidden"
+            className="relative w-full max-w-[320px] rounded-xl overflow-hidden border-2"
             style={{
-              background: 'linear-gradient(180deg, #2a3441 0%, #1e2530 100%)',
-              border: '1px solid #3a4553'
+              background: `linear-gradient(180deg, ${regionStyling.gradientFrom} 0%, ${regionStyling.gradientTo} 100%)`,
+              borderColor: regionStyling.borderColor,
+              boxShadow: `0 0 20px ${regionStyling.borderColor}40`
             }}
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -64,7 +116,7 @@ export function ImageMatchedPopup() {
                 <div className="relative w-16 h-16 mx-auto mb-3">
                   <div 
                     className="w-full h-full rounded-full border-3 overflow-hidden"
-                    style={{ borderColor: '#f59e0b' }}
+                    style={{ borderColor: regionStyling.borderColor }}
                   >
                     <Avatar className="w-full h-full">
                       <AvatarImage 
@@ -86,10 +138,10 @@ export function ImageMatchedPopup() {
 
                 {/* Combat Master Badge */}
                 <div 
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-2 text-xs"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-2 text-xs border"
                   style={{ 
-                    background: 'linear-gradient(90deg, #b45309 0%, #d97706 100%)',
-                    border: '1px solid #f59e0b'
+                    background: `linear-gradient(90deg, ${regionStyling.borderColor}60 0%, ${regionStyling.borderColor}40 100%)`,
+                    borderColor: regionStyling.borderColor
                   }}
                 >
                   <span className="w-2.5 h-2.5 text-yellow-200 text-xs">♦</span>
@@ -98,7 +150,7 @@ export function ImageMatchedPopup() {
 
                 {/* Region */}
                 <div className="text-slate-400 text-xs mb-2">
-                  North America
+                  {regionStyling.name}
                 </div>
 
                 {/* NameMC Link */}
@@ -116,11 +168,17 @@ export function ImageMatchedPopup() {
                   POSITION
                 </h4>
                 <div 
-                  className="rounded-lg p-2.5 flex items-center justify-between"
-                  style={{ background: 'linear-gradient(90deg, #b45309 0%, #d97706 100%)' }}
+                  className="rounded-lg p-2.5 flex items-center justify-between border"
+                  style={{ 
+                    background: `linear-gradient(90deg, ${regionStyling.borderColor}80 0%, ${regionStyling.borderColor}60 100%)`,
+                    borderColor: regionStyling.borderColor
+                  }}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 bg-orange-600 rounded-md flex items-center justify-center text-white font-black text-sm">
+                    <div 
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-white font-black text-sm"
+                      style={{ backgroundColor: regionStyling.borderColor }}
+                    >
                       {position}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -140,8 +198,11 @@ export function ImageMatchedPopup() {
                   TIERS
                 </h4>
                 <div 
-                  className="rounded-lg p-2.5"
-                  style={{ background: 'rgba(51, 65, 85, 0.6)' }}
+                  className="rounded-lg p-2.5 border"
+                  style={{ 
+                    background: 'rgba(51, 65, 85, 0.6)',
+                    borderColor: regionStyling.borderColor + '60'
+                  }}
                 >
                   <div className="grid grid-cols-4 gap-2.5">
                     {orderedGamemodes.map((mode) => {

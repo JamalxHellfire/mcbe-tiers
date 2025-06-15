@@ -10,15 +10,64 @@ import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { toDisplayGameMode } from '@/utils/gamemodeUtils';
 
-// Helper to get region full name and colors
-const getRegionInfo = (regionCode: string = 'NA') => {
-  const regions: Record<string, { name: string, color: string }> = {
-    'NA': { name: 'North America', color: '#3b82f6' },
-    'EU': { name: 'Europe', color: '#16a34a' },
-    'ASIA': { name: 'Asia', color: '#dc2626' },
-    'SA': { name: 'South America', color: '#ca8a04' },
-    'AF': { name: 'Africa', color: '#9333ea' },
-    'OCE': { name: 'Oceania', color: '#0891b2' }
+// Helper to get region styling with enhanced colors
+const getRegionStyling = (regionCode: string = 'NA') => {
+  const regions: Record<string, { 
+    name: string, 
+    borderColor: string, 
+    gradientFrom: string, 
+    gradientTo: string,
+    glowColor: string,
+    accentColor: string
+  }> = {
+    'NA': { 
+      name: 'North America', 
+      borderColor: 'border-green-400',
+      gradientFrom: 'from-green-500/30',
+      gradientTo: 'to-emerald-500/20',
+      glowColor: 'shadow-green-500/30',
+      accentColor: 'text-green-400'
+    },
+    'EU': { 
+      name: 'Europe', 
+      borderColor: 'border-purple-400',
+      gradientFrom: 'from-purple-500/30',
+      gradientTo: 'to-violet-500/20',
+      glowColor: 'shadow-purple-500/30',
+      accentColor: 'text-purple-400'
+    },
+    'ASIA': { 
+      name: 'Asia', 
+      borderColor: 'border-red-400',
+      gradientFrom: 'from-red-500/30',
+      gradientTo: 'to-rose-500/20',
+      glowColor: 'shadow-red-500/30',
+      accentColor: 'text-red-400'
+    },
+    'SA': { 
+      name: 'South America', 
+      borderColor: 'border-orange-400',
+      gradientFrom: 'from-orange-500/30',
+      gradientTo: 'to-amber-500/20',
+      glowColor: 'shadow-orange-500/30',
+      accentColor: 'text-orange-400'
+    },
+    'AF': { 
+      name: 'Africa', 
+      borderColor: 'border-fuchsia-400',
+      gradientFrom: 'from-fuchsia-500/30',
+      gradientTo: 'to-pink-500/20',
+      glowColor: 'shadow-fuchsia-500/30',
+      accentColor: 'text-fuchsia-400'
+    },
+    'OCE': { 
+      name: 'Oceania', 
+      borderColor: 'border-teal-400',
+      gradientFrom: 'from-teal-500/30',
+      gradientTo: 'to-cyan-500/20',
+      glowColor: 'shadow-teal-500/30',
+      accentColor: 'text-teal-400'
+    }
   };
   
   return regions[regionCode] || regions['NA'];
@@ -61,7 +110,7 @@ export function EnhancedResultPopup() {
   const playerPoints = popupData.player.global_points || 0;
   const position = popupData.player.overall_rank || 1;
   const region = popupData.player.region || 'NA';
-  const regionInfo = getRegionInfo(region);
+  const regionStyling = getRegionStyling(region);
 
   // Ordered gamemode layout matching reference
   const orderedGamemodes: GameMode[] = [
@@ -87,13 +136,16 @@ export function EnhancedResultPopup() {
           onClick={handleOverlayClick}
         >
           <motion.div
-            className="relative rounded-3xl w-full max-w-sm border-3 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+            className={`relative rounded-3xl w-full max-w-sm border-3 ${regionStyling.borderColor} ${regionStyling.glowColor} shadow-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900`}
             initial={{ scale: 0.7, opacity: 0, y: 100, rotateX: -20 }}
             animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
             exit={{ scale: 0.7, opacity: 0, y: 100, rotateX: -20 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Region-based gradient overlay */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${regionStyling.gradientFrom} ${regionStyling.gradientTo} opacity-60`} />
+
             {/* Close Button */}
             <motion.button
               onClick={closePopup}
@@ -115,7 +167,7 @@ export function EnhancedResultPopup() {
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               >
                 <div className="relative w-24 h-24 mx-auto mb-4">
-                  <Avatar className="w-full h-full rounded-full border-4 border-white/30 overflow-hidden">
+                  <Avatar className={`w-full h-full rounded-full border-4 ${regionStyling.borderColor} overflow-hidden`}>
                     <AvatarImage 
                       src={`https://visage.surgeplay.com/bust/128/${popupData.player.ign}`}
                       alt={popupData.player.ign}
@@ -148,7 +200,7 @@ export function EnhancedResultPopup() {
 
                 {/* Enhanced Rank Title */}
                 <motion.div 
-                  className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl border border-white/30 backdrop-blur-md mb-3"
+                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-2xl border ${regionStyling.borderColor} backdrop-blur-md mb-3 bg-gradient-to-r ${regionStyling.gradientFrom} ${regionStyling.gradientTo}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 }}
@@ -159,12 +211,12 @@ export function EnhancedResultPopup() {
 
                 {/* Region */}
                 <motion.div 
-                  className="text-slate-300 text-sm font-medium"
+                  className={`${regionStyling.accentColor} text-sm font-medium`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  🌍 {regionInfo.name}
+                  🌍 {regionStyling.name}
                 </motion.div>
               </motion.div>
 
@@ -210,7 +262,7 @@ export function EnhancedResultPopup() {
                     return (
                       <motion.div
                         key={mode}
-                        className="flex flex-col items-center p-2 bg-slate-700/40 rounded-lg border border-slate-600/40 hover:border-slate-500/60 transition-all backdrop-blur-sm"
+                        className={`flex flex-col items-center p-2 bg-slate-700/40 rounded-lg border ${regionStyling.borderColor} hover:border-slate-500/60 transition-all backdrop-blur-sm`}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.8 + index * 0.05 }}
