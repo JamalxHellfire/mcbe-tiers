@@ -1,3 +1,4 @@
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -16,10 +17,23 @@ class KnowledgeBaseService {
   private baseUrl = 'https://openrouter.ai/api/v1';
   private knowledgeBase: KnowledgeBase | null = null;
   private chatHistory: ChatMessage[] = [];
+  private isInitialized = false;
 
   constructor() {
-    // Try to restore knowledge base from localStorage on initialization
-    this.restoreKnowledgeBase();
+    this.initializeService();
+  }
+
+  private async initializeService() {
+    try {
+      console.log('Initializing knowledge base service...');
+      this.restoreKnowledgeBase();
+      this.restoreChatHistory();
+      this.isInitialized = true;
+      console.log('Knowledge base service initialized successfully');
+    } catch (error) {
+      console.error('Error initializing knowledge base service:', error);
+      this.isInitialized = true; // Set to true even on error to prevent infinite loops
+    }
   }
 
   private restoreKnowledgeBase() {
@@ -27,15 +41,40 @@ class KnowledgeBaseService {
       const stored = localStorage.getItem('knowledgeBase');
       if (stored) {
         const parsed = JSON.parse(stored);
-        this.knowledgeBase = {
-          ...parsed,
-          uploadDate: new Date(parsed.uploadDate)
-        };
-        console.log('Restored knowledge base from localStorage:', this.knowledgeBase.filename);
+        // Validate the stored data structure
+        if (parsed && parsed.content && parsed.filename && parsed.uploadDate) {
+          this.knowledgeBase = {
+            ...parsed,
+            uploadDate: new Date(parsed.uploadDate)
+          };
+          console.log('Successfully restored knowledge base from localStorage:', this.knowledgeBase.filename);
+          console.log('Knowledge base content length:', this.knowledgeBase.content.length);
+          return;
+        }
       }
+      console.log('No valid knowledge base found in localStorage');
     } catch (error) {
       console.error('Error restoring knowledge base:', error);
       localStorage.removeItem('knowledgeBase');
+    }
+  }
+
+  private restoreChatHistory() {
+    try {
+      const stored = localStorage.getItem('chatHistory');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          this.chatHistory = parsed.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          console.log('Restored chat history:', this.chatHistory.length, 'messages');
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring chat history:', error);
+      localStorage.removeItem('chatHistory');
     }
   }
 
@@ -50,6 +89,19 @@ class KnowledgeBaseService {
       }
     } catch (error) {
       console.error('Error saving knowledge base:', error);
+    }
+  }
+
+  private saveChatHistory() {
+    try {
+      if (this.chatHistory.length > 0) {
+        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
+        console.log('Saved chat history to localStorage:', this.chatHistory.length, 'messages');
+      } else {
+        localStorage.removeItem('chatHistory');
+      }
+    } catch (error) {
+      console.error('Error saving chat history:', error);
     }
   }
 
@@ -163,6 +215,7 @@ class KnowledgeBaseService {
     };
 
     this.chatHistory.push(userMessage);
+    this.saveChatHistory();
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
     const requestPayload = {
@@ -231,6 +284,7 @@ Instructions:
           };
           
           this.chatHistory.push(assistantMessage);
+          this.saveChatHistory();
           console.log('=== SEND MESSAGE DEBUG END (401 error) ===');
           return fallbackResponse;
         }
@@ -262,6 +316,7 @@ Instructions:
       };
 
       this.chatHistory.push(assistantMessage);
+      this.saveChatHistory();
       console.log('Added assistant message to history, total messages:', this.chatHistory.length);
       console.log('=== SEND MESSAGE DEBUG END (success) ===');
       
@@ -285,6 +340,7 @@ Instructions:
         };
         
         this.chatHistory.push(assistantMessage);
+        this.saveChatHistory();
         console.log('=== SEND MESSAGE DEBUG END (network error) ===');
         return fallbackResponse;
       }
@@ -300,6 +356,7 @@ Instructions:
       };
       
       this.chatHistory.push(assistantMessage);
+      this.saveChatHistory();
       console.log('=== SEND MESSAGE DEBUG END (generic error) ===');
       return fallbackResponse;
     }
@@ -307,6 +364,7 @@ Instructions:
 
   clearConversation(): void {
     this.chatHistory = [];
+    this.saveChatHistory();
     console.log('Conversation cleared - starting fresh! 💕');
   }
 
@@ -317,6 +375,9 @@ Instructions:
   hasKnowledgeBase(): boolean {
     const hasKb = this.knowledgeBase !== null && this.knowledgeBase.content.trim().length > 0;
     console.log('hasKnowledgeBase check:', hasKb, 'KB exists:', !!this.knowledgeBase);
+    if (this.knowledgeBase) {
+      console.log('KB filename:', this.knowledgeBase.filename, 'content length:', this.knowledgeBase.content.length);
+    }
     return hasKb;
   }
 
@@ -326,6 +387,12 @@ Instructions:
       filename: this.knowledgeBase.filename,
       uploadDate: this.knowledgeBase.uploadDate
     };
+  }
+
+  // Method to force refresh knowledge base status
+  refreshKnowledgeBaseStatus(): boolean {
+    this.restoreKnowledgeBase();
+    return this.hasKnowledgeBase();
   }
 }
 

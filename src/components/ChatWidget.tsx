@@ -27,24 +27,46 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasKnowledgeBase, setHasKnowledgeBase] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const refreshKnowledgeBaseStatus = () => {
-    const hasKb = knowledgeBaseService.hasKnowledgeBase();
+    console.log('Refreshing knowledge base status...');
+    const hasKb = knowledgeBaseService.refreshKnowledgeBaseStatus();
     setHasKnowledgeBase(hasKb);
     console.log('Refreshed KB status - Has KB:', hasKb);
+    
+    // Also refresh chat history when checking KB status
+    const history = knowledgeBaseService.getChatHistory();
+    console.log('Refreshed chat history:', history.length, 'messages');
+    setMessages(history);
+    
+    return hasKb;
   };
 
+  // Initialize when component mounts
   useEffect(() => {
-    if (isOpen) {
-      console.log('Chat widget opened, loading history...');
+    console.log('ChatWidget mounting, initializing...');
+    setIsInitializing(true);
+    
+    // Small delay to ensure service is initialized
+    const initTimer = setTimeout(() => {
       refreshKnowledgeBaseStatus();
-      const history = knowledgeBaseService.getChatHistory();
-      console.log('Loaded chat history:', history.length, 'messages');
-      setMessages(history);
+      setIsInitializing(false);
+      console.log('ChatWidget initialization complete');
+    }, 100);
+
+    return () => clearTimeout(initTimer);
+  }, []);
+
+  // Load data when chat is opened
+  useEffect(() => {
+    if (isOpen && !isInitializing) {
+      console.log('Chat widget opened, loading fresh data...');
+      refreshKnowledgeBaseStatus();
       setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, isInitializing]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,6 +113,43 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
       setIsLoading(false);
     }
   };
+
+  if (isInitializing) {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="fixed bottom-20 right-4 w-80 h-96 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 z-50 overflow-hidden flex flex-col"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 20px 40px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset'
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-pink-600/20 opacity-50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            
+            <div className="relative flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <motion.div 
+                  className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <Bot className="w-6 h-6 text-white" />
+                </motion.div>
+                <p className="text-white/80 text-sm">Initializing chat...</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
 
   return (
     <>
