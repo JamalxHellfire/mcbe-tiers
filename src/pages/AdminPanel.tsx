@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
@@ -9,11 +8,46 @@ import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { UploadCloud, Users, Wrench, Settings, Shield, LogOut, BarChart3 } from 'lucide-react';
+import { adminService } from '@/services/adminService';
+import { useToast } from '@/hooks/use-toast';
 
 type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('submit');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const sessionToken = localStorage.getItem('admin_session_token');
+      if (sessionToken) {
+        await adminService.adminLogout(sessionToken);
+        localStorage.removeItem('admin_session_token');
+      }
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of the admin panel.",
+      });
+      
+      // Redirect to home page or login page
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Error",
+        description: "Failed to logout properly, but session has been cleared.",
+        variant: "destructive"
+      });
+      // Force logout anyway
+      localStorage.removeItem('admin_session_token');
+      window.location.href = '/';
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -114,11 +148,13 @@ const AdminPanel = () => {
                 </div>
               </div>
               <Button 
+                onClick={handleLogout}
+                disabled={isLoggingOut}
                 variant="destructive" 
-                className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 hover:text-red-300 transition-all duration-300 px-6 py-3 rounded-xl backdrop-blur-sm"
+                className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 hover:text-red-300 transition-all duration-300 px-6 py-3 rounded-xl backdrop-blur-sm disabled:opacity-50"
               >
                 <LogOut className="h-5 w-5 mr-2" />
-                Logout
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
               </Button>
             </div>
           </header>
