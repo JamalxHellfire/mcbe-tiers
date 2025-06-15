@@ -129,7 +129,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
   if (step === 'pending') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-3">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
         <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
           <CardHeader className="text-center space-y-3 pb-4">
             <div className="flex justify-center">
@@ -160,8 +160,8 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
 
   if (step === 'onboarding') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-3">
-        <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
           <CardHeader className="text-center space-y-3 pb-4">
             <div className="flex justify-center">
               <div className="p-2 md:p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full">
@@ -176,7 +176,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 space-y-4">
             <form onSubmit={handleOnboardingSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">
@@ -239,8 +239,8 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-3">
-      <Card className="w-full max-w-sm bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
         <CardHeader className="text-center space-y-3 pb-4">
           <div className="flex justify-center">
             <div className="p-2 md:p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full">
@@ -255,7 +255,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-4">
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-gray-300">
@@ -292,7 +292,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             </div>
           )}
 
-          <div className="flex flex-col gap-2 mt-4">
+          <div className="flex flex-col gap-2">
             <Button 
               variant="ghost"
               className="w-full border border-purple-400/20 text-purple-300 hover:bg-purple-800/30 h-9 text-sm"
@@ -313,7 +313,7 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
             </Button>
           </div>
 
-          <div className="mt-3 text-xs text-center text-gray-400/80">
+          <div className="text-xs text-center text-gray-400/80">
             <span>
               Still can't get in? Contact owner or try refreshing cookies &amp; state.
             </span>
