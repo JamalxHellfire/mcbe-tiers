@@ -1,19 +1,24 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Users, UserCheck, UserX, Crown, Shield, Eye, UserCog, Ban, UserPlus } from 'lucide-react';
+import { Users, UserCheck, UserX, Crown, Shield, Eye, UserCog, Ban, UserPlus, Globe } from 'lucide-react';
 import { newAdminService, AdminApplication } from '@/services/newAdminService';
+import StaffOnboarding from './StaffOnboarding';
 
 interface StaffMember {
   id: string;
   discord: string;
+  displayName?: string;
   role: string;
   status: 'online' | 'offline';
   lastSeen: string;
   ip_address: string;
+  country?: string;
+  countryCode?: string;
+  flag?: string;
+  onboardedAt?: string;
 }
 
 interface StaffManagementProps {
@@ -25,17 +30,53 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
   const [activeStaff, setActiveStaff] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: string }>({});
+  const [onboardingStaff, setOnboardingStaff] = useState<any>(null);
   const { toast } = useToast();
 
-  // Mock active staff data - in real implementation, this would come from your backend
+  // Initialize staff data with enhanced structure
   const initializeStaffData = () => {
     const mockActiveStaff: StaffMember[] = [
-      { id: '1', discord: 'admin#1234', role: 'admin', status: 'online', lastSeen: '2 minutes ago', ip_address: '192.168.1.100' },
-      { id: '2', discord: 'mod#5678', role: 'moderator', status: 'offline', lastSeen: '1 hour ago', ip_address: '192.168.1.101' },
-      { id: '3', discord: 'tester#9012', role: 'tester', status: 'online', lastSeen: 'Just now', ip_address: '192.168.1.102' }
+      { 
+        id: '1', 
+        discord: 'admin#1234', 
+        displayName: 'Admin Master',
+        role: 'admin', 
+        status: 'online', 
+        lastSeen: '2 minutes ago', 
+        ip_address: '192.168.1.100',
+        country: 'United States',
+        countryCode: 'US',
+        flag: '🇺🇸',
+        onboardedAt: '2024-01-01T00:00:00Z'
+      },
+      { 
+        id: '2', 
+        discord: 'mod#5678', 
+        displayName: 'Moderator Pro',
+        role: 'moderator', 
+        status: 'offline', 
+        lastSeen: '1 hour ago', 
+        ip_address: '192.168.1.101',
+        country: 'United Kingdom',
+        countryCode: 'GB',
+        flag: '🇬🇧',
+        onboardedAt: '2024-01-02T00:00:00Z'
+      },
+      { 
+        id: '3', 
+        discord: 'tester#9012', 
+        displayName: 'Test Ninja',
+        role: 'tester', 
+        status: 'online', 
+        lastSeen: 'Just now', 
+        ip_address: '192.168.1.102',
+        country: 'Canada',
+        countryCode: 'CA',
+        flag: '🇨🇦',
+        onboardedAt: '2024-01-03T00:00:00Z'
+      }
     ];
     
-    // Get existing staff from localStorage or use mock data
     const existingStaff = JSON.parse(localStorage.getItem('active_staff') || JSON.stringify(mockActiveStaff));
     setActiveStaff(existingStaff);
   };
@@ -72,29 +113,23 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
       const result = await newAdminService.reviewApplicationWithRole(applicationId, action, userRole, roleToAssign);
       
       if (result.success) {
-        // If approved, add to active staff
         if (action === 'approve' && roleToAssign) {
           const application = applications.find(app => app.id === applicationId);
           if (application) {
-            const newStaffMember: StaffMember = {
+            // Start onboarding process
+            setOnboardingStaff({
               id: Date.now().toString(),
               discord: application.discord,
               role: roleToAssign,
-              status: 'offline',
-              lastSeen: 'Never',
               ip_address: application.ip_address
-            };
-            
-            const updatedStaff = [...activeStaff, newStaffMember];
-            setActiveStaff(updatedStaff);
-            localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
+            });
           }
         }
         
         toast({
           title: `Application ${action === 'approve' ? 'Approved' : 'Denied'}`,
           description: action === 'approve' 
-            ? `User has been granted ${roleToAssign} role successfully.`
+            ? `User will now complete onboarding for ${roleToAssign} role.`
             : 'The application has been denied.',
         });
         await fetchApplications();
@@ -116,22 +151,34 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
     }
   };
 
+  const handleOnboardingComplete = (staffMember: StaffMember) => {
+    const updatedStaff = [...activeStaff, staffMember];
+    setActiveStaff(updatedStaff);
+    localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
+    setOnboardingStaff(null);
+  };
+
+  const handleOnboardingCancel = () => {
+    setOnboardingStaff(null);
+    toast({
+      title: "Onboarding Cancelled",
+      description: "The staff member setup was cancelled.",
+      variant: "destructive"
+    });
+  };
+
   const handleRemoveStaff = async (staffId: string) => {
     try {
       const staffMember = activeStaff.find(staff => staff.id === staffId);
       if (!staffMember) return;
 
-      // Remove from active staff
       const updatedStaff = activeStaff.filter(staff => staff.id !== staffId);
       setActiveStaff(updatedStaff);
       localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
 
-      // In a real implementation, you would also remove from the database
-      // await staffService.removeStaff(staffId);
-
       toast({
         title: "Staff Removed",
-        description: `${staffMember.discord} has been removed from the team.`,
+        description: `${staffMember.displayName || staffMember.discord} has been removed from the team.`,
       });
     } catch (error) {
       toast({
@@ -147,19 +194,15 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
       const staffMember = activeStaff.find(staff => staff.id === staffId);
       if (!staffMember) return;
 
-      // Update staff role
       const updatedStaff = activeStaff.map(staff => 
         staff.id === staffId ? { ...staff, role: newRole } : staff
       );
       setActiveStaff(updatedStaff);
       localStorage.setItem('active_staff', JSON.stringify(updatedStaff));
 
-      // In a real implementation, you would also update the database
-      // await staffService.updateStaffRole(staffId, newRole);
-
       toast({
         title: "Staff Promoted",
-        description: `${staffMember.discord} has been promoted to ${newRole}.`,
+        description: `${staffMember.displayName || staffMember.discord} has been promoted to ${newRole}.`,
       });
     } catch (error) {
       toast({
@@ -205,138 +248,76 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <div className="p-2 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 rounded-lg border border-yellow-500/30">
-          <UserCog className="h-6 w-6 text-yellow-400" />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-white">Staff Management</h3>
-          <p className="text-gray-400 text-sm">Manage applications and active staff members</p>
-        </div>
-      </div>
-
-      {/* Active Staff */}
-      <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-white flex items-center space-x-2">
-            <Users className="h-5 w-5 text-green-400" />
-            <span>Active Staff ({activeStaff.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {activeStaff.map((staff) => (
-              <div 
-                key={staff.id} 
-                className="group p-4 bg-gray-800/40 rounded-xl border border-gray-700/40 hover:border-gray-600/50 transition-all duration-300"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${staff.status === 'online' ? 'bg-green-400' : 'bg-gray-500'}`} />
-                      {getRoleIcon(staff.role)}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-semibold">{staff.discord}</h4>
-                      <div className="flex items-center space-x-3 text-sm text-gray-400">
-                        <span className={getRoleColor(staff.role)}>
-                          {staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}
-                        </span>
-                        <span>•</span>
-                        <span>Last seen: {staff.lastSeen}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      defaultValue={staff.role}
-                      onValueChange={(value) => handlePromoteStaff(staff.id, value)}
-                    >
-                      <SelectTrigger className="w-32 bg-gray-800/60 border-gray-600/50 text-white text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700">
-                        <SelectItem value="tester" className="text-green-400">Tester</SelectItem>
-                        <SelectItem value="moderator" className="text-blue-400">Moderator</SelectItem>
-                        <SelectItem value="admin" className="text-purple-400">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Button
-                      onClick={() => handleRemoveStaff(staff.id)}
-                      className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
-                      size="sm"
-                    >
-                      <Ban className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+    <>
+      <div className="space-y-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 rounded-lg border border-yellow-500/30">
+            <UserCog className="h-6 w-6 text-yellow-400" />
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <h3 className="text-xl font-bold text-white">Staff Management</h3>
+            <p className="text-gray-400 text-sm">Manage applications and active staff members</p>
+          </div>
+        </div>
 
-      {/* Pending Applications */}
-      <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-white flex items-center space-x-2">
-            <UserPlus className="h-5 w-5 text-yellow-400" />
-            <span>Pending Applications ({applications.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {applications.map((application) => (
-              <div 
-                key={application.id} 
-                className="group p-4 bg-gray-800/40 rounded-xl border border-gray-700/40 hover:border-gray-600/50 transition-all duration-300"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                        <UserPlus className="h-4 w-4 text-yellow-400" />
+        {/* Active Staff */}
+        <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Users className="h-5 w-5 text-green-400" />
+              <span>Active Staff ({activeStaff.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activeStaff.map((staff) => (
+                <div 
+                  key={staff.id} 
+                  className="group p-4 bg-gray-800/40 rounded-xl border border-gray-700/40 hover:border-gray-600/50 transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${staff.status === 'online' ? 'bg-green-400' : 'bg-gray-500'}`} />
+                        {getRoleIcon(staff.role)}
+                        {staff.flag && (
+                          <span className="text-lg" title={staff.country}>
+                            {staff.flag}
+                          </span>
+                        )}
                       </div>
                       <div>
-                        <h4 className="text-white font-semibold">{application.discord}</h4>
-                        <div className="flex items-center space-x-2 text-sm text-gray-400">
-                          {getRoleIcon(application.requested_role)}
-                          <span className={getRoleColor(application.requested_role)}>
-                            Requested: {application.requested_role}
+                        <h4 className="text-white font-semibold">
+                          {staff.displayName || staff.discord}
+                        </h4>
+                        <div className="flex items-center space-x-3 text-sm text-gray-400">
+                          <span className={getRoleColor(staff.role)}>
+                            {staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}
                           </span>
+                          <span>•</span>
+                          <span>Last seen: {staff.lastSeen}</span>
+                          {staff.country && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center space-x-1">
+                                <Globe className="h-3 w-3" />
+                                <span>{staff.country}</span>
+                              </span>
+                            </>
+                          )}
                         </div>
+                        {staff.displayName && (
+                          <p className="text-xs text-gray-500 mt-1">Discord: {staff.discord}</p>
+                        )}
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-gray-500">Applied:</span>
-                        <div className="text-gray-300">
-                          {new Date(application.submitted_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">IP Address:</span>
-                        <div className="text-gray-300 font-mono text-xs">
-                          {application.ip_address}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-gray-300 block mb-2">
-                        Assign Role
-                      </label>
+                    <div className="flex items-center space-x-2">
                       <Select
-                        value={selectedRoles[application.id] || application.requested_role}
-                        onValueChange={(value) => 
-                          setSelectedRoles(prev => ({ ...prev, [application.id]: value }))
-                        }
+                        defaultValue={staff.role}
+                        onValueChange={(value) => handlePromoteStaff(staff.id, value)}
                       >
-                        <SelectTrigger className="w-48 bg-gray-800/60 border-gray-600/50 text-white">
+                        <SelectTrigger className="w-32 bg-gray-800/60 border-gray-600/50 text-white text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-700">
@@ -345,49 +326,141 @@ const StaffManagement: React.FC<StaffManagementProps> = ({ userRole }) => {
                           <SelectItem value="admin" className="text-purple-400">Admin</SelectItem>
                         </SelectContent>
                       </Select>
+                      
+                      <Button
+                        onClick={() => handleRemoveStaff(staff.id)}
+                        className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+                        size="sm"
+                      >
+                        <Ban className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={() => handleReviewApplication(application.id, 'approve')}
-                      disabled={isLoading}
-                      className="bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
-                      size="sm"
-                    >
-                      <UserCheck className="h-4 w-4 mr-1" />
-                      Approve
-                    </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pending Applications */}
+        <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white flex items-center space-x-2">
+              <UserPlus className="h-5 w-5 text-yellow-400" />
+              <span>Pending Applications ({applications.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {applications.map((application) => (
+                <div 
+                  key={application.id} 
+                  className="group p-4 bg-gray-800/40 rounded-xl border border-gray-700/40 hover:border-gray-600/50 transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                          <UserPlus className="h-4 w-4 text-yellow-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-white font-semibold">{application.discord}</h4>
+                          <div className="flex items-center space-x-2 text-sm text-gray-400">
+                            {getRoleIcon(application.requested_role)}
+                            <span className={getRoleColor(application.requested_role)}>
+                              Requested: {application.requested_role}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Applied:</span>
+                          <div className="text-gray-300">
+                            {new Date(application.submitted_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">IP Address:</span>
+                          <div className="text-gray-300 font-mono text-xs">
+                            {application.ip_address}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-gray-300 block mb-2">
+                          Assign Role
+                        </label>
+                        <Select
+                          value={selectedRoles[application.id] || application.requested_role}
+                          onValueChange={(value) => 
+                            setSelectedRoles(prev => ({ ...prev, [application.id]: value }))
+                          }
+                        >
+                          <SelectTrigger className="w-48 bg-gray-800/60 border-gray-600/50 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-800 border-gray-700">
+                            <SelectItem value="tester" className="text-green-400">Tester</SelectItem>
+                            <SelectItem value="moderator" className="text-blue-400">Moderator</SelectItem>
+                            <SelectItem value="admin" className="text-purple-400">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     
-                    <Button
-                      onClick={() => handleReviewApplication(application.id, 'deny')}
-                      disabled={isLoading}
-                      className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
-                      size="sm"
-                    >
-                      <UserX className="h-4 w-4 mr-1" />
-                      Deny
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => handleReviewApplication(application.id, 'approve')}
+                        disabled={isLoading}
+                        className="bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
+                        size="sm"
+                      >
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                      
+                      <Button
+                        onClick={() => handleReviewApplication(application.id, 'deny')}
+                        disabled={isLoading}
+                        className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+                        size="sm"
+                      >
+                        <UserX className="h-4 w-4 mr-1" />
+                        Deny
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            {applications.length === 0 && (
-              <div className="text-center py-8">
-                <div className="p-4 bg-gray-800/20 rounded-xl border border-gray-700/30 inline-block">
-                  <UserPlus className="h-12 w-12 text-gray-500 mx-auto" />
+              ))}
+              
+              {applications.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="p-4 bg-gray-800/20 rounded-xl border border-gray-700/30 inline-block">
+                    <UserPlus className="h-12 w-12 text-gray-500 mx-auto" />
+                  </div>
+                  <div className="mt-4">
+                    <h4 className="text-lg font-semibold text-gray-400 mb-2">No Pending Applications</h4>
+                    <p className="text-gray-500">All applications have been reviewed.</p>
+                  </div>
                 </div>
-                <div className="mt-4">
-                  <h4 className="text-lg font-semibold text-gray-400 mb-2">No Pending Applications</h4>
-                  <p className="text-gray-500">All applications have been reviewed.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Onboarding Modal */}
+      {onboardingStaff && (
+        <StaffOnboarding
+          staffData={onboardingStaff}
+          onComplete={handleOnboardingComplete}
+          onCancel={handleOnboardingCancel}
+        />
+      )}
+    </>
   );
 };
 

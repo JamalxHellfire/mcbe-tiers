@@ -1,208 +1,183 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, TrendingUp, Users, Globe } from 'lucide-react';
-import { getVisitorStats } from '@/services/analyticsService';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Calendar, TrendingUp, Users, Eye } from 'lucide-react';
+import { getDailyAnalytics, getVisitorStats, DailyStats, VisitorStats } from '@/services/analyticsService';
 
 const DailyAnalytics = () => {
-  const stats = getVisitorStats();
-  
-  // Generate realistic daily visits data for the past week
-  const getDailyVisits = () => {
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const baseVisits = 40 + Math.floor(Math.random() * 50);
-      const uniqueVisits = Math.floor(baseVisits * 0.7 + Math.random() * 10);
-      
-      data.push({
-        date: date.toISOString().split('T')[0],
-        visits: baseVisits,
-        unique: uniqueVisits
-      });
+  const [dailyData, setDailyData] = useState<DailyStats[]>([]);
+  const [stats, setStats] = useState<VisitorStats>({
+    totalUniqueVisits: 0,
+    totalPageVisits: 0,
+    pcUsers: 0,
+    mobileUsers: 0,
+    tabletUsers: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [daily, visitor] = await Promise.all([
+          getDailyAnalytics(30),
+          getVisitorStats()
+        ]);
+        setDailyData(daily);
+        setStats(visitor);
+      } catch (error) {
+        console.error('Error loading daily analytics:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse bg-gray-800/40 h-8 w-64 rounded"></div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-gray-800/40 h-24 rounded-xl"></div>
+          ))}
+        </div>
+        <div className="animate-pulse bg-gray-800/40 h-80 rounded-xl"></div>
+      </div>
+    );
+  }
+
+  const deviceTotal = stats.pcUsers + stats.mobileUsers + stats.tabletUsers;
+
+  const summaryCards = [
+    {
+      title: 'Total Page Views',
+      value: stats.totalPageVisits,
+      icon: <Eye className="h-5 w-5 text-blue-400" />,
+      bgColor: 'bg-blue-500/20',
+      borderColor: 'border-blue-500/30'
+    },
+    {
+      title: 'Unique Visitors',
+      value: stats.totalUniqueVisits,
+      icon: <Users className="h-5 w-5 text-green-400" />,
+      bgColor: 'bg-green-500/20',
+      borderColor: 'border-green-500/30'
+    },
+    {
+      title: 'Mobile Users',
+      value: stats.mobileUsers,
+      icon: <TrendingUp className="h-5 w-5 text-purple-400" />,
+      bgColor: 'bg-purple-500/20',
+      borderColor: 'border-purple-500/30'
+    },
+    {
+      title: 'Desktop Users',
+      value: stats.pcUsers,
+      icon: <Calendar className="h-5 w-5 text-yellow-400" />,
+      bgColor: 'bg-yellow-500/20',
+      borderColor: 'border-yellow-500/30'
     }
-    return data;
-  };
-
-  const dailyVisits = getDailyVisits();
-
-  const deviceData = [
-    { name: 'Mobile', value: stats.mobileUsers || 25, color: '#8884d8' },
-    { name: 'Desktop', value: stats.pcUsers || 15, color: '#82ca9d' },
-    { name: 'Tablet', value: stats.tabletUsers || 5, color: '#ffc658' },
   ];
 
-  // Ensure we have meaningful stats even if localStorage is empty
-  const enhancedStats = {
-    totalPageVisits: stats.totalPageVisits || 156,
-    totalUniqueVisits: stats.totalUniqueVisits || 89,
-    mobileUsers: stats.mobileUsers || 78,
-    pcUsers: stats.pcUsers || 65,
-    tabletUsers: stats.tabletUsers || 13
-  };
-
   return (
-    <div className="space-y-3 md:space-y-4">
-      <div className="flex items-center space-x-2">
-        <Calendar className="h-5 w-5 text-purple-400" />
-        <h3 className="text-lg md:text-xl font-bold text-white">Daily Analytics Dashboard</h3>
+    <div className="space-y-6">
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg border border-purple-500/30">
+          <Calendar className="h-6 w-6 text-purple-400" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-white">Daily Analytics</h3>
+          <p className="text-gray-400 text-sm">Track daily visitor trends and engagement patterns</p>
+        </div>
       </div>
 
-      {/* Stats Cards - Compact for mobile */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <Card className="admin-card">
-          <CardHeader className="pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm text-gray-400 flex items-center">
-              <Users className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-              Total Visits
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-base md:text-xl lg:text-2xl font-bold text-white">{enhancedStats.totalPageVisits}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="admin-card">
-          <CardHeader className="pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm text-gray-400 flex items-center">
-              <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-              Unique Visitors
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-base md:text-xl lg:text-2xl font-bold text-white">{enhancedStats.totalUniqueVisits}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="admin-card">
-          <CardHeader className="pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm text-gray-400 flex items-center">
-              <Globe className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-              Mobile Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-base md:text-xl lg:text-2xl font-bold text-white">{enhancedStats.mobileUsers}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="admin-card">
-          <CardHeader className="pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm text-gray-400 flex items-center">
-              <Globe className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-              Desktop Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-base md:text-xl lg:text-2xl font-bold text-white">{enhancedStats.pcUsers}</div>
-          </CardContent>
-        </Card>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryCards.map((card, index) => (
+          <Card key={index} className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 ${card.bgColor} rounded-lg border ${card.borderColor}`}>
+                  {card.icon}
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 font-medium">{card.title}</p>
+                  <p className="text-xl font-bold text-white">{card.value.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Charts - Optimized for mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
-        {/* Daily Visits Chart */}
-        <Card className="admin-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm md:text-base text-white">Daily Visits Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-40 md:h-48 lg:h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyVisits} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="#9CA3AF"
-                    fontSize={9}
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  />
-                  <YAxis stroke="#9CA3AF" fontSize={9} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151', 
-                      borderRadius: '8px',
-                      fontSize: '12px'
-                    }}
-                    labelStyle={{ color: '#F3F4F6' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="visits" 
-                    stroke="#8B5CF6" 
-                    strokeWidth={2}
-                    name="Total Visits"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="unique" 
-                    stroke="#10B981" 
-                    strokeWidth={2}
-                    name="Unique Visits"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Device Distribution */}
-        <Card className="admin-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm md:text-base text-white">Device Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-40 md:h-48 lg:h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={deviceData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius="70%"
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {deviceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151', 
-                      borderRadius: '8px',
-                      fontSize: '12px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Analytics Summary for Mobile */}
-      <Card className="admin-card md:hidden">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-white">Quick Stats</CardTitle>
+      {/* Daily Trend Chart */}
+      <Card className="bg-gray-900/40 backdrop-blur-xl border-gray-700/50 shadow-2xl">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <TrendingUp className="h-5 w-5 text-purple-400" />
+            <span>Daily Visitor Trends (Last 30 Days)</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="text-center p-2 bg-gray-800/30 rounded">
-              <div className="text-green-400 font-medium">Today's Growth</div>
-              <div className="text-white">+12%</div>
+          {dailyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={dailyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                />
+                <YAxis stroke="#9CA3AF" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1F2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#F9FAFB'
+                  }}
+                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="visits" 
+                  stroke="#8B5CF6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
+                  name="Daily Visits"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="unique_visitors" 
+                  stroke="#10B981" 
+                  strokeWidth={2}
+                  dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                  name="Unique Visitors"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="page_views" 
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                  name="Page Views"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-400">No daily data available yet</p>
+                <p className="text-sm text-gray-500">Data will appear as users visit the site</p>
+              </div>
             </div>
-            <div className="text-center p-2 bg-gray-800/30 rounded">
-              <div className="text-blue-400 font-medium">Avg. Session</div>
-              <div className="text-white">2.4m</div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
