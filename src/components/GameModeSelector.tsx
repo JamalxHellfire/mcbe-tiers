@@ -31,15 +31,15 @@ export function GameModeSelector({ selectedMode = 'overall', onSelectMode }: Gam
           key={mode.id}
           onClick={() => onSelectMode(mode.id)}
           className={cn(
-            "flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md whitespace-nowrap border transition-colors duration-150",
-            mode.id === 'overall' ? "text-xs px-3 py-1.5" : "text-xs",
+            "flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap border transition-colors duration-150",
+            mode.id === 'overall' ? "text-sm px-4 py-2" : "text-sm",
             currentMode === mode.id 
               ? "bg-white/10 border-white/20 text-white" 
               : "bg-white/5 border-white/5 text-white/60 hover:bg-white/8 hover:text-white/80"
           )}
         >
           {mode.id !== 'overall' && (
-            <GameModeIcon mode={mode.id} className="h-2.5 w-2.5 mr-1" />
+            <GameModeIcon mode={mode.id} className="h-4 w-4 mr-2" />
           )}
           {mode.label}
         </button>
