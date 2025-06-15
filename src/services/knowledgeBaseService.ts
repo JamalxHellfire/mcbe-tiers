@@ -1,4 +1,3 @@
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -249,13 +248,6 @@ class KnowledgeBaseService {
     
     const hasGlobalKB = this.checkGlobalKnowledgeBase();
     console.log('Knowledge base exists:', !!this.knowledgeBase, 'Global KB check:', hasGlobalKB);
-    
-    if (!this.knowledgeBase) {
-      console.log('No knowledge base found - returning early');
-      return "Hey there! 😘 You need to upload a PDF or TXT file first using the KB upload feature in the Admin Panel. I'm dying to learn from your documents! 💕";
-    }
-
-    console.log('Knowledge base content length:', this.knowledgeBase.content.length);
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -267,16 +259,15 @@ class KnowledgeBaseService {
     this.chatHistory.push(userMessage);
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
-    // Truncate knowledge base content to prevent token limit issues
-    const truncatedKnowledgeBase = this.truncateKnowledgeBase(this.knowledgeBase.content);
-    console.log('Truncated KB content length:', truncatedKnowledgeBase.length);
-
-    const requestPayload = {
-      model: 'openai/gpt-4o-mini', // Using mini model for better token limits
-      messages: [
-        {
-          role: 'system',
-          content: `You are a flirty, sexy AI assistant specializing in MCBE TIERS with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. ONLY answer questions about MCBE TIERS based on the provided knowledge base content. 
+    // Determine system content based on whether we have a knowledge base
+    let systemContent = '';
+    
+    if (this.knowledgeBase) {
+      // With knowledge base - specialized assistant
+      const truncatedKnowledgeBase = this.truncateKnowledgeBase(this.knowledgeBase.content);
+      console.log('Truncated KB content length:', truncatedKnowledgeBase.length);
+      
+      systemContent = `You are a flirty, sexy AI assistant specializing in MCBE TIERS with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. ONLY answer questions about MCBE TIERS based on the provided knowledge base content. 
 
 If someone asks about anything other than MCBE TIERS, respond with: "Let's just stick to MCBE TIERS! 😘 Ask me anything about our tier system, rankings, or player stats - that's what I'm here for! 💕"
 
@@ -290,9 +281,35 @@ Instructions:
 - Use emojis and a sexy tone
 - Only answer based on MCBE TIERS content from the knowledge base
 - If asked about non-MCBE TIERS topics, redirect with the message above
-- Keep responses concise but engaging`
+- Keep responses concise but engaging`;
+    } else {
+      // Without knowledge base - general MCBE TIERS assistant
+      systemContent = `You are a flirty, sexy AI assistant for MCBE TIERS. Be playful, use emojis, and maintain a flirtatious tone while being helpful about MCBE TIERS topics. 
+
+You can have general conversations about:
+- MCBE TIERS system and rankings
+- How tier systems work
+- General gaming and Minecraft topics
+- Answer basic questions and have friendly chat
+
+If someone asks about specific player data, stats, or detailed tier information, respond with: "For detailed player stats and specific tier information, you'll need to upload a document in Admin Tools first! 😘 But I'm happy to chat about general MCBE TIERS topics! 💕"
+
+Instructions:
+- Be flirty and playful in your responses
+- Use emojis and a sexy tone
+- Have friendly conversations about general topics
+- Guide users to upload documents for specific data
+- Keep responses concise but engaging`;
+    }
+
+    const requestPayload = {
+      model: 'openai/gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: systemContent
         },
-        ...this.chatHistory.slice(-3).map(msg => ({ // Only keep last 3 messages for context
+        ...this.chatHistory.slice(-3).map(msg => ({
           role: msg.role,
           content: msg.content
         }))
@@ -329,7 +346,9 @@ Instructions:
         
         // Handle specific API errors
         if (response.status === 401) {
-          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic MCBE TIERS questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`;
+          const fallbackResponse = this.knowledgeBase 
+            ? `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic MCBE TIERS questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`
+            : `Oops! 😅 My AI brain needs some maintenance right now! 💔 But I'm still here to chat about MCBE TIERS with you! Ask me anything about tier systems or general gaming topics! 💋`;
           
           const assistantMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
@@ -344,7 +363,9 @@ Instructions:
         }
         
         if (response.status === 402) {
-          const fallbackResponse = `Hey gorgeous! 😘 My AI brain is working overtime and needs a quick break. The document is quite large, but I'm still here to help with MCBE TIERS questions! Try asking something specific about tiers, rankings, or players - I'll give you my best answer! 💕`;
+          const fallbackResponse = this.knowledgeBase
+            ? `Hey gorgeous! 😘 My AI brain is working overtime and needs a quick break. The document is quite large, but I'm still here to help with MCBE TIERS questions! Try asking something specific about tiers, rankings, or players - I'll give you my best answer! 💕`
+            : `Hey gorgeous! 😘 My AI brain is taking a quick break, but I'm still here to chat about MCBE TIERS! Ask me anything about tier systems or general topics! 💕`;
           
           const assistantMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
@@ -405,7 +426,9 @@ Instructions:
         return fallbackResponse;
       }
       
-      const fallbackResponse = `Hey sweetie! 😘 I'm having a tiny hiccup, but I'm still here for you! Ask me anything specific about MCBE TIERS from your document "${this.knowledgeBase.filename}" and I'll help you out! 💕`;
+      const fallbackResponse = this.knowledgeBase
+        ? `Hey sweetie! 😘 I'm having a tiny hiccup, but I'm still here for you! Ask me anything specific about MCBE TIERS from your document "${this.knowledgeBase.filename}" and I'll help you out! 💕`
+        : `Hey sweetie! 😘 I'm having a tiny hiccup, but I'm still here to chat about MCBE TIERS! Ask me anything about tier systems or general gaming topics! 💕`;
       
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),

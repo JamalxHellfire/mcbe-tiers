@@ -8,6 +8,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useVisitorTracking } from '@/hooks/useVisitorTracking';
 import Index from './pages/Index';
 import AdminPanel from './pages/AdminPanel';
+import SubcategoryPage from './pages/SubcategoryPage';
 import { FloatingChatButton } from './components/FloatingChatButton';
 import NotFound from './pages/NotFound';
 
@@ -22,6 +23,14 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/crystal" element={<SubcategoryPage />} />
+        <Route path="/sword" element={<SubcategoryPage />} />
+        <Route path="/smp" element={<SubcategoryPage />} />
+        <Route path="/uhc" element={<SubcategoryPage />} />
+        <Route path="/axe" element={<SubcategoryPage />} />
+        <Route path="/nethpot" element={<SubcategoryPage />} />
+        <Route path="/bedwars" element={<SubcategoryPage />} />
+        <Route path="/mace" element={<SubcategoryPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <FloatingChatButton />
