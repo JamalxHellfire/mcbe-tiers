@@ -2,7 +2,7 @@
 import React from 'react';
 import { Player } from '@/services/playerService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChevronRight, Trophy } from 'lucide-react';
+import { ChevronRight, Trophy, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { usePopup } from '@/contexts/PopupContext';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
@@ -11,6 +11,21 @@ interface TierResultButtonProps {
   player: Player;
   onClick?: (player: Player) => void;
 }
+
+// Helper to get device icon
+const getDeviceIcon = (device: string = 'PC') => {
+  switch(device?.toLowerCase()) {
+    case 'mobile':
+    case 'bedrock':
+      return <Smartphone className="w-4 h-4 text-blue-400" />;
+    case 'console':
+      return <Gamepad className="w-4 h-4 text-green-400" />;
+    case 'pc':
+    case 'java':
+    default:
+      return <Monitor className="w-4 h-4 text-white/80" />;
+  }
+};
 
 export function TierResultButton({ player, onClick }: TierResultButtonProps) {
   const { openPopup } = usePopup();
@@ -71,6 +86,7 @@ export function TierResultButton({ player, onClick }: TierResultButtonProps) {
         {/* Player info */}
         <div className="flex-1 text-left">
           <div className="flex items-center gap-2 mb-1">
+            {getDeviceIcon(player.device)}
             <span className="text-white font-bold text-lg group-hover:text-blue-200 transition-colors duration-300">
               {player.ign}
             </span>

@@ -1,12 +1,29 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Monitor, Smartphone, Gamepad } from 'lucide-react';
 import { GameModeIcon } from './GameModeIcon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePopup } from '@/contexts/PopupContext';
 import { GameMode } from '@/services/playerService';
 import { getAvatarUrl, handleAvatarError } from '@/utils/avatarUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
+
+// Helper to get device icon
+const getDeviceIcon = (device: string = 'PC', isMobile: boolean = false) => {
+  const iconSize = isMobile ? 'w-4 h-4' : 'w-4 h-4';
+  
+  switch(device?.toLowerCase()) {
+    case 'mobile':
+    case 'bedrock':
+      return <Smartphone className={`${iconSize} text-blue-400`} />;
+    case 'console':
+      return <Gamepad className={`${iconSize} text-green-400`} />;
+    case 'pc':
+    case 'java':
+    default:
+      return <Monitor className={`${iconSize} text-white/80`} />;
+  }
+};
 
 // Helper to get region styling with proper hex colors
 const getRegionStyling = (regionCode: string = 'NA') => {
@@ -189,12 +206,13 @@ export function ModernResultPopup() {
                 </div>
               </div>
               
-              {/* Username and badge */}
+              {/* Username with device icon and badge */}
               <div className="flex flex-col items-center gap-1 mb-4 w-full">
-                <div className={`font-bold text-white drop-shadow-lg text-center ${
+                <div className={`flex items-center gap-2 font-bold text-white drop-shadow-lg text-center ${
                   isMobile ? 'text-lg' : 'text-xl'
                 }`}>
-                  {popupData.player.ign}
+                  {getDeviceIcon(popupData.player.device, isMobile)}
+                  <span>{popupData.player.ign}</span>
                 </div>
                 <div 
                   className={`inline-flex items-center gap-2 rounded-xl border shadow-lg ${
