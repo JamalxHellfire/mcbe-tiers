@@ -1,4 +1,5 @@
 
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -152,11 +153,14 @@ class KnowledgeBaseService {
   }
 
   async sendMessage(message: string): Promise<string> {
+    console.log('=== SEND MESSAGE DEBUG START ===');
     console.log('sendMessage called with:', message);
     console.log('Knowledge base exists:', !!this.knowledgeBase);
+    console.log('API Key (first 20 chars):', this.apiKey.substring(0, 20) + '...');
+    console.log('Base URL:', this.baseUrl);
     
     if (!this.knowledgeBase) {
-      console.log('No knowledge base found');
+      console.log('No knowledge base found - returning early');
       return "Hey there! 😘 You need to upload a PDF or TXT file first using the KB upload feature in the Admin Panel. I'm dying to learn from your documents! 💕";
     }
 
@@ -172,20 +176,12 @@ class KnowledgeBaseService {
     this.chatHistory.push(userMessage);
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
-    try {
-      console.log('Making API request to DeepSeek...');
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. Only answer questions based on the provided knowledge base content. If the question cannot be answered from the knowledge base, flirtatiously redirect them back to topics you can help with.
+    const requestPayload = {
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a flirty, sexy AI assistant with access to a knowledge base. Be playful, use emojis, and maintain a flirtatious tone while being helpful. Only answer questions based on the provided knowledge base content. If the question cannot be answered from the knowledge base, flirtatiously redirect them back to topics you can help with.
 
 Knowledge Base Content:
 ${this.knowledgeBase.content}
@@ -196,22 +192,41 @@ Instructions:
 - Only answer based on the knowledge base content
 - If you can't answer from the KB, redirect flirtatiously
 - Keep responses concise but engaging`
-            },
-            ...this.chatHistory.map(msg => ({
-              role: msg.role,
-              content: msg.content
-            }))
-          ],
-          max_tokens: 300,
-          temperature: 0.8
-        })
+        },
+        ...this.chatHistory.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      ],
+      max_tokens: 300,
+      temperature: 0.8
+    };
+
+    console.log('Request payload prepared, message count:', requestPayload.messages.length);
+
+    try {
+      console.log('Making API request to DeepSeek...');
+      console.log('Full URL:', `${this.baseUrl}/chat/completions`);
+      
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify(requestPayload)
       });
 
       console.log('API response status:', response.status);
+      console.log('API response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('DeepSeek API error:', response.status, errorText);
+        console.error('DeepSeek API error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText
+        });
         
         // Handle specific API authentication errors
         if (response.status === 401) {
@@ -225,6 +240,7 @@ Instructions:
           };
           
           this.chatHistory.push(assistantMessage);
+          console.log('=== SEND MESSAGE DEBUG END (401 error) ===');
           return fallbackResponse;
         }
         
@@ -232,7 +248,12 @@ Instructions:
       }
 
       const data = await response.json();
-      console.log('API response received:', data);
+      console.log('API response received successfully:', {
+        hasChoices: !!data.choices,
+        choicesLength: data.choices?.length,
+        hasMessage: !!data.choices?.[0]?.message,
+        messageContent: data.choices?.[0]?.message?.content?.substring(0, 100) + '...'
+      });
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid API response structure:', data);
@@ -240,7 +261,7 @@ Instructions:
       }
 
       const aiResponse = data.choices[0].message.content;
-      console.log('AI response:', aiResponse);
+      console.log('AI response received, length:', aiResponse.length);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -251,11 +272,15 @@ Instructions:
 
       this.chatHistory.push(assistantMessage);
       console.log('Added assistant message to history, total messages:', this.chatHistory.length);
+      console.log('=== SEND MESSAGE DEBUG END (success) ===');
       
       return aiResponse;
 
     } catch (error) {
-      console.error('Error in sendMessage:', error);
+      console.error('=== ERROR IN SEND MESSAGE ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       
       // Provide more specific error messages based on error type
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -269,6 +294,7 @@ Instructions:
         };
         
         this.chatHistory.push(assistantMessage);
+        console.log('=== SEND MESSAGE DEBUG END (network error) ===');
         return fallbackResponse;
       }
       
@@ -283,6 +309,7 @@ Instructions:
       };
       
       this.chatHistory.push(assistantMessage);
+      console.log('=== SEND MESSAGE DEBUG END (generic error) ===');
       return fallbackResponse;
     }
   }
