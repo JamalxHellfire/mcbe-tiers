@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AdminAuthResult {
@@ -81,33 +80,36 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
 // Authenticate with password
 export const authenticateAdmin = async (password: string): Promise<AdminAuthResult> => {
   try {
+    // Fast path for owner -- use edge function for IP-accurate authentication
+    // Only runs for owner attempt (for other logic, fallback to below, or skip)
+    const response = await fetch(
+      "https://gpofewohvpggmmhgaqxj.functions.supabase.co/admin_owner_login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      }
+    );
+
+    const ownerResult = await response.json();
+
+    if (ownerResult?.success && ownerResult?.role === "owner") {
+      return { success: true, role: "owner" };
+    }
+    // For general password and onboarding logic, do it as before (not owner)
+    // Continue with old logic if not owner
+
     const { data: configs, error } = await supabase
       .from('auth_config')
       .select('config_key, config_value');
 
     if (error) throw error;
 
-    const ownerPassword = configs?.find(c => c.config_key === 'owner_password')?.config_value;
     const generalPassword = configs?.find(c => c.config_key === 'general_password')?.config_value;
 
-    if (password === ownerPassword) {
-      // Owner access - auto-approve IP
-      const userIp = await getUserIP();
-      
-      const { error: insertError } = await supabase
-        .from('admin_users')
-        .upsert({
-          ip_address: userIp,
-          role: 'owner',
-          approved_by: 'system',
-          approved_at: new Date().toISOString(),
-          last_access: new Date().toISOString()
-        });
-
-      if (insertError) throw insertError;
-
-      return { success: true, role: 'owner' };
-    } else if (password === generalPassword) {
+    if (password === generalPassword) {
       // General admin - needs onboarding
       return { success: true, needsOnboarding: true };
     } else {
