@@ -1,4 +1,3 @@
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -21,6 +20,39 @@ class KnowledgeBaseService {
 
   constructor() {
     this.startSessionTimer();
+    // Try to restore knowledge base from localStorage on initialization
+    this.restoreKnowledgeBase();
+  }
+
+  private restoreKnowledgeBase() {
+    try {
+      const stored = localStorage.getItem('knowledgeBase');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        this.knowledgeBase = {
+          ...parsed,
+          uploadDate: new Date(parsed.uploadDate)
+        };
+        console.log('Restored knowledge base from localStorage:', this.knowledgeBase.filename);
+      }
+    } catch (error) {
+      console.error('Error restoring knowledge base:', error);
+      localStorage.removeItem('knowledgeBase');
+    }
+  }
+
+  private saveKnowledgeBase() {
+    try {
+      if (this.knowledgeBase) {
+        localStorage.setItem('knowledgeBase', JSON.stringify(this.knowledgeBase));
+        console.log('Saved knowledge base to localStorage:', this.knowledgeBase.filename);
+      } else {
+        localStorage.removeItem('knowledgeBase');
+        console.log('Removed knowledge base from localStorage');
+      }
+    } catch (error) {
+      console.error('Error saving knowledge base:', error);
+    }
   }
 
   private startSessionTimer() {
@@ -41,6 +73,7 @@ class KnowledgeBaseService {
         filename: file.name,
         uploadDate: new Date()
       };
+      this.saveKnowledgeBase();
       this.clearConversation();
       console.log('PDF uploaded and processed successfully, content length:', text.length);
     } catch (error) {
@@ -60,8 +93,10 @@ class KnowledgeBaseService {
         filename: file.name,
         uploadDate: new Date()
       };
+      this.saveKnowledgeBase();
       this.clearConversation();
       console.log('TXT uploaded and processed successfully, content length:', text.length);
+      console.log('Knowledge base set, hasKnowledgeBase should now return true');
     } catch (error) {
       console.error('Error uploading TXT:', error);
       throw new Error('Failed to process TXT file');
@@ -225,8 +260,8 @@ Instructions:
   }
 
   hasKnowledgeBase(): boolean {
-    const hasKb = this.knowledgeBase !== null;
-    console.log('hasKnowledgeBase:', hasKb);
+    const hasKb = this.knowledgeBase !== null && this.knowledgeBase.content.trim().length > 0;
+    console.log('hasKnowledgeBase check:', hasKb, 'KB exists:', !!this.knowledgeBase);
     return hasKb;
   }
 

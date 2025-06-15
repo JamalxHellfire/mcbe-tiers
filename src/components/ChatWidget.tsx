@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, FileText, Clock, Bot, AlertCircle } from 'lucide-react';
+import { MessageSquare, Send, X, FileText, Clock, Bot, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { knowledgeBaseService } from '@/services/knowledgeBaseService';
@@ -24,15 +24,34 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [timeUntilClear, setTimeUntilClear] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [hasKnowledgeBase, setHasKnowledgeBase] = useState(false);
+  const [kbInfo, setKbInfo] = useState<{ filename: string; uploadDate: Date } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const refreshKnowledgeBaseStatus = () => {
+    const hasKb = knowledgeBaseService.hasKnowledgeBase();
+    const info = knowledgeBaseService.getKnowledgeBaseInfo();
+    setHasKnowledgeBase(hasKb);
+    setKbInfo(info);
+    console.log('Refreshed KB status - Has KB:', hasKb, 'Info:', info);
+  };
 
   useEffect(() => {
     if (isOpen) {
       console.log('Chat widget opened, loading history...');
+      refreshKnowledgeBaseStatus();
       const history = knowledgeBaseService.getChatHistory();
       console.log('Loaded chat history:', history.length, 'messages');
       setMessages(history);
       setError(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    // Refresh KB status periodically when chat is open
+    if (isOpen) {
+      const interval = setInterval(refreshKnowledgeBaseStatus, 1000);
+      return () => clearInterval(interval);
     }
   }, [isOpen]);
 
@@ -51,6 +70,11 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) {
       console.log('Cannot send message: empty input or loading');
+      return;
+    }
+
+    if (!hasKnowledgeBase) {
+      setError('Please upload a document first in Admin Panel → Admin Tools');
       return;
     }
 
@@ -82,9 +106,6 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const kbInfo = knowledgeBaseService.getKnowledgeBaseInfo();
-  const hasKnowledgeBase = knowledgeBaseService.hasKnowledgeBase();
-
   console.log('Chat widget render - KB info:', kbInfo, 'Has KB:', hasKnowledgeBase);
 
   return (
@@ -112,14 +133,25 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                   </p>
                 </div>
               </div>
-              <Button
-                onClick={onToggle}
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={refreshKnowledgeBaseStatus}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                  title="Refresh status"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={onToggle}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Knowledge Base Status */}
@@ -151,7 +183,18 @@ export function ChatWidget({ isOpen, onToggle }: ChatWidgetProps) {
                   <Bot className="w-8 h-8 mx-auto mb-2 text-blue-500" />
                   <p>Hello! I'm your AI assistant.</p>
                   {!hasKnowledgeBase ? (
-                    <p className="mt-2 text-red-500">Please upload a PDF or TXT file in the Admin Panel → Admin Tools to start chatting!</p>
+                    <div className="mt-2">
+                      <p className="text-red-500 mb-2">Please upload a PDF or TXT file in the Admin Panel → Admin Tools to start chatting!</p>
+                      <Button 
+                        onClick={refreshKnowledgeBaseStatus}
+                        size="sm" 
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Check Again
+                      </Button>
+                    </div>
                   ) : (
                     <p className="mt-2 text-green-600">Knowledge base loaded! Ask me anything about your document.</p>
                   )}
