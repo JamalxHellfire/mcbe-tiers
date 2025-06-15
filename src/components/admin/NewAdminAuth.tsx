@@ -44,9 +44,14 @@ export const NewAdminAuth: React.FC<NewAdminAuthProps> = ({ onAuthSuccess }) => 
         } else if (result.role) {
           toast({
             title: "Login Successful",
-            description: `Welcome, ${result.role}!`,
+            description: `Welcome, ${result.role}!`
           });
-          onAuthSuccess(result.role);
+          // Robust: full hard reload, then call onAuthSuccess
+          setTimeout(() => {
+            onAuthSuccess(result.role);
+            window.location.reload(); // Forces all state, including memory/session/caches, to reset
+          }, 220); // Short delay for UI feedback
+          return;
         }
       } else {
         toast({

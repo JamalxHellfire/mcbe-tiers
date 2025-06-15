@@ -34,24 +34,37 @@ export interface AdminUser {
   last_access: string;
 }
 
-// Clear all authentication state
+// Thoroughly clear all authentication state, including Supabase
 export const clearAllAuthState = (): void => {
-  // Clear localStorage
+  // Old code clears our custom keys...
   localStorage.removeItem('admin_session_token');
   localStorage.removeItem('new_admin_auth');
   localStorage.removeItem('admin_role');
   localStorage.removeItem('admin_ip');
   
-  // Clear any other auth-related items
+  // Clear supabase and other auth-related storage
   Object.keys(localStorage).forEach(key => {
-    if (key.includes('admin') || key.includes('auth')) {
+    if (
+      key.includes('admin') ||
+      key.includes('auth') ||
+      key.startsWith('supabase.auth.') ||
+      key.includes('sb-')
+    ) {
       localStorage.removeItem(key);
     }
   });
 
-  // Clear sessionStorage
-  sessionStorage.clear();
-  
+  Object.keys(sessionStorage).forEach(key => {
+    if (
+      key.includes('admin') ||
+      key.includes('auth') ||
+      key.startsWith('supabase.auth.') ||
+      key.includes('sb-')
+    ) {
+      sessionStorage.removeItem(key);
+    }
+  });
+
   // Clear cookies
   document.cookie.split(";").forEach(function(c) { 
     document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
@@ -77,10 +90,28 @@ export const checkAdminAccess = async (): Promise<{ hasAccess: boolean; role?: s
   }
 };
 
-// Authenticate with password
+// Helper to robustly poll checkAdminAccess multiple times
+async function robustCheckAdminAccess(
+  maxRetries = 8,
+  baseDelayMs = 80
+): Promise<{ hasAccess: boolean; role?: string }> {
+  for (let i = 0; i < maxRetries; i++) {
+    const res = await checkAdminAccess();
+    if (res.hasAccess && res.role) return res;
+
+    // Exponential backoff (min 80ms, max 1500ms)
+    await new Promise((r) => setTimeout(r, Math.min(baseDelayMs * (2 ** i), 1500)));
+  }
+  return { hasAccess: false };
+}
+
+// Authenticate with password (now with robust check)
 export const authenticateAdmin = async (password: string): Promise<AdminAuthResult> => {
   try {
     // Edge function for owner -- real IP logic now
+    // Always clear state before login attempt to avoid limbo
+    clearAllAuthState();
+
     const response = await fetch(
       "https://gpofewohvpggmmhgaqxj.functions.supabase.co/admin_owner_login",
       {
@@ -94,19 +125,18 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
 
     const ownerResult = await response.json();
 
-    // Always clear and refetch access status for owner
-    clearAllAuthState();
     if (ownerResult?.success && ownerResult?.role === "owner") {
-      // Immediately recheck db access via checkAdminAccess
-      await new Promise((r) => setTimeout(r, 400));
-      const check = await checkAdminAccess();
+      // Poll access up to 1.5s (8 retries)
+      const check = await robustCheckAdminAccess();
       if (check.hasAccess && check.role === "owner") {
+        // Optionally set token for session compatibility
+        localStorage.setItem('admin_role', 'owner');
         return { success: true, role: "owner" };
       } else {
         return {
           success: false,
           error:
-            "Owner login succeeded, but admin access was still denied. Debug info: " +
+            "Owner login succeeded, but admin access was still denied after retry. Debug info: " +
             JSON.stringify(ownerResult) +
             " Access check: " +
             JSON.stringify(check),
@@ -114,7 +144,7 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
       }
     }
 
-    // General admin as before
+    // General admin password fallback as before
     const { data: configs, error } = await supabase
       .from('auth_config')
       .select('config_key, config_value');
@@ -124,7 +154,6 @@ export const authenticateAdmin = async (password: string): Promise<AdminAuthResu
     const generalPassword = configs?.find(c => c.config_key === 'general_password')?.config_value;
 
     if (password === generalPassword) {
-      // General admin - needs onboarding
       return { success: true, needsOnboarding: true };
     } else {
       return { success: false, error: 'Invalid password' };
