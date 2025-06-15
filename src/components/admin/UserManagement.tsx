@@ -58,7 +58,7 @@ const UserManagement = () => {
         region: player.region || 'NA',
         device: player.device || 'PC',
         global_points: player.global_points || 0,
-        overall_rank: player.overall_rank || 0,
+        overall_rank: player.overall_rank || 999999,
         java_username: player.java_username,
         avatar_url: player.avatar_url,
         banned: player.banned || false
@@ -188,7 +188,7 @@ const UserManagement = () => {
   );
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-3 md:space-y-4">
       <div className="flex items-center space-x-2">
         <Shield className="h-5 w-5 text-purple-400" />
         <h3 className="text-lg md:text-xl font-bold text-white">User Management</h3>
@@ -196,7 +196,7 @@ const UserManagement = () => {
 
       {/* Search */}
       <Card className="admin-card">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm md:text-base text-white flex items-center">
             <Search className="h-4 w-4 mr-2" />
             Search Players
@@ -214,14 +214,14 @@ const UserManagement = () => {
 
       {/* Active Players */}
       <Card className="admin-card">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm md:text-base text-white flex items-center">
             <UserCheck className="h-4 w-4 mr-2" />
             Active Players ({filteredPlayers.filter(p => !p.banned).length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-h-64 overflow-y-auto space-y-2">
+          <div className="max-h-64 overflow-y-auto space-y-1">
             {filteredPlayers.filter(p => !p.banned).map((player) => (
               <div key={player.id} className="flex items-center justify-between p-2 bg-gray-800/30 rounded-lg border border-gray-700/30">
                 <div className="flex-1 min-w-0">
@@ -278,14 +278,14 @@ const UserManagement = () => {
 
       {/* Banned Players */}
       <Card className="admin-card">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm md:text-base text-white flex items-center">
             <UserX className="h-4 w-4 mr-2" />
             Banned Players ({bannedPlayers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-h-64 overflow-y-auto space-y-2">
+          <div className="max-h-64 overflow-y-auto space-y-1">
             {bannedPlayers.map((bannedPlayer) => (
               <div key={bannedPlayer.id} className="flex items-center justify-between p-2 bg-red-900/20 rounded-lg border border-red-700/30">
                 <div className="flex-1 min-w-0">

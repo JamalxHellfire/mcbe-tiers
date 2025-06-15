@@ -10,6 +10,7 @@ import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
 import DailyAnalytics from '@/components/admin/DailyAnalytics';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
+import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
@@ -24,13 +25,14 @@ import {
   X, 
   Calendar,
   Database,
-  UserCheck
+  UserCheck,
+  Terminal
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users';
+type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'daily' | 'database' | 'users' | 'blackbox';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('submit');
@@ -101,6 +103,8 @@ const AdminPanel = () => {
         return <DatabaseTools />;
       case 'users':
         return <UserManagement />;
+      case 'blackbox':
+        return <BlackBoxLogger />;
       default:
         return null;
     }
@@ -222,6 +226,7 @@ const AdminPanel = () => {
                     <TabButton tabName="daily" label="Daily Analytics" icon={Calendar} description="Daily visits and user analytics" />
                     <TabButton tabName="analytics" label="System Analytics" icon={BarChart3} description="Platform insights and statistics" />
                     <TabButton tabName="database" label="Database Tools" icon={Database} description="Database management and maintenance" />
+                    <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Real-time system activity monitor" />
                     <TabButton tabName="tools" label="Admin Tools" icon={Wrench} description="Mass submission and system tools" />
                     
                     <Button 
@@ -240,13 +245,14 @@ const AdminPanel = () => {
               
               {/* Desktop Navigation Grid */}
               {!isMobile && (
-                <div className="grid grid-cols-3 lg:grid-cols-7 gap-2 md:gap-3">
+                <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3">
                   <TabButton tabName="submit" label="Submit" icon={UploadCloud} description="Add or update player rankings" />
                   <TabButton tabName="manage" label="Players" icon={Users} description="View and edit accounts" />
                   <TabButton tabName="users" label="Moderation" icon={UserCheck} description="Ban/unban players" />
                   <TabButton tabName="daily" label="Daily Stats" icon={Calendar} description="Daily analytics" />
                   <TabButton tabName="analytics" label="Analytics" icon={BarChart3} description="System insights" />
                   <TabButton tabName="database" label="Database" icon={Database} description="DB management" />
+                  <TabButton tabName="blackbox" label="Black Box" icon={Terminal} description="Live system monitor" />
                   <TabButton tabName="tools" label="Tools" icon={Wrench} description="Admin utilities" />
                 </div>
               )}

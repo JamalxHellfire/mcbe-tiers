@@ -5,38 +5,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Database, RefreshCw, Trash2, Download, Upload, AlertTriangle } from 'lucide-react';
+import { Database, Trash2, Download, RefreshCw, Play, BarChart3, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const DatabaseTools = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [backupData, setBackupData] = useState('');
   const [sqlQuery, setSqlQuery] = useState('');
   const [queryResults, setQueryResults] = useState<any[]>([]);
+  const [cacheStats, setCacheStats] = useState({ size: 0, keys: 0 });
   const { toast } = useToast();
 
-  const handleRefreshCache = async () => {
+  const handleClearCache = async () => {
     setIsLoading(true);
     try {
-      // Use the refresh_leaderboard_cache function if it exists
-      const { error } = await supabase.rpc('refresh_leaderboard_cache');
-      if (error) {
-        console.warn('refresh_leaderboard_cache function not found, using alternative approach');
-        // Alternative: Force refresh by updating a dummy timestamp
-        await supabase
-          .from('players')
-          .update({ updated_at: new Date().toISOString() })
-          .limit(1);
-      }
+      // Simulate cache clearing with localStorage cleanup
+      const cacheKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('cache_') || key.startsWith('analytics_')
+      );
+      cacheKeys.forEach(key => localStorage.removeItem(key));
       
+      setCacheStats({ size: 0, keys: 0 });
       toast({
-        title: "Cache Refreshed",
-        description: "System cache has been refreshed successfully.",
+        title: "Cache Cleared",
+        description: "System cache has been cleared successfully.",
       });
     } catch (error: any) {
       toast({
-        title: "Cache Refresh",
-        description: "Cache refresh completed (alternative method used).",
+        title: "Cache Clear Failed",
+        description: `Failed to clear cache: ${error.message}`,
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -46,35 +43,32 @@ const DatabaseTools = () => {
   const handleRecalculateRankings = async () => {
     setIsLoading(true);
     try {
-      // Use the recalculate_rankings function if it exists
-      const { error } = await supabase.rpc('recalculate_rankings');
-      if (error) {
-        console.warn('recalculate_rankings function not found, using alternative approach');
-        // Alternative: Manually update rankings
-        const { data: players, error: fetchError } = await supabase
+      const { data: players, error } = await supabase
+        .from('players')
+        .select('*')
+        .order('global_points', { ascending: false });
+
+      if (error) throw error;
+
+      // Update rankings based on points
+      for (let i = 0; i < players.length; i++) {
+        const { error: updateError } = await supabase
           .from('players')
-          .select('id, global_points')
-          .eq('banned', false)
-          .order('global_points', { ascending: false });
-        
-        if (!fetchError && players) {
-          for (let i = 0; i < players.length; i++) {
-            await supabase
-              .from('players')
-              .update({ overall_rank: i + 1 })
-              .eq('id', players[i].id);
-          }
-        }
+          .update({ overall_rank: i + 1 })
+          .eq('id', players[i].id);
+
+        if (updateError) throw updateError;
       }
-      
+
       toast({
         title: "Rankings Recalculated",
-        description: "All player rankings have been recalculated successfully.",
+        description: `Updated rankings for ${players.length} players.`,
       });
     } catch (error: any) {
       toast({
-        title: "Rankings Updated",
-        description: "Player rankings have been updated successfully.",
+        title: "Ranking Update Failed",
+        description: `Failed to recalculate rankings: ${error.message}`,
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -84,37 +78,31 @@ const DatabaseTools = () => {
   const handleExportData = async () => {
     setIsLoading(true);
     try {
-      const { data: players, error: playersError } = await supabase
+      const { data: players, error } = await supabase
         .from('players')
         .select('*');
-      
-      const { data: scores, error: scoresError } = await supabase
-        .from('gamemode_scores')
-        .select('*');
-      
-      if (playersError || scoresError) {
-        throw new Error('Failed to export data');
-      }
-      
+
+      if (error) throw error;
+
       const exportData = {
-        players: players || [],
-        gamemode_scores: scores || [],
-        exported_at: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        total_players: players?.length || 0,
+        players: players || []
       };
-      
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+        type: 'application/json' 
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `mcbe-tiers-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
+      a.download = `player-data-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
-      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       toast({
         title: "Data Exported",
-        description: "Database backup has been downloaded successfully.",
+        description: "Player data has been exported successfully.",
       });
     } catch (error: any) {
       toast({
@@ -127,41 +115,20 @@ const DatabaseTools = () => {
     }
   };
 
-  const handleClearOldLogs = async () => {
-    setIsLoading(true);
-    try {
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      
-      const { error } = await supabase
-        .from('system_logs')
-        .delete()
-        .lt('created_at', oneWeekAgo);
-      
-      if (error) {
-        console.warn('system_logs table not accessible, clearing local logs instead');
-        // Clear local analytics data as fallback
-        localStorage.removeItem('analytics_events');
-        localStorage.removeItem('admin_logs');
-      }
-      
-      toast({
-        title: "Logs Cleared",
-        description: "Old system logs have been cleared successfully.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Logs Cleared",
-        description: "Available logs have been cleared successfully.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleExecuteQuery = async () => {
+    if (!sqlQuery.trim()) {
+      toast({
+        title: "Query Required",
+        description: "Please enter a SQL query to execute.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Only allow SELECT queries for safety
     if (!sqlQuery.trim().toLowerCase().startsWith('select')) {
       toast({
-        title: "Invalid Query",
+        title: "Query Not Allowed",
         description: "Only SELECT queries are allowed for safety.",
         variant: "destructive"
       });
@@ -170,41 +137,29 @@ const DatabaseTools = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('execute_safe_query', {
-        query_text: sqlQuery.trim()
+      const { data, error } = await supabase.rpc('execute_query', {
+        query_text: sqlQuery
       });
 
-      if (error) {
-        // Fallback: Try direct query for simple SELECT statements
-        if (sqlQuery.toLowerCase().includes('from players')) {
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('players')
-            .select('*')
-            .limit(10);
-          
-          if (!fallbackError) {
-            setQueryResults(fallbackData || []);
-            toast({
-              title: "Query Executed",
-              description: `Found ${fallbackData?.length || 0} results (limited to 10).`,
-            });
-          } else {
-            throw fallbackError;
-          }
-        } else {
-          throw error;
-        }
-      } else {
-        setQueryResults(data || []);
+      if (error) throw error;
+
+      if (Array.isArray(data)) {
+        setQueryResults(data);
         toast({
           title: "Query Executed",
-          description: `Found ${data?.length || 0} results.`,
+          description: `Query returned ${data.length} rows.`,
+        });
+      } else {
+        setQueryResults([]);
+        toast({
+          title: "Query Executed",
+          description: "Query executed successfully.",
         });
       }
     } catch (error: any) {
       toast({
         title: "Query Failed",
-        description: `Failed to execute query: ${error.message}`,
+        description: `Query execution failed: ${error.message}`,
         variant: "destructive"
       });
       setQueryResults([]);
@@ -213,125 +168,131 @@ const DatabaseTools = () => {
     }
   };
 
+  const handleSystemCheck = async () => {
+    setIsLoading(true);
+    try {
+      const { data: playersCount, error: playersError } = await supabase
+        .from('players')
+        .select('id', { count: 'exact' });
+
+      if (playersError) throw playersError;
+
+      const cacheSize = Object.keys(localStorage).length;
+      setCacheStats({ size: cacheSize * 50, keys: cacheSize }); // Rough estimate
+
+      toast({
+        title: "System Check Complete",
+        description: `Database: ${playersCount?.length || 0} players, Cache: ${cacheSize} keys`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "System Check Failed",
+        description: `Failed to check system status: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-3 md:space-y-4">
       <div className="flex items-center space-x-2">
         <Database className="h-5 w-5 text-purple-400" />
-        <h3 className="text-lg md:text-xl font-bold text-white">Database Management Tools</h3>
+        <h3 className="text-lg md:text-xl font-bold text-white">Database Tools</h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        {/* Cache Management */}
-        <Card className="admin-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm md:text-base text-white flex items-center">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Cache Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              onClick={handleRefreshCache}
-              disabled={isLoading}
-              className="w-full admin-button bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/30"
-              size="sm"
-            >
-              Refresh Cache
-            </Button>
-            
-            <Button
-              onClick={handleRecalculateRankings}
-              disabled={isLoading}
-              className="w-full admin-button bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
-              size="sm"
-            >
-              Recalculate Rankings
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+        <Button
+          onClick={handleClearCache}
+          disabled={isLoading}
+          className="admin-button bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+          size="sm"
+        >
+          <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+          Clear Cache
+        </Button>
 
-        {/* Data Management */}
-        <Card className="admin-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm md:text-base text-white flex items-center">
-              <Download className="h-4 w-4 mr-2" />
-              Data Backup
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              onClick={handleExportData}
-              disabled={isLoading}
-              className="w-full admin-button bg-purple-600/20 border border-purple-500/50 text-purple-400 hover:bg-purple-600/30"
-              size="sm"
-            >
-              <Download className="h-3 w-3 mr-1" />
-              Export Data
-            </Button>
-          </CardContent>
-        </Card>
+        <Button
+          onClick={handleRecalculateRankings}
+          disabled={isLoading}
+          className="admin-button bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/30"
+          size="sm"
+        >
+          <BarChart3 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+          Recalc Ranks
+        </Button>
 
-        {/* System Maintenance */}
-        <Card className="admin-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm md:text-base text-white flex items-center">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Maintenance
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              onClick={handleClearOldLogs}
-              disabled={isLoading}
-              className="w-full admin-button bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
-              size="sm"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Clear Old Logs
-            </Button>
-          </CardContent>
-        </Card>
+        <Button
+          onClick={handleExportData}
+          disabled={isLoading}
+          className="admin-button bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
+          size="sm"
+        >
+          <Download className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+          Export Data
+        </Button>
+
+        <Button
+          onClick={handleSystemCheck}
+          disabled={isLoading}
+          className="admin-button bg-purple-600/20 border border-purple-500/50 text-purple-400 hover:bg-purple-600/30"
+          size="sm"
+        >
+          <RefreshCw className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+          System Check
+        </Button>
       </div>
+
+      {/* Cache Stats */}
+      <Card className="admin-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm md:text-base text-white">Cache Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-400">Cache Size:</span>
+              <span className="text-white ml-2">{(cacheStats.size / 1024).toFixed(2)} KB</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Cache Keys:</span>
+              <span className="text-white ml-2">{cacheStats.keys}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* SQL Query Tool */}
       <Card className="admin-card">
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm md:text-base text-white flex items-center">
-            <Database className="h-4 w-4 mr-2" />
-            SQL Query Tool
-            <AlertTriangle className="h-3 w-3 ml-2 text-yellow-500" />
+            <FileText className="h-4 w-4 mr-2" />
+            SQL Query Tool (SELECT only)
           </CardTitle>
-          <p className="text-xs text-gray-400 mt-1">
-            Use with caution - Direct database access
-          </p>
         </CardHeader>
         <CardContent className="space-y-3">
           <Textarea
-            placeholder="Enter SQL query... (SELECT statements only for safety)"
+            placeholder="SELECT * FROM players LIMIT 10;"
             value={sqlQuery}
             onChange={(e) => setSqlQuery(e.target.value)}
-            className="admin-input h-20 md:h-24"
-            rows={3}
+            className="admin-input font-mono text-sm"
+            rows={4}
           />
           <Button
             onClick={handleExecuteQuery}
-            disabled={isLoading || !sqlQuery.trim().toLowerCase().startsWith('select')}
-            className="admin-button bg-gray-600/20 border border-gray-500/50 text-gray-400 hover:bg-gray-600/30"
-            size="sm"
+            disabled={isLoading || !sqlQuery.trim()}
+            className="admin-button bg-green-600/20 border border-green-500/50 text-green-400 hover:bg-green-600/30"
           >
+            <Play className="h-4 w-4 mr-2" />
             Execute Query
           </Button>
-          {sqlQuery && !sqlQuery.trim().toLowerCase().startsWith('select') && (
-            <p className="text-xs text-red-400">
-              Only SELECT queries are allowed for safety
-            </p>
-          )}
-          
-          {/* Query Results */}
+
           {queryResults.length > 0 && (
             <div className="mt-4">
-              <h4 className="text-sm font-medium text-white mb-2">Query Results:</h4>
-              <div className="max-h-48 overflow-auto bg-gray-800/50 rounded p-2">
+              <h4 className="text-white font-medium mb-2">Query Results ({queryResults.length} rows):</h4>
+              <div className="bg-gray-900/50 p-3 rounded-lg max-h-64 overflow-auto">
                 <pre className="text-xs text-gray-300">
                   {JSON.stringify(queryResults, null, 2)}
                 </pre>
