@@ -66,25 +66,26 @@
   }
 
   .tier-row {
-    @apply p-4 md:p-6 lg:p-8 rounded-2xl backdrop-blur-sm border
+    @apply p-3 md:p-4 lg:p-6 xl:p-8 rounded-xl md:rounded-2xl backdrop-blur-sm border
            transition-all duration-300 glass;
   }
 
   .tier-header {
-    @apply font-bold mb-3 md:mb-4 pb-3 md:pb-4 relative;
+    @apply font-bold mb-2 md:mb-3 lg:mb-4 pb-2 md:pb-3 lg:pb-4 relative;
   }
 
   .tier-section-container {
-    @apply mb-3 md:mb-4;
+    @apply mb-2 md:mb-3 lg:mb-4;
   }
 
   .tier-section {
-    @apply p-3 md:p-5 rounded-xl bg-dark-surface/80 flex-1 min-h-[120px] md:min-h-[140px] border border-white/5 
+    @apply p-2 md:p-3 lg:p-5 rounded-lg md:rounded-xl bg-dark-surface/80 flex-1 
+           min-h-[100px] md:min-h-[120px] lg:min-h-[140px] border border-white/5 
            backdrop-blur-sm transition-all duration-300 hover:border-white/10;
   }
 
   .tier-placeholder {
-    @apply text-white/20 text-center py-6 md:py-8 italic text-xs md:text-sm;
+    @apply text-white/20 text-center py-4 md:py-6 lg:py-8 italic text-xs md:text-sm;
   }
 
   .game-mode-button {
@@ -101,7 +102,7 @@
   }
 
   .logo-text {
-    @apply text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
+    @apply text-base md:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
            bg-clip-text text-transparent hover:from-white hover:to-white/80 transition-all;
   }
 
@@ -110,11 +111,11 @@
   }
 
   .content-container {
-    @apply container mx-auto px-2 md:px-4 lg:px-8 max-w-7xl py-3 md:py-6;
+    @apply container mx-auto px-2 md:px-4 lg:px-6 xl:px-8 max-w-7xl py-2 md:py-4 lg:py-6;
   }
   
   .section-heading {
-    @apply text-xl md:text-2xl lg:text-3xl font-bold text-center mb-6 md:mb-10 bg-gradient-to-r 
+    @apply text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-center mb-4 md:mb-6 lg:mb-8 xl:mb-10 bg-gradient-to-r 
            from-white to-white/70 bg-clip-text text-transparent;
   }
   
@@ -130,7 +131,7 @@
   
   .player-badge {
     @apply absolute -bottom-1 -right-1 bg-yellow-500 text-dark-background
-           rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center text-xs font-bold;
+           rounded-full w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 flex items-center justify-center text-xs font-bold;
   }
   
   .tier-tab {
@@ -141,10 +142,37 @@
     @apply transition-all duration-300;
   }
 
-  /* Mobile-specific improvements */
-  @media (max-width: 768px) {
+  /* Enhanced responsive improvements for mobile/tablet */
+  @media (max-width: 640px) {
     .tier-row {
-      @apply p-3 rounded-xl;
+      @apply p-2 rounded-lg;
+    }
+    
+    .tier-header {
+      @apply text-xs mb-1 pb-1;
+    }
+    
+    .tier-section {
+      @apply p-2 min-h-[80px];
+    }
+    
+    .game-mode-button {
+      @apply px-1.5 py-1 text-xs;
+    }
+    
+    .content-container {
+      @apply px-1 py-1;
+    }
+
+    .navbar {
+      @apply sticky top-0 z-20;
+    }
+  }
+
+  /* Tablet specific improvements */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .tier-row {
+      @apply p-4 rounded-xl;
     }
     
     .tier-header {
@@ -152,35 +180,57 @@
     }
     
     .tier-section {
-      @apply p-2 min-h-[100px];
+      @apply p-3 min-h-[110px];
     }
     
     .game-mode-button {
-      @apply px-2 py-1 text-xs;
+      @apply px-2.5 py-1.5 text-sm;
     }
     
     .content-container {
-      @apply px-1 py-2;
+      @apply px-3 py-3;
     }
   }
 
-  /* Small mobile devices */
-  @media (max-width: 480px) {
+  /* Large tablet/small desktop */
+  @media (min-width: 1025px) and (max-width: 1280px) {
     .content-container {
-      @apply px-1;
+      @apply px-5 py-5;
     }
-    
-    .tier-row {
-      @apply p-2;
-    }
-    
-    .tier-section {
-      @apply p-2 min-h-[80px];
-    }
+  }
+
+  /* Admin panel specific responsive styles */
+  .admin-card {
+    @apply bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl md:rounded-2xl 
+           p-3 md:p-4 lg:p-6 shadow-xl transition-all duration-300 hover:border-gray-600/50;
+  }
+
+  .admin-button {
+    @apply px-3 md:px-4 lg:px-6 py-2 md:py-2.5 lg:py-3 text-sm md:text-base 
+           rounded-lg md:rounded-xl transition-all duration-300 font-medium;
+  }
+
+  .admin-input {
+    @apply w-full px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base 
+           bg-gray-800/50 border border-gray-600/50 rounded-lg md:rounded-xl
+           focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
+           text-white placeholder:text-gray-400 transition-all duration-300;
+  }
+
+  .admin-table {
+    @apply w-full text-sm md:text-base;
+  }
+
+  .admin-table th {
+    @apply py-2 md:py-3 lg:py-4 px-2 md:px-3 lg:px-4 text-gray-400 font-semibold text-xs md:text-sm;
+  }
+
+  .admin-table td {
+    @apply py-1.5 md:py-2 lg:py-3 px-2 md:px-3 lg:px-4 border-t border-white/5 text-xs md:text-sm;
   }
 }
 
-/* Tier-specific styles */
+/* Tier-specific styles remain the same */
 .tier-1 {
   @apply border-tier-1/30;
 }
@@ -246,18 +296,52 @@
   @apply bg-gradient-to-br from-[#090912] to-[#0F0F18];
 }
 
-/* Table enhancements for leaderboard */
+/* Enhanced responsive table styles */
 .leaderboard-table th {
-  @apply py-3 md:py-4 px-2 md:px-4 text-gray-400 font-semibold text-xs md:text-sm;
+  @apply py-2 md:py-3 lg:py-4 px-1 md:px-2 lg:px-4 text-gray-400 font-semibold text-xs md:text-sm;
 }
 
 .leaderboard-table td {
-  @apply py-2 md:py-3 px-2 md:px-4 border-t border-white/5;
+  @apply py-1.5 md:py-2 lg:py-3 px-1 md:px-2 lg:px-4 border-t border-white/5 text-xs md:text-sm;
 }
 
-/* Mobile dropdown improvements */
+/* Enhanced mobile dropdown improvements */
 @media (max-width: 768px) {
   .dropdown-content {
-    @apply max-h-60 overflow-y-auto;
+    @apply max-h-48 overflow-y-auto;
   }
+
+  .mobile-nav-item {
+    @apply p-2 text-sm;
+  }
+}
+
+/* Tablet dropdown improvements */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dropdown-content {
+    @apply max-h-56 overflow-y-auto;
+  }
+
+  .tablet-nav-item {
+    @apply p-3 text-base;
+  }
+}
+
+/* Animation improvements for mobile/tablet */
+@keyframes mobile-fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tablet-slide-in {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.mobile-animation {
+  animation: mobile-fade-in 0.4s ease-out;
+}
+
+.tablet-animation {
+  animation: tablet-slide-in 0.5s ease-out;
 }

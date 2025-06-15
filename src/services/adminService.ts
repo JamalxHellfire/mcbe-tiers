@@ -15,11 +15,11 @@ export interface AdminUser {
   lastLogin?: string;
 }
 
-// Fixed admin login with password 1234
+// Fixed admin login with new password
 export const adminLogin = async (pin: string): Promise<AdminLoginResult> => {
   try {
     // Check if PIN is the correct admin PIN
-    if (pin === "1234") {
+    if (pin === "$$mcbevtl789db$$") {
       // Generate a mock session token
       const sessionToken = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
