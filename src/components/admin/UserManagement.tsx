@@ -160,7 +160,7 @@ const UserManagement = () => {
                 
                 <div className="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
                   <Button
-                    onClick={() => handleToggleBan(player.id, player.banned)}
+                    onClick={() => handleToggleBan(player.id, player.banned || false)}
                     disabled={isLoading}
                     className={`admin-button ${
                       player.banned

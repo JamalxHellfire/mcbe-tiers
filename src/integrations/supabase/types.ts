@@ -9,6 +9,90 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_applications: {
+        Row: {
+          discord: string
+          id: string
+          ip_address: string
+          requested_role: Database["public"]["Enums"]["admin_role"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          secret_key: string
+          status: Database["public"]["Enums"]["application_status"] | null
+          submitted_at: string | null
+        }
+        Insert: {
+          discord: string
+          id?: string
+          ip_address: string
+          requested_role: Database["public"]["Enums"]["admin_role"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          secret_key: string
+          status?: Database["public"]["Enums"]["application_status"] | null
+          submitted_at?: string | null
+        }
+        Update: {
+          discord?: string
+          id?: string
+          ip_address?: string
+          requested_role?: Database["public"]["Enums"]["admin_role"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          secret_key?: string
+          status?: Database["public"]["Enums"]["application_status"] | null
+          submitted_at?: string | null
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          approved_at: string | null
+          approved_by: string
+          id: string
+          ip_address: string
+          last_access: string | null
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by: string
+          id?: string
+          ip_address: string
+          last_access?: string | null
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string
+          id?: string
+          ip_address?: string
+          last_access?: string | null
+          role?: Database["public"]["Enums"]["admin_role"]
+        }
+        Relationships: []
+      }
+      auth_config: {
+        Row: {
+          config_key: string
+          config_value: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       banned_players: {
         Row: {
           banned_at: string
@@ -181,6 +265,13 @@ export type Database = {
         Args: { tier: Database["public"]["Enums"]["tier_level"] }
         Returns: number
       }
+      check_admin_access: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          has_access: boolean
+          user_role: Database["public"]["Enums"]["admin_role"]
+        }[]
+      }
       check_user_auth: {
         Args: { required_role?: string }
         Returns: boolean
@@ -228,6 +319,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_ip: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_current_user_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -249,6 +344,8 @@ export type Database = {
       }
     }
     Enums: {
+      admin_role: "owner" | "admin" | "moderator" | "tester"
+      application_status: "pending" | "approved" | "denied"
       device_type: "PC" | "Mobile" | "Console"
       game_mode:
         | "Crystal"
@@ -388,6 +485,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_role: ["owner", "admin", "moderator", "tester"],
+      application_status: ["pending", "approved", "denied"],
       device_type: ["PC", "Mobile", "Console"],
       game_mode: [
         "Crystal",
