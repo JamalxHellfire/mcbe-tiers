@@ -211,6 +211,22 @@ Instructions:
       if (!response.ok) {
         const errorText = await response.text();
         console.error('DeepSeek API error:', response.status, errorText);
+        
+        // Handle specific API authentication errors
+        if (response.status === 401) {
+          const fallbackResponse = `Oops! 😅 My AI brain needs some maintenance right now - the API key seems to have expired! 💔 But don't worry sweetie, I can still help you with basic questions about your document: "${this.knowledgeBase.filename}". Try asking me something simple and I'll do my best! 💋`;
+          
+          const assistantMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: fallbackResponse,
+            timestamp: new Date()
+          };
+          
+          this.chatHistory.push(assistantMessage);
+          return fallbackResponse;
+        }
+        
         throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
       }
 
@@ -240,12 +256,33 @@ Instructions:
     } catch (error) {
       console.error('Error in sendMessage:', error);
       
-      // Provide more specific error messages
+      // Provide more specific error messages based on error type
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        return "Oops! 😅 I'm having trouble connecting to my brain right now. Check your internet connection and try again, sweetie! 💋";
+        const fallbackResponse = "Oops! 😅 I'm having trouble connecting to my brain right now. Check your internet connection and try again, sweetie! 💋";
+        
+        const assistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: fallbackResponse,
+          timestamp: new Date()
+        };
+        
+        this.chatHistory.push(assistantMessage);
+        return fallbackResponse;
       }
       
-      return "Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 Try asking me something else about the document you uploaded! 😘";
+      // Generic fallback with document reference
+      const fallbackResponse = `Oops! 😅 Something went wrong on my end, but don't worry - I'm still here for you! 💋 I have your document "${this.knowledgeBase.filename}" loaded, so feel free to ask me anything about it! 😘`;
+      
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: fallbackResponse,
+        timestamp: new Date()
+      };
+      
+      this.chatHistory.push(assistantMessage);
+      return fallbackResponse;
     }
   }
 
