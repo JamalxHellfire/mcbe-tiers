@@ -1,5 +1,3 @@
-
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -15,7 +13,7 @@ interface KnowledgeBase {
 
 class KnowledgeBaseService {
   private apiKey = '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';
-  private baseUrl = 'https://api.deepseek.com/v1';
+  private baseUrl = 'https://openrouter.ai/api/v1';
   private knowledgeBase: KnowledgeBase | null = null;
   private chatHistory: ChatMessage[] = [];
   private sessionStartTime: Date = new Date();
@@ -177,7 +175,7 @@ class KnowledgeBaseService {
     console.log('Added user message to history, total messages:', this.chatHistory.length);
 
     const requestPayload = {
-      model: 'deepseek-chat',
+      model: 'openai/gpt-4o',
       messages: [
         {
           role: 'system',
@@ -205,14 +203,16 @@ Instructions:
     console.log('Request payload prepared, message count:', requestPayload.messages.length);
 
     try {
-      console.log('Making API request to DeepSeek...');
+      console.log('Making API request to OpenRouter...');
       console.log('Full URL:', `${this.baseUrl}/chat/completions`);
       
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'Authorization': `Bearer ${this.apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'MCBE-Tiers Chat Assistant'
         },
         body: JSON.stringify(requestPayload)
       });
@@ -222,7 +222,7 @@ Instructions:
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('DeepSeek API error details:', {
+        console.error('OpenRouter API error details:', {
           status: response.status,
           statusText: response.statusText,
           errorText: errorText
@@ -244,7 +244,7 @@ Instructions:
           return fallbackResponse;
         }
         
-        throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
