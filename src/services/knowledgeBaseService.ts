@@ -1,3 +1,4 @@
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -24,6 +25,7 @@ class KnowledgeBaseService {
 
   private restoreKnowledgeBase() {
     try {
+      // First try localStorage for backward compatibility
       const stored = localStorage.getItem('knowledgeBase');
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -32,24 +34,123 @@ class KnowledgeBaseService {
           uploadDate: new Date(parsed.uploadDate)
         };
         console.log('Restored knowledge base from localStorage:', this.knowledgeBase.filename);
+        return;
+      }
+
+      // Then try sessionStorage as a fallback
+      const sessionStored = sessionStorage.getItem('globalKnowledgeBase');
+      if (sessionStored) {
+        const parsed = JSON.parse(sessionStored);
+        this.knowledgeBase = {
+          ...parsed,
+          uploadDate: new Date(parsed.uploadDate)
+        };
+        console.log('Restored knowledge base from sessionStorage:', this.knowledgeBase.filename);
+        return;
+      }
+
+      // Check if there's a global knowledge base indicator
+      const globalIndicator = localStorage.getItem('hasGlobalKnowledgeBase');
+      if (globalIndicator === 'true') {
+        // Try to fetch from a more persistent source or set a default
+        console.log('Global knowledge base indicator found, but no actual KB data');
       }
     } catch (error) {
       console.error('Error restoring knowledge base:', error);
       localStorage.removeItem('knowledgeBase');
+      sessionStorage.removeItem('globalKnowledgeBase');
     }
   }
 
   private saveKnowledgeBase() {
     try {
       if (this.knowledgeBase) {
-        localStorage.setItem('knowledgeBase', JSON.stringify(this.knowledgeBase));
-        console.log('Saved knowledge base to localStorage:', this.knowledgeBase.filename);
+        // Save to both localStorage and sessionStorage for broader access
+        const kbData = JSON.stringify(this.knowledgeBase);
+        localStorage.setItem('knowledgeBase', kbData);
+        sessionStorage.setItem('globalKnowledgeBase', kbData);
+        
+        // Set a global indicator that knowledge base exists
+        localStorage.setItem('hasGlobalKnowledgeBase', 'true');
+        sessionStorage.setItem('hasGlobalKnowledgeBase', 'true');
+        
+        // Also try to save to a more persistent location if possible
+        try {
+          if (typeof(Storage) !== "undefined") {
+            // Use a global key that all users can access
+            const globalKey = 'mcbe_global_knowledge_base';
+            localStorage.setItem(globalKey, kbData);
+            sessionStorage.setItem(globalKey, kbData);
+          }
+        } catch (e) {
+          console.warn('Could not save to global storage:', e);
+        }
+        
+        console.log('Saved knowledge base to multiple storage locations:', this.knowledgeBase.filename);
       } else {
         localStorage.removeItem('knowledgeBase');
-        console.log('Removed knowledge base from localStorage');
+        sessionStorage.removeItem('globalKnowledgeBase');
+        localStorage.removeItem('hasGlobalKnowledgeBase');
+        sessionStorage.removeItem('hasGlobalKnowledgeBase');
+        localStorage.removeItem('mcbe_global_knowledge_base');
+        sessionStorage.removeItem('mcbe_global_knowledge_base');
+        console.log('Removed knowledge base from all storage locations');
       }
     } catch (error) {
       console.error('Error saving knowledge base:', error);
+    }
+  }
+
+  // Add method to check for global knowledge base
+  private checkGlobalKnowledgeBase() {
+    try {
+      if (this.knowledgeBase) return true;
+
+      // Check multiple possible storage locations
+      const locations = [
+        'knowledgeBase',
+        'globalKnowledgeBase', 
+        'mcbe_global_knowledge_base'
+      ];
+
+      for (const location of locations) {
+        // Check localStorage
+        const localStored = localStorage.getItem(location);
+        if (localStored) {
+          try {
+            const parsed = JSON.parse(localStored);
+            this.knowledgeBase = {
+              ...parsed,
+              uploadDate: new Date(parsed.uploadDate)
+            };
+            console.log('Found global knowledge base in localStorage:', location);
+            return true;
+          } catch (e) {
+            console.warn('Failed to parse KB from localStorage:', location);
+          }
+        }
+
+        // Check sessionStorage
+        const sessionStored = sessionStorage.getItem(location);
+        if (sessionStored) {
+          try {
+            const parsed = JSON.parse(sessionStored);
+            this.knowledgeBase = {
+              ...parsed,
+              uploadDate: new Date(parsed.uploadDate)
+            };
+            console.log('Found global knowledge base in sessionStorage:', location);
+            return true;
+          } catch (e) {
+            console.warn('Failed to parse KB from sessionStorage:', location);
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking global knowledge base:', error);
+      return false;
     }
   }
 
@@ -144,7 +245,10 @@ class KnowledgeBaseService {
   async sendMessage(message: string): Promise<string> {
     console.log('=== SEND MESSAGE DEBUG START ===');
     console.log('sendMessage called with:', message);
-    console.log('Knowledge base exists:', !!this.knowledgeBase);
+    
+    // Check for global knowledge base before proceeding
+    const hasGlobalKB = this.checkGlobalKnowledgeBase();
+    console.log('Knowledge base exists:', !!this.knowledgeBase, 'Global KB check:', hasGlobalKB);
     console.log('API Key (first 20 chars):', this.apiKey.substring(0, 20) + '...');
     console.log('Base URL:', this.baseUrl);
     
@@ -315,17 +419,76 @@ Instructions:
   }
 
   hasKnowledgeBase(): boolean {
-    const hasKb = this.knowledgeBase !== null && this.knowledgeBase.content.trim().length > 0;
-    console.log('hasKnowledgeBase check:', hasKb, 'KB exists:', !!this.knowledgeBase);
-    return hasKb;
+    // First check current instance
+    if (this.knowledgeBase && this.knowledgeBase.content.trim().length > 0) {
+      console.log('hasKnowledgeBase check: true (current instance)');
+      return true;
+    }
+
+    // Then check for global knowledge base
+    const hasGlobalKB = this.checkGlobalKnowledgeBase();
+    console.log('hasKnowledgeBase check:', hasGlobalKB, 'KB exists:', !!this.knowledgeBase);
+    return hasGlobalKB;
   }
 
   getKnowledgeBaseInfo(): { filename: string; uploadDate: Date } | null {
+    // Try to find knowledge base if not already loaded
+    if (!this.knowledgeBase) {
+      this.checkGlobalKnowledgeBase();
+    }
+    
     if (!this.knowledgeBase) return null;
     return {
       filename: this.knowledgeBase.filename,
       uploadDate: this.knowledgeBase.uploadDate
     };
+  }
+
+  private async extractTextFromPDF(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          if (!text) {
+            reject(new Error('Failed to read PDF content'));
+            return;
+          }
+          // Basic PDF text extraction - this is simplified
+          const cleanText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
+          resolve(cleanText);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read PDF file'));
+      reader.readAsText(file, 'utf-8');
+    });
+  }
+
+  private async extractTextFromTXT(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          if (!text) {
+            reject(new Error('Failed to read TXT content'));
+            return;
+          }
+          console.log('TXT file content extracted, length:', text.length);
+          resolve(text.trim());
+        } catch (error) {
+          console.error('Error extracting TXT content:', error);
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        reject(new Error('Failed to read TXT file'));
+      };
+      reader.readAsText(file, 'utf-8');
+    });
   }
 }
 
