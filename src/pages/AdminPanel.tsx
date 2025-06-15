@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
-import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
+import { CombinedSubmitPlayersTab } from '@/components/admin/CombinedSubmitPlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
 import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
 import { CombinedAnalyticsDashboard } from '@/components/admin/CombinedAnalyticsDashboard';
@@ -9,13 +8,12 @@ import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
-import ApplicationsManager from '@/components/admin/ApplicationsManager';
+import StaffManagement from '@/components/admin/StaffManagement';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
   Shield, 
   LogOut, 
-  UploadCloud, 
   Users, 
   Wrench, 
   BarChart3, 
@@ -27,19 +25,19 @@ import {
 import { adminService } from '@/services/adminService';
 import { useToast } from '@/hooks/use-toast';
 
-type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'applications';
+type AdminTab = 'players' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'staff';
 
 // Role-based tab visibility
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
+      return ['players', 'tools', 'analytics', 'database', 'users', 'blackbox', 'staff'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox'];
+      return ['players', 'tools', 'analytics', 'database', 'users', 'blackbox'];
     case 'moderator':
-      return ['submit', 'manage', 'analytics', 'blackbox'];
+      return ['players', 'analytics', 'blackbox'];
     case 'tester':
-      return ['submit', 'manage'];
+      return ['players'];
     default:
       return [];
   }
@@ -51,7 +49,7 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
   const visibleTabs = getVisibleTabs(userRole);
-  const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0] || 'submit');
+  const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0] || 'players');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { toast } = useToast();
 
@@ -86,22 +84,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
   };
 
   const tabs = [
-    { id: 'submit' as AdminTab, label: 'Submit', icon: UploadCloud },
-    { id: 'manage' as AdminTab, label: 'Players', icon: Users },
+    { id: 'players' as AdminTab, label: 'Players', icon: Users },
     { id: 'tools' as AdminTab, label: 'Tools', icon: Wrench },
     { id: 'analytics' as AdminTab, label: 'Analytics', icon: BarChart3 },
     { id: 'database' as AdminTab, label: 'Database', icon: Database },
     { id: 'users' as AdminTab, label: 'Users', icon: UserCheck },
     { id: 'blackbox' as AdminTab, label: 'Logs', icon: Terminal },
-    { id: 'applications' as AdminTab, label: 'Apps', icon: UserCog }
+    { id: 'staff' as AdminTab, label: 'Staff', icon: UserCog }
   ].filter(tab => visibleTabs.includes(tab.id));
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'submit':
-        return <SubmitResultsForm />;
-      case 'manage':
-        return <ManagePlayersTab />;
+      case 'players':
+        return <CombinedSubmitPlayersTab />;
       case 'tools':
         return userRole === 'owner' || userRole === 'admin' ? (
           <div className="space-y-6">
@@ -159,8 +154,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
           </div>;
       case 'blackbox':
         return <BlackBoxLogger />;
-      case 'applications':
-        return <ApplicationsManager userRole={userRole} />;
+      case 'staff':
+        return <StaffManagement userRole={userRole} />;
       default:
         return null;
     }
@@ -168,7 +163,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] text-white">
-      {/* Small Top Navigation Bar */}
+      {/* Compact Top Navigation Bar */}
       <nav className="bg-gray-900/60 backdrop-blur-xl border-b border-gray-700/50 px-4 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}

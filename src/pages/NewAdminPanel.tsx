@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { NewAdminProtectedRoute } from '@/components/admin/NewAdminProtectedRoute';
-import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
-import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
+import { CombinedSubmitPlayersTab } from '@/components/admin/CombinedSubmitPlayersTab';
 import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
 import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
 import { CombinedAnalyticsDashboard } from '@/components/admin/CombinedAnalyticsDashboard';
@@ -10,7 +9,7 @@ import { KnowledgeBaseUpload } from '@/components/admin/KnowledgeBaseUpload';
 import DatabaseTools from '@/components/admin/DatabaseTools';
 import UserManagement from '@/components/admin/UserManagement';
 import BlackBoxLogger from '@/components/admin/BlackBoxLogger';
-import ApplicationsManager from '@/components/admin/ApplicationsManager';
+import StaffManagement from '@/components/admin/StaffManagement';
 import AdminNavigation, { AdminTab } from '@/components/admin/AdminNavigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,13 +28,13 @@ import { newAdminService } from '@/services/newAdminService';
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
+      return ['submit', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox'];
+      return ['submit', 'tools', 'analytics', 'database', 'users', 'blackbox'];
     case 'moderator':
-      return ['submit', 'manage', 'analytics', 'blackbox'];
+      return ['submit', 'analytics', 'blackbox'];
     case 'tester':
-      return ['submit', 'manage'];
+      return ['submit'];
     default:
       return [];
   }
@@ -105,9 +104,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'submit':
-        return <SubmitResultsForm />;
-      case 'manage':
-        return <ManagePlayersTab />;
+        return <CombinedSubmitPlayersTab />;
       case 'tools':
         return userRole === 'owner' || userRole === 'admin' ? (
           <div className="space-y-4 md:space-y-6">
@@ -138,7 +135,7 @@ const AdminPanelContent = ({ userRole }: { userRole: string }) => {
       case 'blackbox':
         return <BlackBoxLogger />;
       case 'applications':
-        return userRole === 'owner' ? <ApplicationsManager userRole={userRole} /> : 
+        return userRole === 'owner' ? <StaffManagement userRole={userRole} /> : 
           <div className="text-center py-8 text-gray-400">Access denied. Only owners can manage applications.</div>;
       default:
         return null;

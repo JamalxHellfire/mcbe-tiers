@@ -2,7 +2,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { 
-  UploadCloud, 
   Users, 
   Wrench, 
   BarChart3, 
@@ -13,7 +12,7 @@ import {
   Shield
 } from 'lucide-react';
 
-export type AdminTab = 'submit' | 'manage' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'applications';
+export type AdminTab = 'submit' | 'tools' | 'analytics' | 'database' | 'users' | 'blackbox' | 'applications';
 
 interface AdminNavigationProps {
   activeTab: AdminTab;
@@ -28,13 +27,13 @@ interface AdminNavigationProps {
 const getVisibleTabs = (role: string): AdminTab[] => {
   switch (role) {
     case 'owner':
-      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
+      return ['submit', 'tools', 'analytics', 'database', 'users', 'blackbox', 'applications'];
     case 'admin':
-      return ['submit', 'manage', 'tools', 'analytics', 'database', 'users', 'blackbox'];
+      return ['submit', 'tools', 'analytics', 'database', 'users', 'blackbox'];
     case 'moderator':
-      return ['submit', 'manage', 'analytics', 'blackbox'];
+      return ['submit', 'analytics', 'blackbox'];
     case 'tester':
-      return ['submit', 'manage'];
+      return ['submit'];
     default:
       return [];
   }
@@ -53,10 +52,9 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
   const navCategories = [
     {
       title: "Content Management",
-      icon: UploadCloud,
+      icon: Users,
       tabs: [
-        { id: 'submit' as AdminTab, label: 'Submit Results', icon: UploadCloud, description: 'Add or update player rankings' },
-        { id: 'manage' as AdminTab, label: 'Manage Players', icon: Users, description: 'View and edit player accounts' }
+        { id: 'submit' as AdminTab, label: 'Players & Results', icon: Users, description: 'Submit results and manage player accounts' }
       ]
     },
     {
@@ -71,7 +69,7 @@ const AdminNavigation: React.FC<AdminNavigationProps> = ({
       icon: Shield,
       tabs: [
         { id: 'users' as AdminTab, label: 'User Management', icon: UserCheck, description: 'Ban/unban players and moderation' },
-        { id: 'applications' as AdminTab, label: 'Admin Applications', icon: UserCog, description: 'Review admin applications' }
+        { id: 'applications' as AdminTab, label: 'Staff Management', icon: UserCog, description: 'Manage staff applications and active members' }
       ]
     },
     {
