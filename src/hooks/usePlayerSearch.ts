@@ -5,14 +5,14 @@ import { searchPlayers, Player } from '@/services/playerService';
 
 export function usePlayerSearch() {
   const [query, setQuery] = useState<string>('');
-  const debouncedQuery = useDebounce(query, 500); // Increased debounce time for better performance
+  const debouncedQuery = useDebounce(query, 800); // Increased debounce for mobile performance
   const [results, setResults] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
   // Memoize the search function to prevent unnecessary re-renders
   const performSearch = useMemo(() => async (searchQuery: string) => {
-    if (!searchQuery || searchQuery.length < 2) {
+    if (!searchQuery || searchQuery.length < 3) { // Increased minimum length
       setResults([]);
       setIsLoading(false);
       return;
@@ -22,9 +22,7 @@ export function usePlayerSearch() {
     setError(null);
     
     try {
-      console.log('Searching for players with query:', searchQuery);
       const data = await searchPlayers(searchQuery);
-      console.log('Search results received:', data?.length || 0, 'players');
       setResults(data || []);
     } catch (err) {
       console.error('Player search error:', err);
@@ -36,6 +34,11 @@ export function usePlayerSearch() {
   }, []);
   
   useEffect(() => {
+    // Skip search on mobile if query is too short to improve performance
+    if (window.innerWidth <= 768 && debouncedQuery.length < 3) {
+      return;
+    }
+    
     performSearch(debouncedQuery);
   }, [debouncedQuery, performSearch]);
   

@@ -25,10 +25,12 @@ export function useGamemodeTiers(gamemode: GameMode) {
         throw new Error(err.message || 'Failed to load tier data');
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - increased for better performance
-    gcTime: 10 * 60 * 1000, // 10 minutes cache time
-    refetchOnWindowFocus: false, // Prevent unnecessary refetches
-    refetchOnMount: false, // Only fetch if data is stale
+    staleTime: 10 * 60 * 1000, // 10 minutes - increased for mobile performance
+    gcTime: 20 * 60 * 1000, // 20 minutes cache time
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnReconnect: false, // Disable refetch on reconnect
   });
   
   return { tierData, loading, error: error ? (error as Error).message : null };

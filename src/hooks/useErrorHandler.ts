@@ -4,9 +4,14 @@ import { deepSeekService } from '@/services/deepSeekService';
 
 export function useErrorHandler() {
   useEffect(() => {
-    // Global error handler
+    // Global error handler - optimized for mobile
     const handleError = (event: ErrorEvent) => {
       try {
+        // Only log critical errors on mobile to reduce performance impact
+        if (event.message.includes('Script error') || event.message.includes('Network')) {
+          return; // Skip non-critical errors
+        }
+        
         deepSeekService.logError({
           message: event.message,
           filename: event.filename,
@@ -15,40 +20,49 @@ export function useErrorHandler() {
           stack: event.error?.stack
         });
       } catch (error) {
-        console.error('Failed to log error:', error);
+        // Silently fail to avoid recursive errors
       }
     };
 
-    // Unhandled promise rejection handler
+    // Unhandled promise rejection handler - optimized
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       try {
+        // Only log if it's a critical rejection
+        if (typeof event.reason === 'string' && event.reason.includes('fetch')) {
+          return; // Skip network-related rejections
+        }
+        
         deepSeekService.logError({
           message: 'Unhandled Promise Rejection',
           reason: event.reason
         });
       } catch (error) {
-        console.error('Failed to log promise rejection:', error);
+        // Silently fail
       }
     };
 
-    // Log page visits
+    // Throttled page visit logging
     const logPageVisit = () => {
       try {
-        deepSeekService.logPageVisit(window.location.pathname);
+        // Only log on desktop or when specifically needed
+        if (window.innerWidth > 768) {
+          deepSeekService.logPageVisit(window.location.pathname);
+        }
       } catch (error) {
-        console.error('Failed to log page visit:', error);
+        // Silently fail
       }
     };
 
     window.addEventListener('error', handleError);
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
     
-    // Log initial page visit
-    logPageVisit();
+    // Debounced page visit logging
+    const timeoutId = setTimeout(logPageVisit, 1000);
 
     return () => {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      clearTimeout(timeoutId);
     };
   }, []);
 }

@@ -88,8 +88,7 @@
   }
 
   .game-mode-button {
-    @apply px-2 py-1 rounded-md hover:bg-white/10 
-           relative text-xs font-medium;
+    @apply px-2 py-1 rounded-md relative text-xs font-medium;
   }
 
   .game-mode-button.active {
@@ -102,7 +101,7 @@
 
   .logo-text {
     @apply text-base font-bold bg-gradient-to-r from-white via-white/90 to-white/70 
-           bg-clip-text text-transparent hover:from-white hover:to-white/80;
+           bg-clip-text text-transparent;
   }
 
   .navbar {
@@ -120,7 +119,7 @@
   
   .player-result-button {
     @apply flex items-center p-2 bg-dark-surface/70 rounded-lg
-           border border-white/10 hover:border-white/20;
+           border border-white/10;
   }
   
   .player-avatar-frame {
@@ -166,10 +165,12 @@
       @apply sticky top-0 z-30;
     }
 
-    /* Disable all animations and transitions on mobile */
-    * {
-      animation: none !important;
-      transition: none !important;
+    /* Disable all animations and transitions on mobile for performance */
+    *, *::before, *::after {
+      animation-duration: 0s !important;
+      animation-delay: 0s !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
       transform: none !important;
     }
     
@@ -184,7 +185,7 @@
   /* Admin panel styles */
   .admin-card {
     @apply bg-gray-900/30 backdrop-blur-sm border border-gray-700/40 rounded-lg 
-           p-3 hover:border-gray-600/40;
+           p-3;
   }
 
   .admin-button {
