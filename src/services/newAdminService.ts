@@ -269,11 +269,12 @@ export const getPendingApplications = async (): Promise<AdminApplication[]> => {
   }
 };
 
-// Approve/deny application (owner only)
-export const reviewApplication = async (
+// Enhanced approve/deny application with role assignment
+export const reviewApplicationWithRole = async (
   applicationId: string, 
   action: 'approve' | 'deny',
-  reviewerRole: string
+  reviewerRole: string,
+  assignedRole?: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     if (reviewerRole !== 'owner') {
@@ -290,12 +291,15 @@ export const reviewApplication = async (
     if (fetchError) throw fetchError;
 
     if (action === 'approve') {
-      // Add to admin_users table
+      // Use the role assigned by owner, fallback to requested role
+      const roleToAssign = assignedRole || application.requested_role;
+      
+      // Add to admin_users table with the assigned role
       const { error: insertError } = await supabase
         .from('admin_users')
         .insert({
           ip_address: application.ip_address,
-          role: application.requested_role,
+          role: roleToAssign,
           approved_by: 'owner',
           approved_at: new Date().toISOString()
         });
@@ -320,6 +324,15 @@ export const reviewApplication = async (
     console.error('Review application error:', error);
     return { success: false, error: error.message };
   }
+};
+
+// Backward compatibility - keep original function
+export const reviewApplication = async (
+  applicationId: string, 
+  action: 'approve' | 'deny',
+  reviewerRole: string
+): Promise<{ success: boolean; error?: string }> => {
+  return reviewApplicationWithRole(applicationId, action, reviewerRole);
 };
 
 // Get user IP (placeholder - in real app this would be server-side)
@@ -356,6 +369,7 @@ export const newAdminService = {
   submitOnboardingApplication,
   getPendingApplications,
   reviewApplication,
+  reviewApplicationWithRole,
   getAdminUsers,
   clearAllAuthState,
   clearAllAdminSessions,

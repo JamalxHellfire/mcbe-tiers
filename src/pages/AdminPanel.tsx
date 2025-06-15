@@ -102,40 +102,80 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
         return <ManagePlayersTab />;
       case 'tools':
         return userRole === 'owner' || userRole === 'admin' ? (
-          <div className="space-y-4 md:space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-              <div className="space-y-3 md:space-y-4">
-                <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Mass Submission</h3>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-lg border border-purple-500/30">
+                    <UploadCloud className="h-5 w-5 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Mass Submission</h3>
+                </div>
                 <MassSubmissionForm />
               </div>
-              <div className="space-y-3 md:space-y-4">
-                <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">System Monitoring</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-lg border border-blue-500/30">
+                    <Settings className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">System Monitoring</h3>
+                </div>
                 <SystemLogsViewer />
               </div>
             </div>
             {userRole === 'owner' && (
-              <div className="space-y-3 md:space-y-4">
-                <h3 className="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Knowledge Base Management</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 rounded-lg border border-yellow-500/30">
+                    <Shield className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Knowledge Base Management</h3>
+                </div>
                 <KnowledgeBaseUpload />
               </div>
             )}
           </div>
-        ) : <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <Shield className="h-12 w-12 text-red-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-red-400 mb-2">Access Restricted</h3>
+                <p className="text-gray-400">Your role does not have access to these tools.</p>
+              </div>
+            </div>
+          </div>
+        );
       case 'analytics':
         return <AnalyticsDashboard />;
       case 'daily':
         return <DailyAnalytics />;
       case 'database':
         return userRole === 'owner' || userRole === 'admin' ? <DatabaseTools /> : 
-          <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <Shield className="h-12 w-12 text-red-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-red-400 mb-2">Access Restricted</h3>
+                <p className="text-gray-400">Your role does not have access to database tools.</p>
+              </div>
+            </div>
+          </div>;
       case 'users':
         return userRole === 'owner' || userRole === 'admin' ? <UserManagement /> : 
-          <div className="text-center py-8 text-gray-400">Access denied for your role.</div>;
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <Shield className="h-12 w-12 text-red-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-red-400 mb-2">Access Restricted</h3>
+                <p className="text-gray-400">Your role does not have access to user management.</p>
+              </div>
+            </div>
+          </div>;
       case 'blackbox':
         return <BlackBoxLogger />;
       case 'applications':
-        return userRole === 'owner' ? <ApplicationsManager userRole={userRole} /> : 
-          <div className="text-center py-8 text-gray-400">Access denied. Only owners can manage applications.</div>;
+        return <ApplicationsManager userRole={userRole} />;
       default:
         return null;
     }
@@ -156,25 +196,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
           if (isMobile) setMobileMenuOpen(false);
         }}
         className={cn(
-          "group relative p-2 md:p-3 lg:p-4 rounded-lg md:rounded-xl transition-all duration-200",
-          "border backdrop-blur-sm text-left w-full",
+          "group relative p-3 lg:p-4 rounded-xl transition-all duration-300",
+          "border backdrop-blur-sm text-left w-full transform hover:scale-[1.02]",
           activeTab === tabName
-            ? "bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/50 shadow-lg shadow-purple-500/25"
-            : "bg-gray-900/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-gray-600/50"
+            ? "bg-gradient-to-br from-purple-600/30 to-blue-600/30 border-purple-400/60 shadow-xl shadow-purple-500/25 scale-[1.02]"
+            : "bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/70 hover:border-gray-600/60 hover:shadow-lg"
         )}
       >
-        <div className="flex items-start space-x-2 md:space-x-3">
+        <div className="flex items-start space-x-3">
           <div className={cn(
-            "p-1.5 md:p-2 rounded-md md:rounded-lg transition-colors",
+            "p-2 rounded-lg transition-all duration-300",
             activeTab === tabName
-              ? "bg-purple-500/20 text-purple-400"
+              ? "bg-purple-500/30 text-purple-300 shadow-lg"
               : "bg-gray-700/50 text-gray-400 group-hover:bg-gray-600/50 group-hover:text-gray-300"
           )}>
-            <Icon className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5" />
+            <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className={cn(
-              "font-semibold mb-0.5 transition-colors text-xs md:text-sm lg:text-base",
+              "font-semibold mb-1 transition-colors text-sm lg:text-base",
               activeTab === tabName ? "text-white" : "text-gray-300 group-hover:text-white"
             )}>
               {label}
@@ -190,41 +230,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0b14] via-[#0f111a] to-[#1a1b2a] text-white">
-      {/* Background effects */}
+      {/* Enhanced Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-32 h-32 md:w-48 md:h-48 bg-purple-600/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 md:w-64 md:h-64 bg-blue-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-600/8 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/8 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-cyan-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      <div className="relative z-10 p-2 md:p-4 lg:p-6">
+      <div className="relative z-10 p-3 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <header className="mb-4 md:mb-6 lg:mb-8">
+          {/* Enhanced Header */}
+          <header className="mb-6 lg:mb-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 md:space-x-3">
-                <div className="p-1.5 md:p-2 bg-gradient-to-br from-purple-600 to-blue-600 rounded-md md:rounded-lg">
-                  <Shield className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6 text-white" />
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl shadow-lg">
+                  <Shield className="h-6 w-6 lg:h-7 lg:w-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
                     Admin Dashboard
                   </h1>
-                  <p className="text-gray-400 text-xs md:text-sm hidden md:block">
-                    Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                  </p>
+                  <div className="flex items-center space-x-3 mt-1">
+                    <p className="text-gray-400 text-sm md:text-base">
+                      Role: <span className="text-purple-400 font-semibold">{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
+                    </p>
+                    <div className="h-1 w-1 bg-gray-500 rounded-full"></div>
+                    <p className="text-gray-500 text-xs md:text-sm">
+                      {new Date().toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 {/* Mobile Menu Toggle */}
                 {isMobile && (
                   <Button 
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     variant="ghost" 
                     size="sm"
-                    className="text-white/70 hover:text-white p-2"
+                    className="text-white/70 hover:text-white p-2 hover:bg-gray-800/50 rounded-lg transition-all duration-200"
                   >
-                    {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                   </Button>
                 )}
                 
@@ -235,9 +282,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
                     disabled={isLoggingOut}
                     variant="destructive" 
                     size="sm"
-                    className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30"
+                    className="bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 hover:border-red-400/60 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
                   >
-                    <LogOut className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                    <LogOut className="h-4 w-4 mr-2" />
                     {isLoggingOut ? 'Logging out...' : 'Logout'}
                   </Button>
                 )}
@@ -245,18 +292,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
             </div>
           </header>
 
-          <main className="space-y-3 md:space-y-4 lg:space-y-6">
-            {/* Navigation */}
-            <div className="space-y-2 md:space-y-3">
-              <h2 className="text-base md:text-lg font-bold text-white text-center">Administrative Controls</h2>
+          <main className="space-y-6 lg:space-y-8">
+            {/* Enhanced Navigation */}
+            <div className="space-y-4">
+              <div className="text-center">
+                <h2 className="text-lg md:text-xl font-bold text-white mb-2">Administrative Controls</h2>
+                <div className="h-1 w-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mx-auto"></div>
+              </div>
               
               {/* Mobile Navigation Menu */}
               {isMobile && (
                 <div className={cn(
-                  "transition-all duration-300 overflow-hidden",
-                  mobileMenuOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                  "transition-all duration-500 overflow-hidden",
+                  mobileMenuOpen ? "max-h-[1200px] opacity-100" : "max-h-0 opacity-0"
                 )}>
-                  <div className="space-y-2 p-3 bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl">
+                  <div className="space-y-3 p-4 bg-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl">
                     <TabButton tabName="submit" label="Submit Results" icon={UploadCloud} description="Add or update player tier rankings" />
                     <TabButton tabName="manage" label="Manage Players" icon={Users} description="View and edit player accounts" />
                     <TabButton tabName="users" label="User Management" icon={UserCheck} description="Ban/unban players and moderation" />
@@ -271,10 +321,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
                       onClick={handleLogout}
                       disabled={isLoggingOut}
                       variant="destructive" 
-                      className="w-full bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 mt-3"
+                      className="w-full bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 mt-4"
                       size="sm"
                     >
-                      <LogOut className="h-3 w-3 mr-1" />
+                      <LogOut className="h-4 w-4 mr-2" />
                       {isLoggingOut ? 'Logging out...' : 'Logout'}
                     </Button>
                   </div>
@@ -283,7 +333,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
               
               {/* Desktop Navigation Grid */}
               {!isMobile && (
-                <div className="grid grid-cols-4 lg:grid-cols-9 gap-2 md:gap-3">
+                <div className="grid grid-cols-3 lg:grid-cols-9 gap-3 lg:gap-4">
                   <TabButton tabName="submit" label="Submit" icon={UploadCloud} description="Add or update player rankings" />
                   <TabButton tabName="manage" label="Players" icon={Users} description="View and edit accounts" />
                   <TabButton tabName="users" label="Moderation" icon={UserCheck} description="Ban/unban players" />
@@ -297,10 +347,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ userRole }) => {
               )}
             </div>
             
-            {/* Content Area */}
+            {/* Enhanced Content Area */}
             <div className="relative">
-              <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-700/50 rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-6 shadow-2xl">
-                {renderContent()}
+              <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl lg:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl">
+                <div className="relative">
+                  {renderContent()}
+                </div>
               </div>
             </div>
           </main>
