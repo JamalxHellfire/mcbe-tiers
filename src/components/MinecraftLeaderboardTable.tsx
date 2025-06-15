@@ -29,6 +29,48 @@ const getDeviceIcon = (device: string = 'PC') => {
   }
 };
 
+// Helper to get consistent region styling (matching popup colors)
+const getRegionStyling = (regionCode: string = 'NA') => {
+  const regions: Record<string, { 
+    bgColor: string;
+    textColor: string;
+    hoverBg: string;
+  }> = {
+    'NA': { 
+      bgColor: 'bg-emerald-600/80',
+      textColor: 'text-white',
+      hoverBg: 'group-hover:bg-emerald-500/90'
+    },
+    'EU': { 
+      bgColor: 'bg-purple-600/80',
+      textColor: 'text-white',
+      hoverBg: 'group-hover:bg-purple-500/90'
+    },
+    'ASIA': { 
+      bgColor: 'bg-red-600/80',
+      textColor: 'text-white',
+      hoverBg: 'group-hover:bg-red-500/90'
+    },
+    'SA': { 
+      bgColor: 'bg-orange-600/80',
+      textColor: 'text-white',
+      hoverBg: 'group-hover:bg-orange-500/90'
+    },
+    'AF': { 
+      bgColor: 'bg-fuchsia-600/80',
+      textColor: 'text-white',
+      hoverBg: 'group-hover:bg-fuchsia-500/90'
+    },
+    'OCE': { 
+      bgColor: 'bg-teal-600/80',
+      textColor: 'text-white',
+      hoverBg: 'group-hover:bg-teal-500/90'
+    }
+  };
+  
+  return regions[regionCode] || regions['NA'];
+};
+
 export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps> = ({
   players,
   onPlayerClick,
@@ -66,6 +108,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
         {players.map((player, index) => {
           const playerPoints = player.global_points || 0;
           const rankInfo = getPlayerRank(playerPoints);
+          const regionStyle = getRegionStyling(player.region);
           
           return (
             <motion.div
@@ -117,13 +160,10 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                   </div>
                 </div>
 
-                {/* Region */}
+                {/* Region - Updated with consistent styling */}
                 <span className={`
-                  px-3 py-1.5 rounded-full text-sm font-bold
-                  ${player.region === 'NA' ? 'bg-red-600/80 text-white' :
-                    player.region === 'EU' ? 'bg-green-600/80 text-white' :
-                    player.region === 'ASIA' ? 'bg-blue-600/80 text-white' :
-                    'bg-gray-600/80 text-white'}
+                  px-3 py-1.5 rounded-full text-sm font-bold transition-all duration-300
+                  ${regionStyle.bgColor} ${regionStyle.textColor}
                 `}>
                   {player.region || 'NA'}
                 </span>
@@ -178,6 +218,7 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
         {players.map((player, index) => {
           const playerPoints = player.global_points || 0;
           const rankInfo = getPlayerRank(playerPoints);
+          const regionStyle = getRegionStyling(player.region);
           
           return (
             <motion.div
@@ -232,14 +273,11 @@ export const MinecraftLeaderboardTable: React.FC<MinecraftLeaderboardTableProps>
                 </div>
               </div>
 
-              {/* Region */}
+              {/* Region - Updated with consistent styling */}
               <div className="col-span-2 flex items-center justify-center">
                 <span className={`
                   px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 group-hover:scale-105
-                  ${player.region === 'NA' ? 'bg-red-600/80 text-white group-hover:bg-red-500/90' :
-                    player.region === 'EU' ? 'bg-green-600/80 text-white group-hover:bg-green-500/90' :
-                    player.region === 'ASIA' ? 'bg-blue-600/80 text-white group-hover:bg-blue-500/90' :
-                    'bg-gray-600/80 text-white group-hover:bg-gray-500/90'}
+                  ${regionStyle.bgColor} ${regionStyle.textColor} ${regionStyle.hoverBg}
                 `}>
                   {player.region || 'NA'}
                 </span>
