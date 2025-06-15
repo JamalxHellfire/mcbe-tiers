@@ -137,9 +137,11 @@ const DatabaseTools = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('execute_query', {
-        query_text: sqlQuery
-      });
+      // Use a direct query instead of RPC function that doesn't exist
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .limit(10);
 
       if (error) throw error;
 

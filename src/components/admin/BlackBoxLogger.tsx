@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ interface LogEntry {
   message: string;
   details?: string;
   level: 'info' | 'warning' | 'error' | 'success';
+  latency?: number; // in milliseconds
 }
 
 const BlackBoxLogger = () => {
@@ -21,7 +23,7 @@ const BlackBoxLogger = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  // Simulate real-time logging
+  // Simulate real-time logging with latency tracking
   useEffect(() => {
     if (isPaused) return;
 
@@ -42,34 +44,76 @@ const BlackBoxLogger = () => {
           'GET /api/players - 200 OK',
           'PUT /api/updateRanking - 200 OK',
           'DELETE /api/deletePlayer - 200 OK',
-          'POST /api/auth/login - 200 OK'
+          'POST /api/auth/login - 200 OK',
+          'GET /api/leaderboard - 200 OK',
+          'PATCH /api/player/update - 200 OK'
         ],
         database: [
           'Indexing: player_stats:123456',
           'Loaded table: combat_scores',
           'Cache updated: leaderboard_data',
           'Database connection pool initialized',
-          'Query executed: SELECT FROM players'
+          'Query executed: SELECT FROM players',
+          'Index rebuild: player_rankings',
+          'Backup completed: player_data'
         ],
         system: [
           'Memory usage: 45% (normal)',
           'CPU load: 23% (optimal)',
           'Cache hit ratio: 89%',
           'Background task completed',
-          'System health check passed'
+          'System health check passed',
+          'Garbage collection cycle',
+          'Process cleanup completed'
         ],
         visit: [
           'New visit: device=Mobile, region=Asia',
           'Page view: /leaderboard from Desktop',
           'New visit: device=Tablet, region=Europe',
           'Search query executed',
-          'User interaction logged'
+          'User interaction logged',
+          'Session timeout handled',
+          'Analytics event recorded'
         ]
       };
 
       const type = types[Math.floor(Math.random() * types.length)];
       const level = levels[Math.floor(Math.random() * levels.length)];
-      const message = messages[type][Math.floor(Math.random() * messages[type].length)];
+      let message = messages[type][Math.floor(Math.random() * messages[type].length)];
+      
+      // Generate realistic latency based on operation type
+      let latency: number | undefined;
+      const shouldIncludeLatency = Math.random() > 0.3; // 70% of operations have latency
+      
+      if (shouldIncludeLatency) {
+        switch (type) {
+          case 'api':
+            latency = Math.floor(Math.random() * 800) + 50; // 50-850ms
+            break;
+          case 'database':
+            latency = Math.floor(Math.random() * 500) + 20; // 20-520ms
+            break;
+          case 'connection':
+            latency = Math.floor(Math.random() * 300) + 100; // 100-400ms
+            break;
+          case 'system':
+            latency = Math.floor(Math.random() * 150) + 10; // 10-160ms
+            break;
+          case 'visit':
+            latency = Math.floor(Math.random() * 200) + 15; // 15-215ms
+            break;
+          default:
+            latency = Math.floor(Math.random() * 100) + 10; // 10-110ms
+        }
+
+        // Only show latency if it's above 10ms threshold
+        if (latency > 10) {
+          const latencyColor = latency > 500 ? 'SLOW' : latency > 200 ? 'MODERATE' : 'FAST';
+          message += ` (Latency: ${latency}ms - ${latencyColor})`;
+        } else {
+          latency = undefined;
+        }
+      }
 
       return {
         id: Math.random().toString(36).substr(2, 9),
@@ -77,7 +121,8 @@ const BlackBoxLogger = () => {
         type,
         message,
         level,
-        details: Math.random() > 0.7 ? 'Additional context data available' : undefined
+        latency,
+        details: Math.random() > 0.8 ? 'Additional context data available' : undefined
       };
     };
 
@@ -122,7 +167,14 @@ const BlackBoxLogger = () => {
     URL.revokeObjectURL(url);
   };
 
-  const getLogColor = (level: string) => {
+  const getLogColor = (level: string, latency?: number) => {
+    // Priority: latency coloring for performance, then level coloring
+    if (latency !== undefined) {
+      if (latency > 500) return 'text-red-400'; // Slow
+      if (latency > 200) return 'text-yellow-400'; // Moderate
+      if (latency <= 200) return 'text-green-400'; // Fast
+    }
+    
     switch (level) {
       case 'error': return 'text-red-400';
       case 'warning': return 'text-yellow-400';
@@ -142,6 +194,30 @@ const BlackBoxLogger = () => {
       case 'admin': return '🛡️';
       default: return '📝';
     }
+  };
+
+  const getLatencyBadge = (latency?: number) => {
+    if (latency === undefined) return null;
+    
+    let variant: "default" | "secondary" | "destructive" | "outline" = "default";
+    let className = "";
+    
+    if (latency > 500) {
+      variant = "destructive";
+      className = "bg-red-600/20 text-red-400 border-red-500/50";
+    } else if (latency > 200) {
+      variant = "outline";
+      className = "bg-yellow-600/20 text-yellow-400 border-yellow-500/50";
+    } else {
+      variant = "outline";
+      className = "bg-green-600/20 text-green-400 border-green-500/50";
+    }
+
+    return (
+      <Badge variant={variant} className={`text-xs ${className}`}>
+        {latency}ms
+      </Badge>
+    );
   };
 
   return (
@@ -188,7 +264,7 @@ const BlackBoxLogger = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm md:text-base text-white flex items-center">
               <Terminal className="h-4 w-4 mr-2" />
-              Live System Activity
+              Live System Activity with Latency Tracking
             </CardTitle>
             <div className="flex items-center space-x-2">
               {isPaused ? (
@@ -219,18 +295,19 @@ const BlackBoxLogger = () => {
                   >
                     <span className="text-xs">{getTypeIcon(log.type)}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
+                      <div className="flex items-center space-x-2 mb-1 flex-wrap">
                         <span className="text-gray-500 text-xs">
                           {new Date(log.timestamp).toLocaleTimeString()}
                         </span>
                         <Badge 
                           variant="outline" 
-                          className={`text-xs border-gray-600 ${getLogColor(log.level)}`}
+                          className={`text-xs border-gray-600 ${getLogColor(log.level, log.latency)}`}
                         >
                           {log.type.toUpperCase()}
                         </Badge>
+                        {getLatencyBadge(log.latency)}
                       </div>
-                      <div className={`text-xs ${getLogColor(log.level)}`}>
+                      <div className={`text-xs ${getLogColor(log.level, log.latency)}`}>
                         {log.message}
                       </div>
                       {log.details && (
@@ -249,7 +326,7 @@ const BlackBoxLogger = () => {
       </Card>
 
       <div className="text-xs text-gray-500 text-center">
-        Real-time system monitoring • Sensitive data automatically masked • Read-only view
+        Real-time system monitoring with latency tracking • Sensitive data automatically masked • Read-only view
       </div>
     </div>
   );
