@@ -1,3 +1,4 @@
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -12,7 +13,7 @@ interface KnowledgeBase {
 }
 
 class KnowledgeBaseService {
-  private apiKey = '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';
+  private apiKey = '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';
   private baseUrl = 'https://api.deepseek.com/v1';
   private knowledgeBase: KnowledgeBase | null = null;
   private chatHistory: ChatMessage[] = [];
