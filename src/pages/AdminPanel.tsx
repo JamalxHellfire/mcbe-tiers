@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useAdminPanel } from '@/hooks/useAdminPanel';
 import { SubmitResultsForm } from '@/components/admin/SubmitResultsForm';
 import { ManagePlayersTab } from '@/components/admin/ManagePlayersTab';
+import { MassSubmissionForm } from '@/components/admin/MassSubmissionForm';
+import { SystemLogsViewer } from '@/components/admin/SystemLogsViewer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { UploadCloud, Users, Wrench, Settings, Shield, LogOut } from 'lucide-react';
@@ -20,11 +22,16 @@ const AdminPanel = () => {
         return <ManagePlayersTab />;
       case 'tools':
         return (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4">
-              <Settings className="h-16 w-16 text-purple-400 mx-auto animate-pulse" />
-              <h3 className="text-2xl font-bold text-white">Admin Tools</h3>
-              <p className="text-gray-400 max-w-md">Advanced administrative features coming soon. Stay tuned for powerful tools to manage your platform.</p>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-white mb-4">Mass Submission</h3>
+                <MassSubmissionForm />
+              </div>
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-white mb-4">System Monitoring</h3>
+                <SystemLogsViewer />
+              </div>
             </div>
           </div>
         );

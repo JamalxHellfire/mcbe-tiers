@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, GameMode, TierLevel, updatePlayerGlobalPoints } from '@/services/playerService';
 import { useToast } from '@/hooks/use-toast';
+import { deepSeekService } from '@/services/deepSeekService';
 
 interface PlayerResult {
   gamemode: GameMode;
@@ -17,30 +17,43 @@ export const useAdminPanel = () => {
   const { toast } = useToast();
 
   const refreshPlayers = async () => {
+    const startTime = Date.now();
     setLoading(true);
     setError(null);
+    
     try {
+      deepSeekService.logDatabaseOperation('SELECT', 'players', null, null, null);
+      
       const { data, error } = await supabase
         .from('players')
         .select('*')
         .order('global_points', { ascending: false });
 
+      const duration = Date.now() - startTime;
+
       if (error) {
         console.error('Error fetching players:', error);
         setError(error.message);
+        deepSeekService.logDatabaseOperation('SELECT', 'players', null, null, error, duration);
       } else {
         console.log('Fetched players:', data);
         setPlayers(data || []);
+        deepSeekService.logDatabaseOperation('SELECT', 'players', null, { data }, null, duration);
       }
     } catch (err: any) {
+      const duration = Date.now() - startTime;
       console.error('Exception in refreshPlayers:', err);
       setError(err.message);
+      deepSeekService.logError(err, { operation: 'refreshPlayers' });
+      deepSeekService.logDatabaseOperation('SELECT', 'players', null, null, err, duration);
     } finally {
       setLoading(false);
     }
   };
 
   const updatePlayerTier = async (playerId: number, gamemode: GameMode, tier: TierLevel) => {
+    const startTime = Date.now();
+    
     // Validate inputs
     if (!playerId || isNaN(playerId)) {
       toast({
@@ -62,8 +75,20 @@ export const useAdminPanel = () => {
 
     setLoading(true);
     setError(null);
+    
     try {
       console.log(`Updating player ${playerId} tier for ${gamemode} to ${tier}`);
+      deepSeekService.logUserAction('update_tier', 'player', { playerId, gamemode, tier });
+      
+      const upsertData = { 
+        player_id: playerId.toString(), 
+        gamemode: gamemode, 
+        display_tier: tier,
+        internal_tier: tier,
+        score: 0
+      };
+      
+      deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', upsertData);
       
       const { error } = await supabase
         .from('gamemode_scores')
@@ -78,26 +103,30 @@ export const useAdminPanel = () => {
           { onConflict: 'player_id,gamemode' }
         );
 
+      const duration = Date.now() - startTime;
+
       if (error) {
         console.error('Error updating tier:', error);
         setError(error.message);
+        deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', upsertData, null, error, duration);
         toast({
           title: "Error",
           description: `Failed to update tier: ${error.message}`,
           variant: "destructive"
         });
       } else {
-        // Automatically update global points
         await updatePlayerGlobalPoints(playerId.toString());
-        
+        deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', upsertData, { success: true }, null, duration);
         toast({
           title: "Success",
           description: `Tier updated successfully for player ID ${playerId} in ${gamemode}. Global points recalculated.`,
         });
       }
     } catch (err: any) {
+      const duration = Date.now() - startTime;
       console.error('Exception in updatePlayerTier:', err);
       setError(err.message);
+      deepSeekService.logError(err, { operation: 'updatePlayerTier', playerId, gamemode, tier });
       toast({
         title: "Error",
         description: `Failed to update tier: ${err.message}`,
@@ -109,6 +138,8 @@ export const useAdminPanel = () => {
   };
 
   const deletePlayer = async (playerId: number) => {
+    const startTime = Date.now();
+    
     // Validate player ID
     if (!playerId || isNaN(playerId)) {
       toast({
@@ -121,10 +152,13 @@ export const useAdminPanel = () => {
 
     setLoading(true);
     setError(null);
+    
     try {
       console.log(`Deleting player with ID: ${playerId}`);
+      deepSeekService.logUserAction('delete_player', 'player', { playerId });
       
       // First delete gamemode scores
+      deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId.toString() });
       const { error: scoresError } = await supabase
         .from('gamemode_scores')
         .delete()
@@ -132,28 +166,36 @@ export const useAdminPanel = () => {
 
       if (scoresError) {
         console.error('Error deleting gamemode scores:', scoresError);
+        deepSeekService.logDatabaseOperation('DELETE', 'gamemode_scores', { player_id: playerId.toString() }, null, scoresError);
         throw new Error(`Failed to delete gamemode scores: ${scoresError.message}`);
       }
 
       // Then delete the player
+      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId.toString() });
       const { error: playerError } = await supabase
         .from('players')
         .delete()
         .eq('id', playerId.toString());
 
+      const duration = Date.now() - startTime;
+
       if (playerError) {
         console.error('Error deleting player:', playerError);
+        deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId.toString() }, null, playerError, duration);
         throw new Error(`Failed to delete player: ${playerError.message}`);
       }
 
       setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId.toString()));
+      deepSeekService.logDatabaseOperation('DELETE', 'players', { id: playerId.toString() }, { success: true }, null, duration);
       toast({
         title: "Success",
         description: `Player ID ${playerId} deleted successfully.`,
       });
     } catch (err: any) {
+      const duration = Date.now() - startTime;
       console.error('Exception in deletePlayer:', err);
       setError(err.message);
+      deepSeekService.logError(err, { operation: 'deletePlayer', playerId });
       toast({
         title: "Error",
         description: `Failed to delete player: ${err.message}`,
@@ -171,9 +213,12 @@ export const useAdminPanel = () => {
     java_username?: string,
     results?: Array<{ gamemode: GameMode; tier: TierLevel; points: number }>
   ) => {
+    const startTime = Date.now();
+    
     try {
       setLoading(true);
       console.log('Submitting player results:', { ign, region, device, java_username, results });
+      deepSeekService.logUserAction('submit_results', 'player', { ign, region, device, resultsCount: results?.length });
 
       // Validate inputs
       if (!ign || !ign.trim()) {
@@ -199,6 +244,7 @@ export const useAdminPanel = () => {
       };
 
       console.log('Upserting player:', playerInsertObj);
+      deepSeekService.logDatabaseOperation('UPSERT', 'players', playerInsertObj);
 
       const { data: playerData, error: playerUpsertError } = await supabase
         .from('players')
@@ -208,6 +254,7 @@ export const useAdminPanel = () => {
 
       if (playerUpsertError) {
         console.error('Player upsert error:', playerUpsertError);
+        deepSeekService.logDatabaseOperation('UPSERT', 'players', playerInsertObj, null, playerUpsertError);
         throw new Error(`Failed to upsert player: ${playerUpsertError.message}`);
       }
 
@@ -216,6 +263,7 @@ export const useAdminPanel = () => {
       }
 
       console.log('Player upserted successfully:', playerData);
+      deepSeekService.logDatabaseOperation('UPSERT', 'players', playerInsertObj, { data: playerData });
       const playerId = playerData.id;
 
       if (results && results.length > 0) {
@@ -225,6 +273,16 @@ export const useAdminPanel = () => {
           const { gamemode, tier, points } = result;
           if (tier !== 'Not Ranked') {
             console.log(`Upserting gamemode score: ${gamemode} - ${tier} - ${points}`);
+            
+            const gamemodeData = { 
+              player_id: playerId, 
+              gamemode, 
+              display_tier: tier,
+              internal_tier: tier,
+              score: points || 0
+            };
+            
+            deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', gamemodeData);
             
             const { error: gamemodeUpsertError } = await supabase
               .from('gamemode_scores')
@@ -241,15 +299,20 @@ export const useAdminPanel = () => {
 
             if (gamemodeUpsertError) {
               console.error(`Gamemode ${gamemode} upsert error:`, gamemodeUpsertError);
+              deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', gamemodeData, null, gamemodeUpsertError);
               throw new Error(`Failed to upsert gamemode ${gamemode}: ${gamemodeUpsertError.message}`);
             }
+            
+            deepSeekService.logDatabaseOperation('UPSERT', 'gamemode_scores', gamemodeData, { success: true });
           }
         }
         
-        // Automatically calculate and update global points
         console.log('Updating global points for player:', playerId);
         await updatePlayerGlobalPoints(playerId);
       }
+
+      const duration = Date.now() - startTime;
+      deepSeekService.logApiCall('POST', '/admin/submit-results', { ign, resultsCount: results?.length }, { success: true }, null, duration);
 
       toast({
         title: "Success",
@@ -258,8 +321,11 @@ export const useAdminPanel = () => {
 
       return { success: true, player: playerData };
     } catch (error: any) {
+      const duration = Date.now() - startTime;
       console.error('Submission error:', error);
       setError(error.message);
+      deepSeekService.logError(error, { operation: 'submitPlayerResults', ign });
+      deepSeekService.logApiCall('POST', '/admin/submit-results', { ign }, null, error, duration);
       toast({
         title: "Error",
         description: `Failed to submit player results: ${error.message}`,

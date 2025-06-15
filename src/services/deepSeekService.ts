@@ -7,6 +7,9 @@ interface LogEntry {
   stack?: string;
   url?: string;
   userAgent?: string;
+  category?: 'api' | 'database' | 'ui' | 'auth' | 'system';
+  operation?: string;
+  duration?: number;
 }
 
 interface DeepSeekAnalysis {
@@ -16,10 +19,61 @@ interface DeepSeekAnalysis {
   category: string;
 }
 
+interface ApiCallMetrics {
+  totalCalls: number;
+  callsPerMinute: number;
+  lastMinuteCalls: number[];
+  errorRate: number;
+  averageResponseTime: number;
+}
+
 class DeepSeekService {
   private apiKey = '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';
   private baseUrl = 'https://api.deepseek.com/v1';
   private logs: LogEntry[] = [];
+  private apiMetrics: ApiCallMetrics = {
+    totalCalls: 0,
+    callsPerMinute: 0,
+    lastMinuteCalls: [],
+    errorRate: 0,
+    averageResponseTime: 0
+  };
+
+  constructor() {
+    // Start metrics collection
+    this.startMetricsCollection();
+  }
+
+  private startMetricsCollection() {
+    setInterval(() => {
+      this.updateMetrics();
+    }, 60000); // Update every minute
+  }
+
+  private updateMetrics() {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    
+    // Filter calls from the last minute
+    const recentCalls = this.logs.filter(log => 
+      log.category === 'api' && 
+      new Date(log.timestamp).getTime() > oneMinuteAgo
+    );
+    
+    this.apiMetrics.lastMinuteCalls.push(recentCalls.length);
+    if (this.apiMetrics.lastMinuteCalls.length > 60) {
+      this.apiMetrics.lastMinuteCalls.shift(); // Keep only last 60 minutes
+    }
+    
+    this.apiMetrics.callsPerMinute = recentCalls.length;
+    
+    // Calculate error rate
+    const errors = this.logs.filter(log => log.level === 'error' && log.category === 'api');
+    this.apiMetrics.errorRate = this.apiMetrics.totalCalls > 0 ? 
+      (errors.length / this.apiMetrics.totalCalls) * 100 : 0;
+
+    console.log('API Metrics Updated:', this.apiMetrics);
+  }
 
   async analyzeError(error: any, context?: any): Promise<DeepSeekAnalysis> {
     try {
@@ -73,7 +127,6 @@ class DeepSeekService {
       const data = await response.json();
       const analysis = data.choices[0].message.content;
 
-      // Parse the response to extract structured data
       return this.parseAnalysis(analysis);
     } catch (apiError) {
       console.error('DeepSeek analysis failed:', apiError);
@@ -87,7 +140,6 @@ class DeepSeekService {
   }
 
   private parseAnalysis(analysis: string): DeepSeekAnalysis {
-    // Simple parsing - in production, you might want more sophisticated parsing
     const lines = analysis.split('\n');
     
     let reasoning = 'Error analysis not available';
@@ -124,19 +176,21 @@ class DeepSeekService {
       context,
       stack: error.stack,
       url: window.location.href,
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
+      category: 'system'
     };
 
     this.logs.push(logEntry);
     console.error('Error logged:', logEntry);
 
-    // Analyze error with DeepSeek
     this.analyzeError(error, context).then(analysis => {
       console.log('DeepSeek Analysis:', analysis);
     });
   }
 
-  logApiCall(method: string, endpoint: string, payload?: any, response?: any, error?: any): void {
+  logApiCall(method: string, endpoint: string, payload?: any, response?: any, error?: any, duration?: number): void {
+    this.apiMetrics.totalCalls++;
+    
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: error ? 'error' : 'info',
@@ -144,11 +198,15 @@ class DeepSeekService {
       context: {
         method,
         endpoint,
-        payload,
-        response,
-        error: error?.message
+        payload: payload ? this.sanitizePayload(payload) : undefined,
+        response: response ? this.sanitizeResponse(response) : undefined,
+        error: error?.message,
+        status: response?.status || (error ? 'error' : 'success')
       },
-      url: window.location.href
+      url: window.location.href,
+      category: 'api',
+      operation: 'api_call',
+      duration
     };
 
     this.logs.push(logEntry);
@@ -158,6 +216,29 @@ class DeepSeekService {
     }
   }
 
+  logDatabaseOperation(operation: string, table: string, data?: any, result?: any, error?: any, duration?: number): void {
+    const logEntry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level: error ? 'error' : 'info',
+      message: `${operation.toUpperCase()} ${table}`,
+      context: {
+        operation,
+        table,
+        data: data ? this.sanitizePayload(data) : undefined,
+        result: result ? this.sanitizeResponse(result) : undefined,
+        error: error?.message,
+        recordCount: Array.isArray(result?.data) ? result.data.length : undefined
+      },
+      url: window.location.href,
+      category: 'database',
+      operation: 'db_operation',
+      duration
+    };
+
+    this.logs.push(logEntry);
+    console.log('Database operation logged:', logEntry);
+  }
+
   logPageVisit(path: string): void {
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
@@ -165,22 +246,101 @@ class DeepSeekService {
       message: `Page visit: ${path}`,
       context: { path, referrer: document.referrer },
       url: window.location.href,
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
+      category: 'ui',
+      operation: 'page_visit'
     };
 
     this.logs.push(logEntry);
   }
 
-  getLogs(): LogEntry[] {
-    return [...this.logs];
+  logUserAction(action: string, target: string, data?: any): void {
+    const logEntry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      message: `User action: ${action} on ${target}`,
+      context: { action, target, data },
+      url: window.location.href,
+      category: 'ui',
+      operation: 'user_action'
+    };
+
+    this.logs.push(logEntry);
+  }
+
+  private sanitizePayload(payload: any): any {
+    if (!payload) return undefined;
+    
+    // Remove sensitive information
+    const sanitized = JSON.parse(JSON.stringify(payload));
+    if (sanitized.password) sanitized.password = '[REDACTED]';
+    if (sanitized.pin) sanitized.pin = '[REDACTED]';
+    if (sanitized.token) sanitized.token = '[REDACTED]';
+    
+    return sanitized;
+  }
+
+  private sanitizeResponse(response: any): any {
+    if (!response) return undefined;
+    
+    const sanitized = JSON.parse(JSON.stringify(response));
+    if (sanitized.session_token) sanitized.session_token = '[REDACTED]';
+    
+    return sanitized;
+  }
+
+  getLogs(filter?: { 
+    level?: string; 
+    category?: string; 
+    since?: Date; 
+    limit?: number 
+  }): LogEntry[] {
+    let filteredLogs = [...this.logs];
+    
+    if (filter?.level) {
+      filteredLogs = filteredLogs.filter(log => log.level === filter.level);
+    }
+    
+    if (filter?.category) {
+      filteredLogs = filteredLogs.filter(log => log.category === filter.category);
+    }
+    
+    if (filter?.since) {
+      filteredLogs = filteredLogs.filter(log => 
+        new Date(log.timestamp) >= filter.since!
+      );
+    }
+    
+    if (filter?.limit) {
+      filteredLogs = filteredLogs.slice(-filter.limit);
+    }
+    
+    return filteredLogs.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }
+
+  getApiMetrics(): ApiCallMetrics {
+    return { ...this.apiMetrics };
   }
 
   clearLogs(): void {
     this.logs = [];
+    this.apiMetrics = {
+      totalCalls: 0,
+      callsPerMinute: 0,
+      lastMinuteCalls: [],
+      errorRate: 0,
+      averageResponseTime: 0
+    };
   }
 
   exportLogs(): string {
-    return JSON.stringify(this.logs, null, 2);
+    return JSON.stringify({
+      logs: this.logs,
+      metrics: this.apiMetrics,
+      exportedAt: new Date().toISOString()
+    }, null, 2);
   }
 }
 
