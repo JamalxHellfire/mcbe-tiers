@@ -12,7 +12,23 @@ import { ModernResultPopup } from "./components/ModernResultPopup";
 import { AdminProtectedRoute } from "./components/admin/AdminProtectedRoute";
 import { useErrorHandler } from "./hooks/useErrorHandler";
 
-const queryClient = new QueryClient();
+// Optimized QueryClient configuration for better performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      retry: 1, // Reduce retry attempts for faster error handling
+      networkMode: 'online',
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'online',
+    },
+  },
+});
 
 function AppContent() {
   useErrorHandler();

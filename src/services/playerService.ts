@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export type GameMode = 'Crystal' | 'Sword' | 'Mace' | 'Axe' | 'SMP' | 'UHC' | 'NethPot' | 'Bedwars';
@@ -115,46 +116,72 @@ export async function updatePlayerGlobalPoints(playerId: string): Promise<void> 
   }
 }
 
+// OPTIMIZED: Single query to get leaderboard with tier assignments
 export async function getLeaderboard(): Promise<Player[]> {
   try {
-    console.log('Fetching leaderboard data...');
-    const { data, error } = await supabase
+    console.log('Fetching optimized leaderboard data...');
+    
+    // Single query to get players with their tier assignments
+    const { data: playersData, error: playersError } = await supabase
       .from('players')
       .select('*')
       .eq('banned', false)
       .order('global_points', { ascending: false })
       .limit(50);
 
-    if (error) {
-      console.error('Supabase error fetching leaderboard:', error);
-      throw error;
+    if (playersError) {
+      console.error('Supabase error fetching leaderboard:', playersError);
+      throw playersError;
     }
 
-    console.log('Raw leaderboard data:', data);
-
-    if (!data || data.length === 0) {
+    if (!playersData || playersData.length === 0) {
       console.log('No players found in database');
       return [];
     }
 
-    const players: Player[] = await Promise.all(data.map(async (player, index) => {
-      // Fetch tier assignments for each player
-      const tierAssignments = await getPlayerTierAssignments(player.id);
-      
-      return {
-        id: player.id,
-        ign: player.ign,
-        region: player.region || 'NA',
-        device: player.device || 'PC',
-        global_points: player.global_points || 0,
-        overall_rank: index + 1,
-        java_username: player.java_username,
-        avatar_url: player.avatar_url,
-        tierAssignments
-      };
+    // Get all player IDs for batch fetching tier assignments
+    const playerIds = playersData.map(p => p.id);
+    
+    // Single query to get all tier assignments for all players
+    const { data: tierData, error: tierError } = await supabase
+      .from('gamemode_scores')
+      .select('player_id, gamemode, internal_tier, score')
+      .in('player_id', playerIds);
+
+    if (tierError) {
+      console.error('Error fetching tier assignments:', tierError);
+    }
+
+    // Group tier assignments by player ID for quick lookup
+    const tierAssignmentsByPlayer = new Map<string, {gamemode: GameMode; tier: TierLevel; score: number}[]>();
+    
+    if (tierData) {
+      tierData.forEach(tier => {
+        if (!tierAssignmentsByPlayer.has(tier.player_id)) {
+          tierAssignmentsByPlayer.set(tier.player_id, []);
+        }
+        tierAssignmentsByPlayer.get(tier.player_id)!.push({
+          gamemode: tier.gamemode as GameMode,
+          tier: tier.internal_tier as TierLevel,
+          score: tier.score || 0
+        });
+      });
+    }
+
+    // Process players with pre-fetched tier data
+    const players: Player[] = playersData.map((player, index) => ({
+      id: player.id,
+      ign: player.ign,
+      region: player.region || 'NA',
+      device: player.device || 'PC',
+      global_points: player.global_points || 0,
+      overall_rank: index + 1,
+      java_username: player.java_username,
+      avatar_url: player.avatar_url,
+      tierAssignments: tierAssignmentsByPlayer.get(player.id) || []
     }));
 
-    console.log('Processed players:', players);
+    console.log('Optimized leaderboard processing complete:', players.length, 'players');
     return players;
   } catch (error) {
     console.error('Error in getLeaderboard:', error);
@@ -187,8 +214,9 @@ export async function getPlayerTierAssignments(playerId: string): Promise<{gamem
   }
 }
 
+// OPTIMIZED: Single query for gamemode tiers
 export async function getGamemodeTiers(gamemode: GameMode): Promise<Player[]> {
-  console.log(`Fetching tiers for gamemode: ${gamemode}`);
+  console.log(`Fetching optimized tiers for gamemode: ${gamemode}`);
   
   try {
     const { data, error } = await supabase
@@ -224,24 +252,45 @@ export async function getGamemodeTiers(gamemode: GameMode): Promise<Player[]> {
 
     console.log(`Found ${data.length} players for gamemode: ${gamemode}`);
 
-    const players: Player[] = await Promise.all(data.map(async (item: any, index: number) => {
-      const tierAssignments = await getPlayerTierAssignments(item.players.id);
-      
-      return {
-        id: item.players.id,
-        ign: item.players.ign,
-        region: item.players.region || 'NA',
-        device: item.players.device || 'PC',
-        global_points: item.score,
-        overall_rank: index + 1,
-        tier: item.internal_tier,
-        java_username: item.players.java_username,
-        avatar_url: item.players.avatar_url,
-        tierAssignments,
-        gamemode_points: {
-          [gamemode]: item.score
+    // Get all player IDs for batch fetching tier assignments
+    const playerIds = data.map((item: any) => item.players.id);
+    
+    // Single query to get all tier assignments for these players
+    const { data: tierData } = await supabase
+      .from('gamemode_scores')
+      .select('player_id, gamemode, internal_tier, score')
+      .in('player_id', playerIds);
+
+    // Group tier assignments by player ID
+    const tierAssignmentsByPlayer = new Map<string, {gamemode: GameMode; tier: TierLevel; score: number}[]>();
+    
+    if (tierData) {
+      tierData.forEach(tier => {
+        if (!tierAssignmentsByPlayer.has(tier.player_id)) {
+          tierAssignmentsByPlayer.set(tier.player_id, []);
         }
-      };
+        tierAssignmentsByPlayer.get(tier.player_id)!.push({
+          gamemode: tier.gamemode as GameMode,
+          tier: tier.internal_tier as TierLevel,
+          score: tier.score || 0
+        });
+      });
+    }
+
+    const players: Player[] = data.map((item: any, index: number) => ({
+      id: item.players.id,
+      ign: item.players.ign,
+      region: item.players.region || 'NA',
+      device: item.players.device || 'PC',
+      global_points: item.score,
+      overall_rank: index + 1,
+      tier: item.internal_tier,
+      java_username: item.players.java_username,
+      avatar_url: item.players.avatar_url,
+      tierAssignments: tierAssignmentsByPlayer.get(item.players.id) || [],
+      gamemode_points: {
+        [gamemode]: item.score
+      }
     }));
 
     return players;
@@ -251,6 +300,7 @@ export async function getGamemodeTiers(gamemode: GameMode): Promise<Player[]> {
   }
 }
 
+// OPTIMIZED: Batch search with tier assignments
 export async function searchPlayers(query: string): Promise<Player[]> {
   try {
     const { data, error } = await supabase
@@ -267,20 +317,39 @@ export async function searchPlayers(query: string): Promise<Player[]> {
 
     if (!data) return [];
 
-    const players: Player[] = await Promise.all(data.map(async player => {
-      const tierAssignments = await getPlayerTierAssignments(player.id);
-      
-      return {
-        id: player.id,
-        ign: player.ign,
-        region: player.region || 'NA',
-        device: player.device || 'PC',
-        global_points: player.global_points || 0,
-        overall_rank: 0,
-        java_username: player.java_username,
-        avatar_url: player.avatar_url,
-        tierAssignments
-      };
+    // Batch fetch tier assignments for all search results
+    const playerIds = data.map(p => p.id);
+    const { data: tierData } = await supabase
+      .from('gamemode_scores')
+      .select('player_id, gamemode, internal_tier, score')
+      .in('player_id', playerIds);
+
+    // Group tier assignments by player ID
+    const tierAssignmentsByPlayer = new Map<string, {gamemode: GameMode; tier: TierLevel; score: number}[]>();
+    
+    if (tierData) {
+      tierData.forEach(tier => {
+        if (!tierAssignmentsByPlayer.has(tier.player_id)) {
+          tierAssignmentsByPlayer.set(tier.player_id, []);
+        }
+        tierAssignmentsByPlayer.get(tier.player_id)!.push({
+          gamemode: tier.gamemode as GameMode,
+          tier: tier.internal_tier as TierLevel,
+          score: tier.score || 0
+        });
+      });
+    }
+
+    const players: Player[] = data.map(player => ({
+      id: player.id,
+      ign: player.ign,
+      region: player.region || 'NA',
+      device: player.device || 'PC',
+      global_points: player.global_points || 0,
+      overall_rank: 0,
+      java_username: player.java_username,
+      avatar_url: player.avatar_url,
+      tierAssignments: tierAssignmentsByPlayer.get(player.id) || []
     }));
 
     return players;
@@ -290,10 +359,11 @@ export async function searchPlayers(query: string): Promise<Player[]> {
   }
 }
 
+// OPTIMIZED: Single query for tier data
 export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
   [key in TierLevel]?: Player[]
 }> {
-  console.log(`Fetching tier data for gamemode: ${gamemode}`);
+  console.log(`Fetching optimized tier data for gamemode: ${gamemode}`);
   
   try {
     const { data, error } = await supabase
@@ -342,9 +412,32 @@ export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
       'Retired': []
     };
 
-    await Promise.all(data.map(async (item: any) => {
-      const tierAssignments = await getPlayerTierAssignments(item.players.id);
-      
+    // Get all player IDs for batch fetching tier assignments
+    const playerIds = data.map((item: any) => item.players.id);
+    
+    // Single query to get all tier assignments for these players
+    const { data: allTierData } = await supabase
+      .from('gamemode_scores')
+      .select('player_id, gamemode, internal_tier, score')
+      .in('player_id', playerIds);
+
+    // Group tier assignments by player ID
+    const tierAssignmentsByPlayer = new Map<string, {gamemode: GameMode; tier: TierLevel; score: number}[]>();
+    
+    if (allTierData) {
+      allTierData.forEach(tier => {
+        if (!tierAssignmentsByPlayer.has(tier.player_id)) {
+          tierAssignmentsByPlayer.set(tier.player_id, []);
+        }
+        tierAssignmentsByPlayer.get(tier.player_id)!.push({
+          gamemode: tier.gamemode as GameMode,
+          tier: tier.internal_tier as TierLevel,
+          score: tier.score || 0
+        });
+      });
+    }
+
+    data.forEach((item: any) => {
       const player: Player = {
         id: item.players.id,
         ign: item.players.ign,
@@ -355,7 +448,7 @@ export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
         tier: item.internal_tier,
         java_username: item.players.java_username,
         avatar_url: item.players.avatar_url,
-        tierAssignments,
+        tierAssignments: tierAssignmentsByPlayer.get(item.players.id) || [],
         gamemode_points: {
           [gamemode]: item.score
         }
@@ -365,7 +458,7 @@ export async function getPlayersByTierAndGamemode(gamemode: GameMode): Promise<{
       if (tierData[tier]) {
         tierData[tier]!.push(player);
       }
-    }));
+    });
 
     return tierData;
   } catch (error) {

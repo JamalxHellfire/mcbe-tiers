@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { MinecraftLeaderboardTable } from '../components/MinecraftLeaderboardTable';
@@ -7,7 +7,6 @@ import { useLeaderboard } from '../hooks/useLeaderboard';
 import { TierGrid } from '../components/TierGrid';
 import { usePopup } from '../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { GameMode, Player } from '../services/playerService';
 import { motion } from 'framer-motion';
 import { toDatabaseGameMode } from '@/utils/gamemodeCasing';
@@ -25,7 +24,8 @@ const Index = () => {
   // Enable automatic points calculation
   usePointsCalculation();
 
-  const handlePlayerClick = (player: Player) => {
+  // Memoize the player click handler to prevent unnecessary re-renders
+  const handlePlayerClick = useCallback((player: Player) => {
     const rankInfo = getPlayerRank(player.global_points || 0);
     
     const tierAssignments = (player.tierAssignments || []).map(assignment => ({
@@ -47,14 +47,65 @@ const Index = () => {
       },
       timestamp: new Date().toISOString()
     });
-  };
+  }, [openPopup]);
 
-  const handleSelectMode = (mode: string) => {
+  // Memoize the mode selection handler
+  const handleSelectMode = useCallback((mode: string) => {
     setSelectedMode(mode as GameMode | 'overall');
-  };
+  }, []);
 
+  // Memoize the loading and error states
   const loading = leaderboardLoading;
   const error = leaderboardError;
+
+  // Memoize the main content to prevent unnecessary re-renders
+  const mainContent = useMemo(() => {
+    if (loading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-white">Loading...</div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-red-500 text-center py-8">
+          Error: {error}
+        </div>
+      );
+    }
+
+    if (selectedMode === 'overall') {
+      return (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full"
+        >
+          <MinecraftLeaderboardTable 
+            players={players}
+            onPlayerClick={handlePlayerClick} 
+          />
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full"
+      >
+        <TierGrid 
+          selectedMode={toDatabaseGameMode(selectedMode)}
+          onPlayerClick={handlePlayerClick} 
+        />
+      </motion.div>
+    );
+  }, [loading, error, selectedMode, players, handlePlayerClick]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-dark">
@@ -66,39 +117,7 @@ const Index = () => {
       
       <main className="flex-grow w-full">
         <div className="w-full px-4 py-6">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="text-white">Loading...</div>
-            </div>
-          ) : error ? (
-            <div className="text-red-500 text-center py-8">
-              Error: {error}
-            </div>
-          ) : selectedMode === 'overall' ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="w-full"
-            >
-              <MinecraftLeaderboardTable 
-                players={players}
-                onPlayerClick={handlePlayerClick} 
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="w-full"
-            >
-              <TierGrid 
-                selectedMode={toDatabaseGameMode(selectedMode)}
-                onPlayerClick={handlePlayerClick} 
-              />
-            </motion.div>
-          )}
+          {mainContent}
         </div>
       </main>
       
@@ -110,4 +129,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default React.memo(Index);
